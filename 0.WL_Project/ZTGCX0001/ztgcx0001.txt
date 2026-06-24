@@ -1,0 +1,356 @@
+*&-----------------------------------------------------------------------------*
+*& Report  預採帳-新訂單與增量詢單報 MOQ                                       *
+*------------------------------------------------------------------------------*
+* Author      : Ron Chang                                                      *
+* Purpose     : 預採帳-新訂單與增量詢單報 MOQ
+********************************************************************************
+* MODIFICATIONS HISTORY :                                                      *
+********************************************************************************
+* CHANGE DATE VERSION MODIFIER DESCRIPTION
+* =========== ======= ======== =================================================
+* 2024/09/19  V001    Ron Chang Creation
+* 2026/01/15  V002    Tristan  修正寫入當掉+權限控管移除
+*                              ZTGCX0001B新T-Code IT用 "返補不報MOQ子件"
+* 2026/01/16  V003    Tristan  生管/採購上傳確認功能回復 因為之前這個功能被刪除
+*                              但是沒有紀錄
+* 2026/01/21  V004    Tristan  修正需求數量&確認子階需求數量 計算規則
+* 2026/02/04  V005    Tristan  建立日期預設上個月一號到上個月最後一號
+* 2026/02/13  V006    Tristan  由於假期之後一上班,程式計算要跳過假期
+* 2026/02/13  V007    Tristan  取消V005版本
+* 2026/2/28    V008    KY 指定 P_FIX 補BOM日期為月底
+* 2026/3/1      V009    KY 增加 主要圖號 MAINDRAWINGNO
+* 2026/3/29    V010      KY 考慮替代料的情況, 按照替代機率算需求量
+* 2026/4/1      V011   Ky  DUMP 可做台數 Fix
+* 2026/4/2      V012  Ky  取 lt_raw 第一筆記錄的建立日期，作為所有補回子件的 建立日期
+* 2026/04/14  V013    Tristan  已存在資料也要進ZTCX0001 然後ZTCX0001-ISMOQ = 'X'
+* 2026/04/22  V014    Tristan  採購類型(MARC-BESKZ )= F 特殊採購類型(MARC-SOBSL) =空白
+*                              LIFNR <> '11200' & '21200' 上刪除註記
+* 2026/05/04  V015    Tristan  新增Table ZTCX0001_BOM(詢單展BOM階層資料)
+* 2026/05/13  V016    Tristan  新增加判斷 撈ZTCX0001時多加一個條件IZMOQ = ''
+* 2026/05/14  V017    Tristan  查詢以及修改 不顯示不報MOQ
+* 2026/05/14  V018    Tristan  回復V004修改計算規則前的邏輯
+* 2026/05/18  V019    Tristan  修改刪資料邏輯 不在一上傳檢查時就刪除 而是等到存檔時才刪
+* 2026/05/21  V020    JosephLo 1. 修改單位用量與需求數量不匹配的問題
+*                              2. 無BOM無客戶型號市購配件的訊息處理修正 ;  W狀態要放行
+* 2026/05/24  V021    JosephLo 統一重構主ALV前的異常顯示, 已及修正部分原有功能
+*                              1. 修正 assign_rem_data 未卡控角色權責資料相關bugs
+*                              2. 較大調整: W件統一走 assign_rem_data(廢 gt_self_moq)；上傳檢查/
+*                                 詢單重複改部分通過(錯誤列收集到異常清單、不中斷整批)；
+*                                 異常清單補上階料號(子件)
+* 2026/05/25  V022    JosephLo 理存轉XQ餘額, 做為MOQ計算依據
+* 2026/05/27  V023    JosephLo ALV增加欄位顯示計算來源為上期MOQ結餘或是本期liab餘額(change ZSCX0001_ALV)
+* 2026/05/28  V024    JosephLo Fix get_liability 前沒設定型號(skutitem)導致C類件號無法算到正確z_end_balance的問題
+* 2026/06/01  V025    JosephLo 雙t-code模擬重構:mode profile(gs_mode)收斂sy-tcode;ZTGCX0001A可套用real過濾(do_filter)
+*                              +P_FILT過濾切換(預設不過濾,勾才過濾);寫DB綁不可變t-code+frm_user_command雙保險(allow_write)
+*                              +修正get_global_data權限缺口(原p_mod重複漏p_upd→p_upd上傳確認對無角色不擋,可寫DB/取QQ)
+* 2026/06/09  V026    JosephLo 報MOQ改「淨額重算模型」(僅gv_moq_basis='L'):剩餘=Liability+Σ7天報MOQ#Σ7天需求,
+*                              剩餘<0且|剩餘|<ZMOQ報「一個」ZMOQ(20260610更正,非多批ceil;|剩餘|>=ZMOQ走正常採購報0);
+*                              序列累計防同次多筆都報。詳見問題doc §8。(待Oliver確認)
+*                              20260611:(1)新增欄位 Z_NET_BALANCE「當筆詢單扣除後餘額」(=淨額,忠實正負)寫入 ZTCX0001;
+*                              (2)可做台數改用淨額為分子(取代moq_remain):PC/ST=淨額÷單位用量,其他單位(如Y碼)再#50台緩衝,<0夾0,floor取整,報MOQ列→0;
+*                              (3)死碼 calc_moq_fields_for_all(自始空轉,含從未生效的#50)以 RETURN 停用。詳見問題doc §11。
+* 2026/06/13  V027    JosephLo 本批合併模型(同次上傳同子件視為「一筆」,取代V026逐列累加;僅gv_moq_basis='L');
+*                              詳見「V027_分析_同次上傳多詢單應合併計算與群組QQ.md」。實作全在 ZTGCX0001_SUB.abap:
+*                              (1)本批合併需求 lv_batch_req(Pass1一次Σ全本批合格列)→本批所有列共用同一淨額→有需求就每列都報同一ZMOQ、共用同一QQ
+*                                 (robust:Sync SO/轉XQ過程即使刪一列,別列仍撐住該批MOQ→不少報);供給以QQ去重(DELETE ADJ DUP BY qq,同QQ多列只算一個ZMOQ)。
+*                              (2)fix(b)供給做「QQ級排除」:同一QQ只要有任一列已轉XQ(zxqno<>''),整批已進Liability→不再計入供給
+*                                 (修「V027多列鋪開後、ZTGCX0019轉XQ只標一列→其餘zxqno=''兄弟列被重複計」的洞);需求維持逐列排除(供給QQ級/需求per-row,不對稱)。
+*                              (3)彈窗「7天列入資料明細」同步:供給/需求說明改QQ去重+本批合併;黃色標示對齊fix(b)(同QQ任一列轉XQ→整批不標黃)。
+*                              ★ZTGCX0019/ZTGCX0026/ZTGCX0001_SYNC 皆不動;無新DDIC。
+* 2026/06/14  V028    JosephLo 並行鎖:RECALC/CONFIRM/&DATA_SAVE 加 SAP enqueue 鎖,防多人同時計算/產QQ讀同一
+*                              未提交基準雙報MOQ。新DDIC:錨表 ZTGCX0001_LOCK + 鎖物件 EZGCX0001LOCK(mode E)。
+*                              鎖鍵=寫入分區(生管E='A'/採購F='C',C/D合併);寫入路徑_scope='2'(COMMIT自動釋放)、
+*                              RECALC _scope='1'(明確DEQUEUE);撞鎖非阻塞提示(_wait預設SPACE,sy-msgv1=持鎖者)。
+*                              ZTGCX0001_SUB新增FORM get_moq_lock_key/lock_moq_calc/unlock_moq_calc。詳見並行鎖設計文件。
+* 2026/06/14  V029    JosephLo (1)草稿不計需求:別批 7天需求 lt_reqdb 加回 AND qq_seq IS NOT INITIAL ——僅暫存、未按
+*                              「產生QQ」的列(qq_seq 空=草稿)不計入別批需求(回到舊邏輯 calc_7day_qq / 顯示 lt_7day_comp 一致;
+*                              ★反轉 2026-06-12「連草稿也算」,經業務確認);本批 lv_batch_req 不加、供給 lt_supmoq 不動(qq 非空本就排除草稿)。
+*                              (2)彈窗「7天列入資料明細」拿掉「MOQ結餘(moq_remain)」欄、改放「Liability(z_end_balance)」欄。
+*                              ※(1)為純 SELECT 條件、(2)為純顯示,無 DDIC。詳見「V027_分析_…QQ.md」§8。
+* 2026/06/16  V030    JosephLo Fix get_liability 去重把「不同XQ單(同料zcpnocn+同量)」誤判重複砍掉→Liability少算→誤報MOQ:
+*                              SELECT FOR ALL ENTRIES 欄位清單 + V022去重 READ TABLE WITH KEY 兩處都補 ZXQNO/ZXQSEQ
+*                              (缺一不可:只改key仍被FOR ALL ENTRIES先收斂)。實機 A0422-000036 真實1057(513+513+31)原只算544。
+*                              詳見「問題_Liability去重砍掉不同XQ單導致少算_多報MOQ.md」。
+* 2026/06/22  V031    JosephLo Fix 業務(B)上傳恆報「詢單號重覆」:check_upload_data 詢單重複檢查對 role B 無 SELECT 分支→
+*                              sy-subrc 殘留自 READ gt_role 的 0 誤擋。改於 get_global_data 加白名單:詢單上傳(p_imp/p_upd)
+*                              只允許生管A/採購C,非A/C(B/無角色)→MESSAGE literal 擋;兩 t-code(含 ZTGCX0001A 模擬)共用此閘門。
+* 2026/06/22  V032    JosephLo 並行鎖孤鎖修補(承 V028 報MOQ並行鎖):
+*                              (a) save_data 的 COMMIT WORK 原只在「有寫入(lt_moq 非空)」時跑→寫0筆(選取列全被 gt_sku_err
+*                              逐列跳過等)不 COMMIT→_scope='2' 的 EZGCX0001LOCK 不釋放→孤鎖卡住別人。補 ELSE 空 COMMIT 保證放鎖。
+*                              (b) 取QQ號(confirm_get_qq/ZCX_QQ_NR)、取QQ序號(get_qq_seq/ZCX_QQ_SEQ)的 NUMBER_GET_NEXT 失敗時,
+*                              原 MESSAGE-E 中斷會跳過 save_data 的 COMMIT→孤鎖。改 MESSAGE-I + LEAVE TO TRANSACTION 結束本交易
+*                              →LUW 結束→所有鎖(並行鎖+號碼鎖)自動釋放、回乾淨(罕見:號碼範圍異常才觸發)。
+********************************************************************************
+*20250314:第二次上傳的詢單，QQ單號要抓前次已產生的單號
+REPORT ztgcx0001 NO STANDARD PAGE HEADING MESSAGE-ID zcx01.
+
+INCLUDE ztgcx0001_top.
+* V025 JosephLo 2026/06/01 本次新增的全域/畫面邏輯(init_mode、adjust_screen_filt)抽到此 include;舊邏輯日後逐步搬入
+INCLUDE ztgcx0001f00.
+INCLUDE ztgcx0001_sub.
+
+INITIALIZATION.
+  title01 = TEXT-t01.
+* 20260524 JosephLo 第一行顯示當前 t-code，分辨 ZTGCX0001 / ZTGCX0001A 等不同入口
+  gv_scinf = |目前交易碼 (T-Code)：{ sy-tcode }|.
+
+  sscrfields-functxt_01 = icon_export && TEXT-t02.
+  sscrfields-ucomm      = 'FC01'.
+* V002 Added by Tristan 2026/01/15 *
+  PERFORM init_param.
+* V002 End off *
+AT SELECTION-SCREEN ON VALUE-REQUEST FOR p_file.
+  PERFORM file_open_dialog.
+
+AT SELECTION-SCREEN.
+  IF sy-ucomm = 'FC01'.
+*  下載模版
+    PERFORM frm_download_template.
+  ENDIF.
+* V002 Added by Tristan 2026/01/15 *
+AT SELECTION-SCREEN OUTPUT.
+  PERFORM init_param.
+* V002 End off *
+
+AT SELECTION-SCREEN ON p_file.
+  IF ( p_imp IS NOT INITIAL OR p_upd IS NOT INITIAL ) AND p_file IS INITIAL AND p_fix IS INITIAL AND sy-ucomm NE 'FC01'.
+    MESSAGE e001(00) WITH '請選擇上傳檔案路徑'(t03).
+  ENDIF.
+
+START-OF-SELECTION.
+  "PERFORM check_auth.
+  PERFORM get_global_data.
+* V025 JosephLo 2026/06/01 設定本次 mode profile(gs_mode);後續過濾/寫DB/基準/檢查放寬皆讀旗標,不再比 sy-tcode
+  PERFORM init_mode.
+
+  IF p_imp IS NOT INITIAL.
+* 20260524 JosephLo 統一異常訊息顯示重構：上傳流程前重置異常收集清單(故 process_data 不再清 gt_excluded)
+    CLEAR: gt_excluded, gt_sku_err.
+    PERFORM excel_upload.
+    IF gt_upload IS NOT INITIAL.
+      PERFORM check_upload_data.
+* 20260524 JosephLo 階段3 L2部分通過：check_upload_data 已把錯誤列收集到 gt_excluded 並從
+*   gt_upload 移除，不再整批 show_error_alv；剩餘正常件續展BOM(全錯則 gt_upload 空、安全略過)。
+      "展BOM並計算子件是否需要報MOQ
+      PERFORM process_data.
+* V026 JosephLo 20260611 — calc_moq_fields_for_all 已整支 remark(空轉死碼);可做台數於 process_data→calc_moq_qty(共用 calc_out_qty)內算妥,此呼叫停用。
+*      PERFORM calc_moq_fields_for_all CHANGING gt_data.
+    ELSE.
+      MESSAGE s001(00) WITH 'No data upload'.
+      RETURN.
+    ENDIF.
+
+    " IF gt_upload IS NOT INITIAL.
+    "   PERFORM check_upload_data.
+    "   LOOP AT gt_upload INTO DATA(ls_u) WHERE zmsg IS NOT INITIAL.
+    "   ENDLOOP.
+    "   IF sy-subrc = 0.
+    "     "Show error ALV and download to local
+    "     PERFORM show_error_alv.
+    "   ELSE.
+    "     "展BOM並計算子件是否需要報MOQ
+    "     PERFORM process_data.
+    "     " 計算 MOQ結餘 / 可做台數
+    "     PERFORM calc_moq_fields_for_all CHANGING gt_data.
+    "   ENDIF.
+    " ELSE.
+    "   MESSAGE s001(00) WITH 'No data upload'.
+    "   RETURN.
+    " ENDIF.
+
+* V003 Added by Tristan 2026/01/16 *
+  ELSEIF p_upd IS NOT INITIAL.
+    PERFORM excel_upload.
+    PERFORM collect_gt_data.
+* V026 JosephLo 20260611 — calc_moq_fields_for_all 已整支 remark(空轉死碼),此呼叫停用(可做台數由 recalc/save 的共用 calc_out_qty 處理)。
+*    PERFORM calc_moq_fields_for_all CHANGING gt_data.
+* V003 End off *
+  ELSEIF p_fix IS NOT INITIAL.
+    "權限檢查：只有 Z_BR_CONFIG_EXPERT_DATA_MIG 角色可用
+*    AUTHORITY-CHECK OBJECT 'Z_BR_ROLE'
+*        ID 'ROLE' FIELD 'Z-BC-0000-BASIC-ENDUSER'.
+*    IF sy-subrc <> 0.
+*      MESSAGE e001(00) WITH '無權限執行此功能，需要角色 Z-BC-0000-BASIC-ENDUSER'.
+*      RETURN.
+*    ENDIF.
+
+    "執行補回料號邏輯
+    PERFORM frm_fix_missing_materials.
+
+  ELSE.
+    PERFORM get_report_data.
+* V026 JosephLo 20260611 — calc_moq_fields_for_all 已整支 remark(空轉死碼),此呼叫停用(查詢模式 out_qty 取 DB 既存值)。
+*    PERFORM calc_moq_fields_for_all CHANGING gt_report.
+
+  ENDIF.
+
+END-OF-SELECTION.
+* 20260524 JosephLo 統一異常訊息顯示重構：P_IMP 先彈異常清單(不中斷)、再進ALV(即使空表)
+  IF p_imp IS NOT INITIAL.
+    IF gt_excluded IS NOT INITIAL.
+      PERFORM show_excluded_popup.
+    ENDIF.
+    PERFORM display_alv USING gt_data.
+    CLEAR p_file.
+    RETURN.
+  ENDIF.
+  IF gt_data IS NOT INITIAL OR gt_report IS NOT INITIAL.
+* V002 Marked by Tristan 2026/01/15 *
+* User反應資料跑不出來 先Marked掉
+*    "=== ↓↓↓ PATCH 1 角色權限過濾顯示 ↓↓↓ ===
+*    READ TABLE gt_role INTO DATA(ls_role_display) WITH KEY uname = sy-uname.
+*    IF sy-subrc = 0.
+*      CASE ls_role_display-role.
+*        WHEN 'A'. " 生管：只顯示採購類型 E
+*          IF p_imp IS NOT INITIAL OR p_mod IS NOT INITIAL OR p_upd IS NOT INITIAL.
+*            DELETE gt_data WHERE beskz NE 'E'.
+*          ELSEIF p_dis IS NOT INITIAL.
+*            DELETE gt_report WHERE beskz NE 'E'.
+*          ENDIF.
+*
+*        WHEN 'C'. " 採購：只顯示採購類型 F
+*          IF p_imp IS NOT INITIAL OR p_mod IS NOT INITIAL OR p_upd IS NOT INITIAL.
+*            DELETE gt_data WHERE beskz NE 'F'.
+*          ELSEIF p_dis IS NOT INITIAL.
+*            DELETE gt_report WHERE beskz NE 'F'.
+*          ENDIF.
+*
+*        WHEN 'D'. " 當地採購：只顯示當地採購項目
+*          IF p_imp IS NOT INITIAL OR p_mod IS NOT INITIAL OR p_upd IS NOT INITIAL.
+*            DELETE gt_data WHERE zpurchase_type NE '當地採購'.
+*          ELSEIF p_dis IS NOT INITIAL.
+*            DELETE gt_report WHERE zpurchase_type NE '當地採購'.
+*          ENDIF.
+*      ENDCASE.
+*    ENDIF.
+*    "=== ↑↑↑ PATCH 1 結束 ↑↑↑ ===
+* V002 End off *
+    IF p_imp IS NOT INITIAL OR p_mod IS NOT INITIAL OR p_upd IS NOT INITIAL.
+      PERFORM display_alv USING gt_data.
+    ELSEIF p_dis IS NOT INITIAL.
+      PERFORM display_alv USING gt_report.
+    ENDIF.
+  ELSE.
+    MESSAGE s001(00) WITH 'No data exist.'.
+  ENDIF.
+  CLEAR:p_file.
+*&---------------------------------------------------------------------*
+*& Form get_liability
+*&---------------------------------------------------------------------*
+FORM get_liability  TABLES  lt_stpox STRUCTURE stpox
+                    USING  p_upload LIKE LINE OF gt_upload.
+  DATA: tmp_liab TYPE TABLE OF ztcx0026.
+* 最大的期別
+  SELECT MAX( period ) INTO @DATA(max_period)
+    FROM ztcx0026.
+* V030 Changed by JosephLo 20260616 — 補 zxqno/zxqseq:兩張不同XQ單(同料zcpnocn+同量)勿被
+*   FOR ALL ENTRIES 依選取欄位隱含去重收斂成一張(否則 Liability 少算→誤報MOQ)。
+  SELECT period, vtweg, werks, zpno, zcpnocn, ztunyn, zportalno, zxqno, zxqseq, zqty_sy
+    FROM ztcx0026
+     FOR ALL ENTRIES IN @lt_stpox
+   WHERE period = @max_period
+     AND vtweg = @p_upload-vtweg
+     AND zpno = @lt_stpox-idnrk(30)
+     AND zportalno = ''
+    INTO CORRESPONDING FIELDS OF TABLE @tmp_liab.
+* V022 Added by JosephLo 20260526 *
+* 修正 it_liab 重複累加 bug：
+*   問題：原本每張上傳列(LOOP AT gt_upload)都呼叫一次本 FORM，各自 SELECT ZTCX0026
+*         後直接 APPEND 進 it_liab。同 vtweg 內若多列觸發相同 idnrk
+*         (例如：同 matnr 重複上傳、或不同 matnr 但 BOM 共用子件)，
+*         同一筆 ZTCX0026 列會被加進 it_liab 多次。
+*   影響：後續 get_stock_qty 的 REDUCE 對 it_liab 加總 ZQTY_SY → z_end_balance 偏大。
+*         切換為 XQ 餘額作 MOQ 基準後，會讓 lv_req_qty 偏正 → MOQ 少報(買不夠)。
+*   修法：APPEND 前比對 it_liab 是否已存在同列(以 SELECT 出來的欄位為 key;V030 起含 zxqno/zxqseq)，
+*         已存在就從 tmp_liab 刪掉、不重複加。
+*   取代：process_data 末段原 V013 的 SORT+DELETE ADJACENT DUPLICATES 死碼
+*         (全代碼核對：去重時點晚於所有讀者，沒人讀去重後的 it_liab)。
+* V030 Note:原 key 缺 zxqno/zxqseq → 兩張不同XQ單(同料同量)被誤判同列砍一張 → Liability 少算誤報MOQ;下方 key 補上。
+  LOOP AT tmp_liab INTO DATA(ls_tmp).
+    READ TABLE it_liab TRANSPORTING NO FIELDS
+                       WITH KEY period    = ls_tmp-period
+                                vtweg     = ls_tmp-vtweg
+                                werks     = ls_tmp-werks
+                                zpno      = ls_tmp-zpno
+                                zcpnocn   = ls_tmp-zcpnocn
+                                ztunyn    = ls_tmp-ztunyn
+                                zportalno = ls_tmp-zportalno
+                                zxqno     = ls_tmp-zxqno     "V030:同料同量但不同XQ單號不算重複
+                                zxqseq    = ls_tmp-zxqseq    "V030
+                                zqty_sy   = ls_tmp-zqty_sy.
+    IF sy-subrc = 0.
+      DELETE tmp_liab.
+    ENDIF.
+  ENDLOOP.
+* V022 End off *
+  APPEND LINES OF tmp_liab TO it_liab.
+ENDFORM.
+
+*Text elements
+*----------------------------------------------------------
+* E01 No template file found, upload with SMW0
+* F01 Customer
+* F02 Material
+* F03 Plant
+* F04 Material req.qty
+* F05 Require date
+* F06 Query no
+* F07 Error message
+* F08 Comp. req. qty.
+* F09 Check Box
+* F10 Vendor name
+* F11 Material description
+* F12 單位用量
+* F13 前置時間
+* F14 MOQ基本資料
+* F15 料價(CNY)
+* F16 料價(TWD)
+* F17 採購方法
+* M01 Data with the same key exists in Ztable, it can't be overwrite with the same data.
+* T01 Selection Criteria
+* T02 Download Excel Template File
+* T03 Please select upload file path
+* T04 Confirm to generate QQ no
+* T05 Generate QQ no for checked items?
+* T06 Are you sure to Save
+* T07 Are you sure save to Ztable?( only items with QQ Number).
+* T08 確認離開
+* T09 未儲存的資料即將消失，確定?
+* T10 確認刪除
+* T11 確認刪除該詢單資料?
+* T12 確認重新計算
+* T13 確認重新計算詢單資料?
+* T14 確認重新計算業務金額相關欄位?
+
+
+*Selection texts
+*----------------------------------------------------------
+* P_DIS         Query QQ Order Report
+* P_FILE         Excel file upload file path:
+* P_FIX         返補不報MOQ子件
+* P_IMP         Upload query Excel
+* P_MOD         修改詢單資訊
+* P_UPD         生管/採購上傳確認(請用查詢格式上傳)
+* S_ERDAT         QQ order creation date
+* S_IDNRK         Component
+* S_SO         SO Number
+* S_STATUS         Status
+* S_BESKZ D       .
+* S_PR D       .
+* S_QQ D       .
+* S_SKU D       .
+* S_VTWEG D       .
+* S_WERKS D       .
+
+
+*Messages
+*----------------------------------------------------------
+*
+* Message class: 00
+*001   &1&2&3&4&5&6&7&8
+*
+* Message class: Hard coded
+*   Excel data format is wrong,please check
+
+----------------------------------------------------------------------------------
+Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2026. Sap Release 757
