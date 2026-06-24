@@ -1,0 +1,1622 @@
+*&---------------------------------------------------------------------*
+*& Report ZTGCX0031
+*&---------------------------------------------------------------------*
+*&
+*&---------------------------------------------------------------------*
+REPORT ztgcx0031.
+
+TABLES:eban,tvtw.
+*----------------------------------------------------------------------*
+* TYPE-POOLS
+*----------------------------------------------------------------------*
+TYPE-POOLS: slis.
+*交通燈引用類型池
+TYPE-POOLS:icon.
+*&---------------------------------------------------------------------*
+*&聲明ALV參數
+*&---------------------------------------------------------------------*
+DATA:gt_fieldcat TYPE lvc_t_fcat, "字段目錄#表
+     gs_fieldcat TYPE lvc_s_fcat, "字段目錄工作區
+     gs_layout   TYPE lvc_s_layo. "用於定義ALV表單的相關格式、屬性
+
+DATA:gt_mat TYPE TABLE OF zscx0030a.
+DATA:gt_mat_out TYPE TABLE OF zscx0030b,
+     gs_mat_out TYPE zscx0030b.
+
+DATA: BEGIN OF it_xq0099 OCCURS 0,
+        werks       LIKE ztsd0098-werks,
+        vtweg       LIKE ztsd0098-vtweg,
+        zbcust      LIKE ztsd0098-zbcust,
+        zscust      LIKE ztsd0098-zscust,
+        zxqdat      LIKE ztsd0098-zxqdat,
+        zxqline     LIKE ztsd0098-zxqline,
+        zxqtyp      LIKE ztsd0098-zxqtyp,
+        zunptyp     LIKE ztsd0098-zunptyp,
+        zcpno       LIKE ztsd0098-zcpno,
+        zcpnocn     LIKE ztsd0098-zcpnocn,
+        zdesc       LIKE ztsd0098-zdesc,
+        zrem1       LIKE ztsd0098-zrem1,
+        zpno        LIKE ztsd0099-zpno,
+        zspno       LIKE ztsd0099-zspno,
+        ztunyn      LIKE ztsd0099-ztunyn,
+        zxqdtyp     LIKE ztsd0099-zxqdtyp,
+        zqty(15),
+* 2022/07/25  V004 Begin
+*        zunit(6),
+        zunit(10),
+* 2022/07/25  V004 End
+        zpcur       LIKE ztsd0099-zpcur,
+        zdispup(15),
+        zrem        LIKE ztsd0099-zrem,
+        zpup        LIKE ztsd0099-zpup,
+        zpup_per    LIKE ztsd0099-zpup_per,
+        zxqno       LIKE ztsd0099-zxqno,
+        zxqmsg(100),
+      END OF it_xq0099.
+DATA: g_err TYPE c.
+*DATA:   bdcdata LIKE bdcdata    OCCURS 0 WITH HEADER LINE.
+*DATA:   messtab LIKE bdcmsgcoll OCCURS 0 WITH HEADER LINE.
+*DATA:   e_message LIKE TABLE OF bapiret2 WITH HEADER LINE.
+TYPES: BEGIN OF ttdata.
+         INCLUDE STRUCTURE zssd0075.
+"20210421 yinglung V009 Begin
+TYPES:   ztmppup     LIKE zssd0075-zpup,
+         ztmppup_per LIKE zssd0075-zpup_per,
+         ztmppup_dis LIKE zssd0075-zpup_dis.
+"20210421 yinglung V009 End
+"20210423 yinglung V010 Begin
+TYPES: ztmptwdpup     LIKE zssd0075-zpup,
+       ztmptwdpup_per LIKE zssd0075-zpup_per,
+       ztmptwdpup_dis LIKE zssd0075-zpup_dis.
+"20210423 yinglung V010 End
+TYPES:   style TYPE lvc_t_styl.
+TYPES: END OF ttdata.
+DATA: stdata TYPE ttdata.
+DATA: tmp_stdata TYPE ttdata.
+DATA: stsd89       TYPE ztsd0089.
+
+DATA:ls_ztsd0098 TYPE ztsd0098,
+     lt_ztsd0098 TYPE TABLE OF ztsd0098,
+     ls_ztsd0099 TYPE ztsd0099,
+     lt_ztsd0099 TYPE TABLE OF ztsd0099.
+DATA:lv_perid TYPE zivdch_ym,   "CHAR6 (YYYYMM)
+     lv_zxqno TYPE ztsd0098-zxqno.
+DATA:lv_wl2_englishspecifications TYPE ztmara-wl2_englishspecifications,
+     lv_string                    TYPE string.
+DATA: ls_ztcx0031 TYPE ztcx0031,
+      lt_ztcx0031 TYPE TABLE OF ztcx0031.
+*&---------------------------------------------------------------------*
+*搜索幫助
+*&---------------------------------------------------------------------*
+SELECTION-SCREEN BEGIN OF BLOCK b1 WITH FRAME TITLE TEXT-001. "選擇準則
+  SELECT-OPTIONS: s_vtweg FOR tvtw-vtweg OBLIGATORY, "預採帳客戶別
+                               s_banfn FOR eban-banfn, "請購單號
+                               s_matnr FOR eban-matnr, "件號
+                               s_cdate FOR eban-creationdate OBLIGATORY. "採購文件建立日期
+SELECTION-SCREEN END OF BLOCK b1.
+
+AT SELECTION-SCREEN OUTPUT.
+
+START-OF-SELECTION.
+  PERFORM frm_del_data.   "處理數據
+  PERFORM frm_set_fieldcat."設置字段
+  PERFORM frm_set_layout.  "設置顯示格式
+  PERFORM frm_display_alv. "ALV報表展示
+*&---------------------------------------------------------------------*
+*& Form frm_del_data
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM frm_del_data.
+  SELECT
+    a~banfn,
+    a~bnfpo,
+    a~bsart,
+    a~werks,
+    a~matnr,
+    a~creationdate,
+    a~waers AS waers_a,
+    a~preis AS netpr_a,
+    a~peinh AS peinh_a,
+    a~menge,
+    a~kunnr,
+    a~zzcustomer,
+    CASE a~zzcustomer
+      WHEN 'GRACO'  THEN 'G1'
+      WHEN 'WB'     THEN 'B1'
+      WHEN 'CHICCO' THEN 'C1'
+      WHEN 'JOIE'   THEN 'J1'
+      WHEN 'NUNA'   THEN 'N1'
+      WHEN 'TAVO'   THEN 'T1'
+    END AS vtweg,
+    a~zzmoqline,
+    a~zzunptyp,
+    a~zzskuitem,
+    a~zzmnglg,  "單位用量
+    a~ebeln,
+    a~ebelp,
+    b~waers AS waers_b,
+    c~netpr AS netpr_b,
+    c~peinh AS peinh_b,
+    CASE WHEN b~waers IS NOT INITIAL THEN b~waers ELSE a~waers END AS waers,
+    CASE WHEN c~netpr > 0 THEN c~netpr ELSE a~preis END AS netpr,
+    CASE WHEN c~peinh > 0 THEN c~peinh ELSE a~peinh END AS peinh
+    FROM eban AS a
+    LEFT JOIN ekko AS b ON b~ebeln = a~ebeln
+    LEFT JOIN ekpo AS c ON c~ebeln = a~ebeln AND c~ebelp = a~ebelp
+    WHERE ( CASE a~zzcustomer WHEN 'GRACO' THEN 'G1'   WHEN 'WB' THEN 'B1'   WHEN 'CHICCO' THEN 'C1'
+                   WHEN 'JOIE' THEN 'J1'   WHEN 'NUNA' THEN 'N1'   WHEN 'TAVO' THEN 'T1'  END ) IN @s_vtweg
+    AND a~banfn IN @s_banfn
+    AND a~matnr IN @s_matnr
+    AND a~creationdate IN @s_cdate
+    AND a~creationdate >= '20260501'
+    AND a~bsart = 'ZR07'
+    AND a~loekz = ''
+    AND a~menge > 0
+    AND ( CASE WHEN c~netpr > 0 THEN c~netpr ELSE a~preis END ) > 0
+    AND NOT EXISTS ( SELECT * FROM ztcx0031 AS z WHERE z~banfn = a~banfn AND z~bnfpo = a~bnfpo AND z~zxqno <> '' )
+    INTO TABLE @DATA(lt_eban).
+
+  CLEAR:gt_mat,gt_mat_out.
+  SELECT DISTINCT
+    a~werks,
+    a~matnr AS idnrk
+    FROM @lt_eban AS a
+    WHERE ( a~zzskuitem = '' OR a~zzmnglg = 0 )
+    INTO TABLE @gt_mat.
+  "#取最新型#和#位用量
+  IF gt_mat IS NOT INITIAL.
+    PERFORM frm_get_model_unit TABLES gt_mat gt_mat_out.
+    SELECT
+      a~werks,
+      a~idnrk,
+      a~matnr,
+      a~ersda,
+      a~skuitem,
+      SUM( a~dimng ) AS dimng
+      FROM @gt_mat_out AS a
+      GROUP BY a~werks, a~idnrk, a~matnr, a~ersda, a~skuitem
+      INTO TABLE @DATA(lt_mat_out_sum).
+    SELECT
+      a~werks,
+      a~idnrk,
+      a~matnr,
+      a~ersda,
+      a~skuitem,
+      a~dimng,
+      b~vtweg,
+      b~kunnr,
+      b~zcpno,
+      b~zcn
+      FROM @lt_mat_out_sum AS a
+      LEFT JOIN ztsd0020 AS b ON a~skuitem = b~zcn AND a~matnr = b~matnr
+      INTO TABLE @DATA(lt_mat_out).
+    SORT lt_mat_out BY vtweg werks idnrk ersda DESCENDING.
+  ENDIF.
+
+  IF lt_eban IS NOT INITIAL.
+    REFRESH:it_xq0099.
+    CLEAR:it_xq0099.
+    LOOP AT lt_eban INTO DATA(ls_eban).
+      it_xq0099-werks    = ls_eban-werks.
+      it_xq0099-vtweg    = ls_eban-vtweg.
+      PERFORM get_zbcust USING ls_eban-vtweg CHANGING it_xq0099-zbcust.
+      it_xq0099-zscust   = it_xq0099-zbcust.
+      it_xq0099-zxqdat   = ls_eban-creationdate.
+      SELECT SINGLE zzmoqline INTO it_xq0099-zxqline FROM knvv
+        WHERE kunnr = it_xq0099-zscust AND vtweg = it_xq0099-vtweg AND zzmoqline <> ''.
+      it_xq0099-zxqtyp   = '1'.
+      it_xq0099-zunptyp  = ls_eban-zzunptyp.
+      IF ls_eban-zzskuitem = '' OR ls_eban-zzmnglg = 0.
+        READ TABLE lt_mat_out INTO DATA(ls_mat_out) WITH KEY vtweg = ls_eban-vtweg werks = ls_eban-werks idnrk = ls_eban-matnr BINARY SEARCH.
+        IF sy-subrc = 0.
+          it_xq0099-zcpnocn  = ls_mat_out-skuitem.
+          it_xq0099-zunit = ls_mat_out-dimng / 1000.
+          it_xq0099-zcpno = ls_mat_out-zcpno.    "客戶件號
+          CLEAR:ls_mat_out.
+        ENDIF.
+      ELSE.
+        it_xq0099-zcpnocn  = ls_eban-zzskuitem.
+        it_xq0099-zunit = ls_eban-zzmnglg.
+        SELECT vtweg, kunnr, zcpno, zcn, matnr, zdefault, del
+          INTO TABLE @DATA(lt_ztsd0020) FROM ztsd0020
+          WHERE vtweg = @it_xq0099-vtweg AND zcn = @it_xq0099-zcpnocn AND zcpno <> '' AND zcn <> ''.
+        SORT lt_ztsd0020 BY del ASCENDING zdefault DESCENDING.
+        READ TABLE lt_ztsd0020 INTO DATA(ls_ztsd0020) INDEX 1.
+        IF sy-subrc = 0.
+          it_xq0099-zcpno = ls_ztsd0020-zcpno.    "客戶件號
+          CLEAR:ls_ztsd0020.
+        ENDIF.
+      ENDIF.
+      SELECT SINGLE zunptypnam INTO it_xq0099-zdesc FROM ztsd0113
+        WHERE werks = it_xq0099-werks AND vtweg = it_xq0099-vtweg
+        AND ( zbcust = it_xq0099-zbcust OR zbcust = '*' ) AND zunptyp = it_xq0099-zunptyp.
+      it_xq0099-zrem1    = ls_eban-banfn && '_' && ls_eban-bnfpo.
+      it_xq0099-zpno     = ls_eban-matnr.
+*    it_xq0099-zspno = ''.
+      it_xq0099-ztunyn   = 'X'.
+      it_xq0099-zxqdtyp  = ls_eban-zzunptyp.
+      it_xq0099-zqty = ls_eban-menge.
+      it_xq0099-zpcur = ls_eban-waers.
+      IF ls_eban-peinh <> 0.
+        it_xq0099-zdispup = ls_eban-netpr / ls_eban-peinh.
+      ENDIF.
+*    it_xq0099-zrem = ''.
+      APPEND it_xq0099. CLEAR it_xq0099.
+      CLEAR:ls_eban,lt_ztsd0020.
+    ENDLOOP.
+
+*    CLEAR:g_err.
+    PERFORM checkdata.       "COPY ZXQ07 的perfrom
+*    IF g_err EQ ''.
+*      PERFORM createxq.        "COPY ZXQ07 的perfrom
+*    ENDIF.
+
+    LOOP AT it_xq0099 WHERE zxqmsg = ''.
+      CLEAR:lv_perid,lv_zxqno.
+      lv_perid = it_xq0099-zxqdat(6).
+      CALL FUNCTION 'ZSD_ODM_XQ_NO_GET'
+        EXPORTING
+          iv_perid = lv_perid
+          iv_werks = it_xq0099-werks
+        IMPORTING
+          ev_zxqno = lv_zxqno
+        EXCEPTIONS
+          OTHERS   = 1.
+      IF lv_zxqno IS NOT INITIAL.
+        CLEAR:lt_ztsd0098,lt_ztsd0099.
+        CLEAR:ls_ztsd0098.
+        ls_ztsd0098-werks = it_xq0099-werks.
+        ls_ztsd0098-zxqno = lv_zxqno.
+        ls_ztsd0098-zym = it_xq0099-zxqdat(6).
+        ls_ztsd0098-zperiod = '1'.
+        ls_ztsd0098-zbcust = it_xq0099-zbcust.
+        ls_ztsd0098-zxqsta = ''.
+        ls_ztsd0098-zxqline = it_xq0099-zxqline.
+        ls_ztsd0098-zcpno = it_xq0099-zcpno.
+        ls_ztsd0098-zcpnocn = it_xq0099-zcpnocn.
+        ls_ztsd0098-zxqtyp = it_xq0099-zxqtyp.
+        ls_ztsd0098-zxqdat = it_xq0099-zxqdat.
+        ls_ztsd0098-zscust = it_xq0099-zscust.
+        ls_ztsd0098-zunptyp = it_xq0099-zunptyp.
+        ls_ztsd0098-zdesc = it_xq0099-zdesc.
+        ls_ztsd0098-zrem1 = it_xq0099-zrem1.
+        ls_ztsd0098-zopr_new = sy-uname.
+        ls_ztsd0098-zopd_new = sy-datum.
+        ls_ztsd0098-zopt_new = sy-uzeit.
+        ls_ztsd0098-zaction = 'I'.
+        SELECT SINGLE zp_entity INTO ls_ztsd0098-zp_entity
+          FROM ztsd0015 WHERE bukrs = it_xq0099-werks.
+        ls_ztsd0098-vtweg = it_xq0099-vtweg.
+        APPEND ls_ztsd0098 TO lt_ztsd0098.
+
+        CLEAR:ls_ztsd0099.
+        ls_ztsd0099-werks = it_xq0099-werks.
+        ls_ztsd0099-zxqno = lv_zxqno.
+        ls_ztsd0099-zxqseq = 1.
+        ls_ztsd0099-zxqwrktyp = '1'.
+        ls_ztsd0099-zbcust = it_xq0099-zbcust.
+        ls_ztsd0099-zdat = it_xq0099-zxqdat.
+        ls_ztsd0099-zpno = it_xq0099-zpno.
+        IF ls_ztsd0099-zpno IS NOT INITIAL.
+          CLEAR:lv_wl2_englishspecifications,lv_string.
+          SELECT SINGLE wl2_englishspecifications
+            INTO lv_wl2_englishspecifications
+            FROM ztmara WHERE matnr = ls_ztsd0099-zpno.
+          lv_string = lv_wl2_englishspecifications.
+          REPLACE ALL OCCURRENCES OF REGEX '[一-#]' IN lv_string WITH ''.
+          ls_ztsd0099-zdesc = lv_string.
+        ENDIF.
+        ls_ztsd0099-zxqclass = '2'.
+        ls_ztsd0099-zxqdtyp = it_xq0099-zunptyp.
+        ls_ztsd0099-zbqty = it_xq0099-zunit.
+        ls_ztsd0099-ztunyn = it_xq0099-ztunyn.
+        ls_ztsd0099-zopr_new = sy-uname.
+        ls_ztsd0099-zopd_new = sy-datum.
+        ls_ztsd0099-zopt_new = sy-uzeit.
+        ls_ztsd0099-zqtybalace = it_xq0099-zqty.
+        ls_ztsd0099-zp_entity = ls_ztsd0098-zp_entity.
+        ls_ztsd0099-zaction = 'I'.
+        ls_ztsd0099-vtweg = ls_ztsd0098-vtweg.
+        ls_ztsd0099-zqty = it_xq0099-zqty.
+        SELECT SINGLE meinh INTO ls_ztsd0099-zuq
+          FROM marm WHERE matnr = ls_ztsd0099-zpno.
+        IF ls_ztsd0099-zbqty <> 0.
+          ls_ztsd0099-zunit = ls_ztsd0099-zqty / ls_ztsd0099-zbqty.
+          IF ls_ztsd0099-zuq NE 'ST' AND ls_ztsd0099-zuq NE 'PC'.
+            IF ls_ztsd0099-zunit > 50.
+              ls_ztsd0099-zunit = ls_ztsd0099-zunit - 50.                         " 其他單位(如 Y 碼/布料):留 50 台安全緩衝
+            ELSE.
+              ls_ztsd0099-zunit = 0.
+            ENDIF.
+          ENDIF.
+          ls_ztsd0099-zunit = floor( ls_ztsd0099-zunit ).
+        ENDIF.
+        ls_ztsd0099-zpcur = it_xq0099-zpcur.
+        ls_ztsd0099-zpup = it_xq0099-zpup.
+        ls_ztsd0099-zpup_per = it_xq0099-zpup_per.
+        CLEAR:stdata,tmp_stdata,stsd89.
+        PERFORM new_item.      "COPY ZXQ01
+        PERFORM set_zbaseup.  "COPY ZXQ01
+        PERFORM back62.          "COPY ZXQ01
+        ls_ztsd0099-zpcur = tmp_stdata-zpcur.
+        ls_ztsd0099-zpup = tmp_stdata-zpup.
+        ls_ztsd0099-zpup_per = tmp_stdata-zpup_per.
+        ls_ztsd0099-zptwdcur = tmp_stdata-zptwdcur.
+        ls_ztsd0099-zptwdup = tmp_stdata-zptwdup.
+        ls_ztsd0099-zptwd_per = tmp_stdata-zptwd_per.
+        ls_ztsd0099-zpcnycur = tmp_stdata-zpcnycur.
+        ls_ztsd0099-zpcnyup = tmp_stdata-zpcnyup.
+        ls_ztsd0099-zpcny_per = tmp_stdata-zpcny_per.
+        ls_ztsd0099-zusdcur = tmp_stdata-zusdcur.
+        ls_ztsd0099-zup = tmp_stdata-zup.
+        ls_ztsd0099-zup_per = tmp_stdata-zup_per.
+        ls_ztsd0099-zuptyp = tmp_stdata-zuptyp.
+        ls_ztsd0099-zupformula = tmp_stdata-zupformula.
+        APPEND ls_ztsd0099 TO lt_ztsd0099.
+        IF lt_ztsd0098 IS NOT INITIAL.
+          MODIFY ztsd0098 FROM TABLE lt_ztsd0098.
+          IF sy-subrc = 0.
+            COMMIT WORK.
+          ENDIF.
+        ENDIF.
+        IF lt_ztsd0099 IS NOT INITIAL.
+          MODIFY ztsd0099 FROM TABLE lt_ztsd0099.
+          IF sy-subrc = 0.
+            COMMIT WORK.
+          ENDIF.
+        ENDIF.
+        it_xq0099-zxqno = lv_zxqno.
+      ELSE.
+        it_xq0099-zxqmsg  = 'XQ單號產生失敗'.
+      ENDIF.
+      MODIFY it_xq0099.
+    ENDLOOP.
+
+    CLEAR:lt_ztcx0031.
+    LOOP AT it_xq0099.
+      " 每筆都記一筆 LOG
+      CLEAR:ls_ztcx0031.
+      SPLIT it_xq0099-zrem1 AT '_' INTO ls_ztcx0031-banfn ls_ztcx0031-bnfpo.
+      ls_ztcx0031-zxqno = it_xq0099-zxqno.
+      IF ls_ztcx0031-zxqno <> ''.
+        ls_ztcx0031-zxqseq = 1.
+      ENDIF.
+      ls_ztcx0031-zxqmsg = it_xq0099-zxqmsg.
+      ls_ztcx0031-ernam     = sy-uname.
+      ls_ztcx0031-erdat     = sy-datum.
+      ls_ztcx0031-ertim     = sy-uzeit.
+      APPEND ls_ztcx0031 TO lt_ztcx0031.
+    ENDLOOP.
+    IF lt_ztcx0031 IS NOT INITIAL.
+      MODIFY ztcx0031 FROM TABLE lt_ztcx0031.
+      IF sy-subrc = 0.
+        COMMIT WORK.
+      ENDIF.
+    ENDIF.
+
+    MESSAGE  '處理完成！' TYPE  'S' .
+
+  ELSE.
+    MESSAGE  '沒有符合條件的PIR數據！' TYPE  'S'  DISPLAY LIKE  'E' .  "請選擇數據！
+    LEAVE LIST-PROCESSING.
+  ENDIF.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form FRM_SET_FIELDCAT
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM frm_set_fieldcat.
+  REFRESH gt_fieldcat.
+  PERFORM frm_set_fieldcat_line USING 'WERKS'   '工廠'  ''  '' ''  ''.
+  PERFORM frm_set_fieldcat_line USING 'VTWEG'   '通路'  ''  '' ''  ''.
+  PERFORM frm_set_fieldcat_line USING 'ZBCUST'   '客戶'  ''  '' ''  ''.
+  PERFORM frm_set_fieldcat_line USING 'ZSCUST'   '收貨客戶'  ''  '' ''  ''.
+  PERFORM frm_set_fieldcat_line USING 'ZXQDAT'   '產生日期'  ''  '' ''  ''.
+  PERFORM frm_set_fieldcat_line USING 'ZXQLINE'   '線別'  ''  '' ''  ''.
+  PERFORM frm_set_fieldcat_line USING 'ZXQTYP'   '大分類'  ''  '' ''  ''.
+  PERFORM frm_set_fieldcat_line USING 'ZUNPTYP'   'UNPAY排序'  ''  '' ''  ''.
+  PERFORM frm_set_fieldcat_line USING 'ZCPNO'   '客戶件號'  ''  '' ''  ''.
+  PERFORM frm_set_fieldcat_line USING 'ZCPNOCN'   '對應型號'  ''  '' ''  ''.
+  PERFORM frm_set_fieldcat_line USING 'ZDESC'   '敘述'  ''  '' ''  ''.
+  PERFORM frm_set_fieldcat_line USING 'ZREM1'   '表頭備註1'  ''  '' ''  ''.
+  PERFORM frm_set_fieldcat_line USING 'ZPNO'   '預採件號'  ''  '' ''  ''.
+  PERFORM frm_set_fieldcat_line USING 'ZTUNYN'   '系統轉出'  ''  '' ''  ''.
+  PERFORM frm_set_fieldcat_line USING 'ZXQDTYP'   '預採帳小分類'  ''  '' ''  ''.
+  PERFORM frm_set_fieldcat_line USING 'ZQTY'   '數量'  ''  '' ''  ''.
+  PERFORM frm_set_fieldcat_line USING 'ZUNIT'   '單位用量'  ''  '' ''  ''.
+  PERFORM frm_set_fieldcat_line USING 'ZPCUR'   '採購幣別'  ''  '' ''  ''.
+  PERFORM frm_set_fieldcat_line USING 'ZDISPUP'   '採購單價'  ''  '' ''  ''.
+  PERFORM frm_set_fieldcat_line USING 'ZREM'   '明細備註'  ''  '' ''  ''.
+  PERFORM frm_set_fieldcat_line USING 'ZXQNO'   'XQ單號'  ''  '' ''  ''.
+  PERFORM frm_set_fieldcat_line USING 'ZXQMSG'   '處理訊息'  ''  '' ''  ''.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&FRM_SET_FIELDCAT_LINE
+*&---------------------------------------------------------------------*
+FORM frm_set_fieldcat_line USING pv_name TYPE char100
+                                 pv_title TYPE char100
+                                 pv_table TYPE char30
+                                 pv_field TYPE char30
+                                 pv_zero TYPE char1
+                                 pv_hotspot TYPE char1.
+  CLEAR gs_fieldcat.
+  gs_fieldcat-fieldname = pv_name."數據字段
+  gs_fieldcat-coltext = pv_title.       "字段描述
+  gs_fieldcat-ref_table = pv_table.
+  gs_fieldcat-ref_field = pv_field.
+  gs_fieldcat-no_zero = pv_zero.
+  gs_fieldcat-hotspot = pv_hotspot.
+  APPEND gs_fieldcat TO gt_fieldcat.
+ENDFORM. " frm_set_fieldcat_line
+*&---------------------------------------------------------------------*
+*& Form FRM_SET_LAYOUT
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM frm_set_layout .
+  "ALV界面格式
+  CLEAR gs_layout.
+*  gs_layout-box_fname  = 'CHECK'. "選擇行控制
+  gs_layout-sel_mode = 'A'.       "設置行模式
+  gs_layout-cwidth_opt = 'X'.     "優化列寬設置
+  gs_layout-zebra = 'X'.          "設置斑馬#
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form FRM_DISPLAY_ALV
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM frm_display_alv.
+  "報表展示
+  CALL FUNCTION 'REUSE_ALV_GRID_DISPLAY_LVC'
+    EXPORTING
+      i_callback_program = sy-repid
+*     i_callback_pf_status_set = 'SET_PF_STATUS '
+*     i_callback_user_command  = 'ALV_USER_COMMAND '
+      is_layout_lvc      = gs_layout      "界面格式
+      it_fieldcat_lvc    = gt_fieldcat    "字段屬性
+      i_save             = 'A'
+*   IMPORTING
+*     E_EXIT_CAUSED_BY_CALLER  =
+*     ES_EXIT_CAUSED_BY_USER   =
+    TABLES
+      t_outtab           = it_xq0099
+    EXCEPTIONS
+      program_error      = 1
+      OTHERS             = 2.
+ENDFORM.
+" 根據 VTWEG 取得 ZBCUST
+FORM get_zbcust USING    iv_vtweg TYPE vtweg
+                CHANGING cv_zbcust TYPE ztsd0098-zbcust.
+
+  cv_zbcust = SWITCH #( iv_vtweg
+    WHEN 'T1' THEN '0000008110'
+    WHEN 'C1' THEN '0006100007'
+    WHEN 'B1' THEN '0000007110'
+    WHEN 'G1' THEN '0006100006'
+    WHEN 'Z1' THEN '0006100008'
+    WHEN 'J1' THEN '0000004110'
+    WHEN 'N1' THEN '0000003310'
+    ELSE '' ).
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form checkdata
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM checkdata .
+  DATA: l_cntCust TYPE i.   "V006
+  DATA: l_cnt TYPE i.
+  DATA: l_domaintext TYPE c LENGTH 30.
+  DATA: l_err TYPE c.
+  DATA: l_str TYPE string.
+  DATA: l_dtype LIKE dd01v-datatype.
+  DATA: l_val LIKE cats_its_fields-num_value.
+  g_err = ''.
+  LOOP AT it_xq0099.
+    l_err = ''.
+    IF it_xq0099-vtweg EQ ''.
+      g_err = 'X'.
+      l_err = 'X'.
+      it_xq0099-zxqmsg = '未輸入配銷通路！'.
+      MODIFY it_xq0099.
+      CONTINUE.
+    ENDIF.
+
+    "" IF it_xq0099-vtweg NE 'WL' AND it_xq0099-vtweg NE 'BP'.
+    ""   g_err = 'X'.
+    ""   l_err = 'X'.
+    ""   it_xq0099-zxqmsg = '無此配銷通路！'.
+    ""   MODIFY it_xq0099.
+    ""   CONTINUE.
+    "" ENDIF.
+
+    IF it_xq0099-zbcust EQ ''.
+      g_err = 'X'.
+      l_err = 'X'.
+      it_xq0099-zxqmsg = '未輸客戶別！'.
+      MODIFY it_xq0099.
+      CONTINUE.
+    ENDIF.
+*2023/10/31  V006    CaroL       調整預採帳客戶檢查方式
+*    IF it_xq0099-zbcust NE 'GA01' AND it_xq0099-zbcust NE 'B01' AND
+*      it_xq0099-zbcust NE 'C01' AND it_xq0099-zbcust NE 'J01' AND
+*      it_xq0099-zbcust NE 'N01'   .
+    SELECT COUNT(*) INTO l_cntCust FROM ztsd0088
+    WHERE vtweg EQ it_xq0099-vtweg AND
+         zbcust EQ it_xq0099-zbcust .
+    IF l_cntCust EQ 0.
+      g_err = 'X'.
+      l_err = 'X'.
+      it_xq0099-zxqmsg = '無此客戶別！'.
+      MODIFY it_xq0099.
+      CONTINUE.
+    ENDIF.
+
+*    IF it_xq0099-zcpno EQ ''.
+*      g_err = 'X'.
+*      l_err = 'X'.
+*      it_xq0099-zxqmsg = '未輸入客戶件號！'.
+*      MODIFY it_xq0099.
+*      CONTINUE.
+*    ENDIF.
+
+    IF it_xq0099-zcpnocn EQ ''.
+      g_err = 'X'.
+      l_err = 'X'.
+      it_xq0099-zxqmsg = '未輸入對應型號！'.
+      MODIFY it_xq0099.
+      CONTINUE.
+    ENDIF.
+
+    IF it_xq0099-zxqdat EQ '' OR it_xq0099-zxqdat EQ '00000000'.
+      g_err = 'X'.
+      l_err = 'X'.
+      it_xq0099-zxqmsg = '未輸入產生日期！'.
+      MODIFY it_xq0099.
+      CONTINUE.
+    ENDIF.
+
+    CALL FUNCTION 'DATE_CHECK_PLAUSIBILITY'
+      EXPORTING
+        date                      = it_xq0099-zxqdat
+      EXCEPTIONS
+        plausibility_check_failed = 1
+        OTHERS                    = 2.
+    IF sy-subrc NE 0.
+      g_err = 'X'.
+      l_err = 'X'.
+      it_xq0099-zxqmsg = '日期錯誤！'.
+      MODIFY it_xq0099.
+      CONTINUE.
+    ELSE.
+
+      SELECT COUNT(*) INTO l_cnt FROM ztsd0088
+      WHERE vtweg  EQ it_xq0099-vtweg AND
+            zbcust EQ it_xq0099-zbcust AND
+      zsdat LE it_xq0099-zxqdat AND
+      zedat GE it_xq0099-zxqdat.
+      IF l_cnt EQ 0.
+        g_err = 'X'.
+        l_err = 'X'.
+        it_xq0099-zxqmsg = '日期不存在預採帳區間！'.
+        MODIFY it_xq0099.
+        CONTINUE.
+      ENDIF.
+    ENDIF.
+
+    IF it_xq0099-zxqline EQ ''.
+      g_err = 'X'.
+      l_err = 'X'.
+      it_xq0099-zxqmsg = '未輸入線別！'.
+      MODIFY it_xq0099.
+      CONTINUE.
+    ENDIF.
+
+    PERFORM get_domain_value USING 'ZMOQLINE' it_xq0099-zxqline
+              CHANGING l_domaintext.
+    IF l_domaintext EQ 'UNKNOW'.
+      g_err = 'X'.
+      l_err = 'X'.
+      it_xq0099-zxqmsg = '無此線別！'.
+      MODIFY it_xq0099.
+      CONTINUE.
+    ENDIF.
+
+
+    IF it_xq0099-zxqtyp EQ ''.
+      g_err = 'X'.
+      l_err = 'X'.
+      it_xq0099-zxqmsg = '未輸入大分類！'.
+      MODIFY it_xq0099.
+      CONTINUE.
+    ENDIF.
+
+    SELECT COUNT(*) INTO l_cnt FROM ztsd0112
+    WHERE vtweg EQ it_xq0099-vtweg AND
+    zxqtyp EQ it_xq0099-zxqtyp.
+    IF l_cnt EQ 0.
+      g_err = 'X'.
+      l_err = 'X'.
+      it_xq0099-zxqmsg = '無此大分類！'.
+      MODIFY it_xq0099.
+      CONTINUE.
+    ENDIF.
+
+    IF it_xq0099-zunptyp EQ ''.
+      g_err = 'X'.
+      l_err = 'X'.
+      it_xq0099-zxqmsg = '未輸入UNPAY排序！'.
+      MODIFY it_xq0099.
+      CONTINUE.
+    ENDIF.
+
+    SELECT COUNT(*) INTO l_cnt FROM ztsd0113
+    WHERE vtweg EQ it_xq0099-vtweg AND
+    zunptyp EQ it_xq0099-zunptyp.
+    IF l_cnt EQ 0.
+      g_err = 'X'.
+      l_err = 'X'.
+      it_xq0099-zxqmsg = '無此UNPAY排序！'.
+      MODIFY it_xq0099.
+      CONTINUE.
+    ENDIF.
+
+    IF it_xq0099-zpno EQ ''.
+      g_err = 'X'.
+      l_err = 'X'.
+      it_xq0099-zxqmsg = '未輸入料號！'.
+      MODIFY it_xq0099.
+      CONTINUE.
+    ENDIF.
+
+    "" SELECT COUNT(*) INTO l_cnt FROM ztsd0130
+    "" WHERE zauthorg EQ it_xq0099-zauthorg AND zpno EQ it_xq0099-zpno.
+    "" IF l_cnt EQ 0.
+    ""   g_err = 'X'.
+    ""   l_err = 'X'.
+    ""   it_xq0099-zxqmsg = '無此料號！'.
+    ""   MODIFY it_xq0099.
+    ""   CONTINUE.
+    "" ENDIF.
+
+    SELECT COUNT(*) INTO l_cnt FROM ztmara
+    WHERE matnr EQ it_xq0099-zpno.
+    IF l_cnt EQ 0.
+      g_err = 'X'.
+      l_err = 'X'.
+      it_xq0099-zxqmsg = '無此料號！'.
+      MODIFY it_xq0099.
+      CONTINUE.
+    ENDIF.
+
+    IF it_xq0099-zspno NE ''.
+      "" SELECT COUNT(*) INTO l_cnt FROM ztsd0130
+      "" WHERE zauthorg EQ it_xq0099-zauthorg AND zpno EQ it_xq0099-zspno.
+      SELECT COUNT(*) INTO l_cnt FROM ztmara
+    WHERE matnr EQ it_xq0099-zspno.
+      IF l_cnt EQ 0.
+        g_err = 'X'.
+        l_err = 'X'.
+        it_xq0099-zxqmsg = '無此視同料號！'.
+        MODIFY it_xq0099.
+        CONTINUE.
+      ENDIF.
+    ENDIF.
+
+    IF it_xq0099-zxqdtyp EQ ''.
+      g_err = 'X'.
+      l_err = 'X'.
+      it_xq0099-zxqmsg = '未輸入預採帳小分類！'.
+      MODIFY it_xq0099.
+      CONTINUE.
+    ENDIF.
+
+    SELECT COUNT(*) INTO l_cnt FROM ztsd0111
+    WHERE zxqdtyp EQ it_xq0099-zxqdtyp.
+    " AND ZENTITY EQ IT_XQ0099-ZAUTHORG.
+    IF l_cnt EQ 0.
+      g_err = 'X'.
+      l_err = 'X'.
+      it_xq0099-zxqmsg = '無此預採帳小分類！'.
+      MODIFY it_xq0099.
+      CONTINUE.
+    ENDIF.
+
+    IF it_xq0099-zqty EQ '' OR it_xq0099-zqty IS INITIAL.
+      g_err = 'X'.
+      l_err = 'X'.
+      it_xq0099-zxqmsg = '未輸入數量！'.
+      MODIFY it_xq0099.
+      CONTINUE.
+    ENDIF.
+
+    CALL FUNCTION 'CATS_ITS_MAKE_STRING_NUMERICAL'
+      EXPORTING
+        input_string  = it_xq0099-zqty
+      IMPORTING
+        value         = l_val
+      EXCEPTIONS
+        not_numerical = 1
+        OTHERS        = 2.
+
+    IF sy-subrc <> 0.
+      g_err = 'X'.
+      l_err = 'X'.
+      it_xq0099-zxqmsg = '數量需為數字格式！'.
+      MODIFY it_xq0099.
+      CONTINUE.
+    ENDIF.
+
+    IF it_xq0099-zunit EQ '' OR it_xq0099-zunit IS INITIAL.
+      g_err = 'X'.
+      l_err = 'X'.
+      it_xq0099-zxqmsg = '未輸入單位用量！'.
+      MODIFY it_xq0099.
+      CONTINUE.
+    ENDIF.
+
+    CALL FUNCTION 'CATS_ITS_MAKE_STRING_NUMERICAL'
+      EXPORTING
+        input_string  = it_xq0099-zunit
+      IMPORTING
+        value         = l_val
+      EXCEPTIONS
+        not_numerical = 1
+        OTHERS        = 2.
+
+    IF sy-subrc <> 0.
+      g_err = 'X'.
+      l_err = 'X'.
+      it_xq0099-zxqmsg = '單位用量需為數字格式！'.
+      MODIFY it_xq0099.
+      CONTINUE.
+    ENDIF.
+    IF it_xq0099-zdispup NE '' AND it_xq0099-zdispup IS NOT INITIAL.
+
+      CALL FUNCTION 'CATS_ITS_MAKE_STRING_NUMERICAL'
+        EXPORTING
+          input_string  = it_xq0099-zdispup
+        IMPORTING
+          value         = l_val
+        EXCEPTIONS
+          not_numerical = 1
+          OTHERS        = 2.
+
+      IF sy-subrc <> 0.
+        g_err = 'X'.
+        l_err = 'X'.
+        it_xq0099-zxqmsg = '採購單價需為數字格式！'.
+        MODIFY it_xq0099.
+        CONTINUE.
+      ENDIF.
+
+      IF it_xq0099-zpcur EQ '' .
+        g_err = 'X'.
+        l_err = 'X'.
+        it_xq0099-zxqmsg = '未輸入採購幣別！'.
+        MODIFY it_xq0099.
+        CONTINUE.
+      ENDIF.
+
+      IF it_xq0099-zpcur NE 'TWD' AND it_xq0099-zpcur NE 'CNY' AND
+        it_xq0099-zpcur NE 'USD' AND it_xq0099-zpcur NE 'HKD' AND
+        it_xq0099-zpcur NE 'EUR'.
+        g_err = 'X'.
+        l_err = 'X'.
+        it_xq0099-zxqmsg = '無此預採帳採購幣別 ( 僅可輸入 TWD / CNY / USD / HKD / EUR )！'.
+        MODIFY it_xq0099.
+        CONTINUE.
+      ENDIF.
+
+      PERFORM convert_price USING it_xq0099-zpcur
+                                  it_xq0099-zdispup  "原採購單價
+                         CHANGING it_xq0099-zpup
+                                  it_xq0099-zpup_per.
+
+      MODIFY it_xq0099.
+    ENDIF.
+
+  ENDLOOP.
+
+ENDFORM.
+FORM convert_price  USING    p_waers
+                             p_pup
+                    CHANGING p_zpup
+                             p_zpup_per.
+*  DATA: L_CURRDEC TYPE CURRDEC. "小數位數
+*  IF P_WAERS <> ''.
+*    SELECT SINGLE CURRDEC FROM TCURX INTO L_CURRDEC
+*                  WHERE CURRKEY = P_WAERS.
+*    IF SY-SUBRC <> 0.
+*      L_CURRDEC = 2.
+*    ENDIF.
+*  ENDIF.
+*  IF P_PUP = 0.
+*    L_CURRDEC = 6.
+*  ENDIF.
+*  CASE L_CURRDEC.
+*    WHEN 0.
+*      P_ZPUP_PER = 1000000.
+*    WHEN 1.
+*      P_ZPUP_PER = 100000.
+*    WHEN 2.
+*      P_ZPUP_PER = 10000.
+*    WHEN 3.
+*      P_ZPUP_PER = 1000.
+*    WHEN 4.
+*      P_ZPUP_PER = 100.
+*    WHEN 5.
+*      P_ZPUP_PER = 10.
+*    WHEN 6.
+*      P_ZPUP_PER = 1.
+*  ENDCASE.
+*  IF P_PUP <> 0.
+*    P_ZPUP = P_PUP * P_ZPUP_PER.
+*  ENDIF.
+*判斷小數點位數
+  DATA: l_p TYPE p DECIMALS 9,
+        l_i TYPE i.
+  DATA: l_v TYPE p DECIMALS 9. "20210628 yinglung V002
+  l_v = p_pup. "20210628 yinglung V002
+  l_p = frac( p_pup ).
+  CLEAR l_i.
+  DO 10 TIMES.
+    IF l_p > 1 OR l_p = 0.
+      EXIT.
+    ENDIF.
+    l_i = l_i + 1.
+    l_p = l_p * 10.
+    l_p = frac( l_p ).
+  ENDDO.
+  p_zpup_per = 10 ** l_i.
+
+  "20210628 yinglung V002 begin
+*  CHECK p_pup NE 0.
+*  IF p_pup <> 0.
+*    p_zpup = p_pup * p_zpup_per.
+*  ENDIF.
+  CHECK l_v NE 0.
+  IF l_v <> 0.
+    p_zpup = l_v * p_zpup_per.
+  ENDIF.
+  "20210628 yinglung V002 end
+
+*將外部傳入金額轉成內部值
+  DATA l_factor TYPE isoc_factor.
+  CALL FUNCTION 'CURRENCY_CONVERTING_FACTOR'
+    EXPORTING
+      currency          = p_waers
+    IMPORTING
+      factor            = l_factor
+    EXCEPTIONS
+      too_many_decimals = 1
+      OTHERS            = 2.
+  IF sy-subrc <> 0.
+    l_factor = 1.
+  ENDIF.
+**如果是1,代表金額可到小數下兩位
+  IF l_factor = 1.
+    IF p_zpup_per < 100.
+      IF l_factor NE 0.  "V006
+        p_zpup = p_zpup / l_factor.
+      ENDIF.
+    ELSE.
+      p_zpup_per = p_zpup_per / 100.
+      IF l_factor NE 0.  "V006
+        p_zpup = ( p_zpup / l_factor ) / 100.
+      ENDIF.
+    ENDIF.
+  ELSE.
+    IF l_factor NE 0.  "V006
+      p_zpup = p_zpup / l_factor.
+    ENDIF.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_DOMAIN_VALUE
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_<ITAB>_WBSTK  text
+*      <--P_<ITAB>_WBSTK_TEXT  text
+*----------------------------------------------------------------------*
+FORM get_domain_value  USING    p_domain p_value
+                       CHANGING p_text.
+  DATA: i_domname  LIKE  dd07v-domname,
+        i_domvalue LIKE  dd07v-domvalue_l,
+        e_ddtext   LIKE  dd07v-ddtext.
+
+  i_domname  = p_domain.
+  i_domvalue = p_value.
+  CLEAR e_ddtext.
+  CALL FUNCTION 'DOMAIN_VALUE_GET'
+    EXPORTING
+      i_domname  = i_domname
+      i_domvalue = i_domvalue
+    IMPORTING
+      e_ddtext   = e_ddtext
+    EXCEPTIONS
+      not_exist  = 1
+      OTHERS     = 2.
+  IF sy-subrc <> 0.
+    e_ddtext = 'UNKNOW'.
+  ENDIF.
+  p_text = e_ddtext.
+ENDFORM.
+**&---------------------------------------------------------------------*
+**& Form createxq
+**&---------------------------------------------------------------------*
+**& text
+**&---------------------------------------------------------------------*
+**& -->  p1        text
+**& <--  p2        text
+**&---------------------------------------------------------------------*
+*FORM createxq .
+*  DATA: l_pup TYPE c LENGTH 15.
+*  DATA: l_pup_per TYPE c LENGTH 7.
+*  LOOP AT it_xq0098.
+*    PERFORM bdc_dynpro      USING 'ZTWBSD0017' '6000'.
+*    PERFORM bdc_field       USING 'BDC_OKCODE'
+*                                  '/00'.
+*    PERFORM bdc_field       USING 'STSD98-VTWEG'
+*                                  it_xq0098-vtweg.
+*    PERFORM bdc_field       USING 'STSD98-WERKS'
+*                                  it_xq0098-werks.
+*    PERFORM bdc_field       USING 'STSD98-ZBCUST'
+*                                  it_xq0098-zbcust.
+*    PERFORM bdc_field       USING 'STSD98-ZXQDAT'
+*                                  it_xq0098-zxqdat.
+*    PERFORM bdc_field       USING 'STSD98-ZSCUST'
+*                                  it_xq0098-zscust.
+*    PERFORM bdc_dynpro      USING 'ZTWBSD0017' '6000'.
+*    PERFORM bdc_field       USING 'BDC_OKCODE'
+*                                  '/00'.
+*    PERFORM bdc_dynpro      USING 'ZTWBSD0017' '6000'.
+*    PERFORM bdc_field       USING 'BDC_OKCODE'
+*                                  '=CCTABS_FC2'.
+*    PERFORM bdc_dynpro      USING 'ZTWBSD0017' '6000'.
+*    PERFORM bdc_field       USING 'BDC_OKCODE'
+*                                  '/00'.
+*    PERFORM bdc_field       USING 'BDC_CURSOR'
+*                                  'STSD98-ZXQLINE'.
+*    PERFORM bdc_field       USING 'STSD98-ZXQLINE'
+*                                  it_xq0098-zxqline.
+*    PERFORM bdc_field       USING 'STSD98-ZCPNO'
+*                                  it_xq0098-zcpno.
+*    PERFORM bdc_field       USING 'STSD98-ZCPNOCN'
+*                                  it_xq0098-zcpnocn.
+*    PERFORM bdc_field       USING 'STSD98-ZXQTYP'
+*                                  it_xq0098-zxqtyp.
+*    PERFORM bdc_field       USING 'STSD98-ZUNPTYP'
+*                                  it_xq0098-zunptyp.
+*    PERFORM bdc_field       USING 'STSD98-ZDESC'
+*                                  it_xq0098-zdesc.
+*    PERFORM bdc_dynpro      USING 'ZTWBSD0017' '6000'.
+*    PERFORM bdc_field       USING 'BDC_OKCODE'
+*                                  '=CCTABS_FC3'.
+*    PERFORM bdc_dynpro      USING 'ZTWBSD0017' '6000'.
+*    PERFORM bdc_field       USING 'BDC_OKCODE'
+*                                  '/00'.
+*    PERFORM bdc_field       USING 'BDC_CURSOR'
+*                                  'STSD98-ZREM1'.
+*    PERFORM bdc_field       USING 'STSD98-ZREM1'
+*                                  it_xq0098-zrem1.
+*    PERFORM bdc_dynpro      USING 'ZTWBSD0017' '6000'.
+*    PERFORM bdc_field       USING 'BDC_OKCODE'
+*                                  '=CCTABS_FC1'.
+*    LOOP AT it_xq0099 WHERE vtweg EQ it_xq0098-vtweg AND
+*        zbcust EQ it_xq0098-zbcust AND
+*        zscust EQ it_xq0098-zscust AND
+*        zxqdat EQ it_xq0098-zxqdat AND
+*        zxqline EQ it_xq0098-zxqline AND
+*        zxqtyp EQ it_xq0098-zxqtyp AND
+*        zunptyp EQ it_xq0098-zunptyp AND
+*        zcpno EQ it_xq0098-zcpno AND
+*        zcpnocn EQ it_xq0098-zcpnocn AND
+*        zdesc EQ it_xq0098-zdesc AND
+*        zrem1 EQ it_xq0098-zrem1  .
+*
+*      PERFORM bdc_dynpro      USING 'ZTWBSD0017' '6000'.
+*      PERFORM bdc_field       USING 'BDC_OKCODE'
+*                                    '=INST'.
+*      PERFORM bdc_dynpro      USING 'ZTWBSD0017' '6200'.
+*      PERFORM bdc_field       USING 'BDC_CURSOR'
+*                                    'STDATA-ZPNO'.
+*      PERFORM bdc_field       USING 'BDC_OKCODE'
+*                                     '/00'.
+*      PERFORM bdc_field       USING 'STDATA-ZPNO'
+*                                    it_xq0099-zpno.
+*      PERFORM bdc_dynpro      USING 'ZTWBSD0017' '6200'.
+*      PERFORM bdc_field       USING 'BDC_CURSOR'
+*                                    'STDATA-ZXQDTYP'.
+*      PERFORM bdc_field       USING 'BDC_OKCODE'
+*                                     '/00'.
+*      PERFORM bdc_field       USING 'STDATA-ZXQDTYP'
+*                                    it_xq0099-zxqdtyp.
+*      PERFORM bdc_field       USING 'STDATA-ZSPNO'
+*                                    it_xq0099-zspno.
+*      PERFORM bdc_dynpro      USING 'ZTWBSD0017' '6200'.
+*      PERFORM bdc_field       USING 'BDC_CURSOR'
+*                                    'STDATA-ZUNIT'.
+*      PERFORM bdc_field       USING 'BDC_OKCODE'
+*                                    '/00'.
+*      PERFORM bdc_dynpro      USING 'ZTWBSD0017' '6200'.
+*      PERFORM bdc_field       USING 'BDC_CURSOR'
+*                                    'STDATA-ZQTY'.
+*      PERFORM bdc_field       USING 'BDC_OKCODE'
+*                                    '/00'.
+*      PERFORM bdc_field       USING 'STDATA-ZQTY'
+*                                    it_xq0099-zqty.
+*      PERFORM bdc_dynpro      USING 'ZTWBSD0017' '6200'.
+*      PERFORM bdc_field       USING 'STDATA-ZBQTY'
+*                                    it_xq0099-zunit.
+*      PERFORM bdc_field       USING 'BDC_CURSOR'
+*                                    'STDATA-ZBQTY'.
+*      PERFORM bdc_field       USING 'STDATA-ZPCUR'
+*                                    it_xq0099-zpcur.
+*      l_pup = it_xq0099-zpup.
+*      l_pup_per = it_xq0099-zpup_per.
+*      PERFORM bdc_field       USING 'STDATA-ZPUP'
+*                                    l_pup.
+*      PERFORM bdc_field       USING 'STDATA-ZPUP_PER'
+*                                    l_pup_per.
+*      PERFORM bdc_field       USING 'BDC_OKCODE'
+*                                    '/00'.
+*      PERFORM bdc_field       USING 'STDATA-ZTUNYN'
+*                                    it_xq0099-ztunyn.
+*      PERFORM bdc_field       USING 'STDATA-ZREM'
+*                                    it_xq0099-zrem.
+*
+*      PERFORM bdc_dynpro      USING 'ZTWBSD0017' '6200'.
+*      PERFORM bdc_field       USING 'BDC_CURSOR'
+*                                    'STDATA-ZPNO'.
+*      PERFORM bdc_field       USING 'BDC_OKCODE'
+*                                    '=BACK62'.
+*    ENDLOOP.
+*    PERFORM bdc_dynpro      USING 'ZTWBSD0017' '6000'.
+*    PERFORM bdc_field       USING 'BDC_OKCODE'
+*                                  '=SAVE'.
+*    PERFORM bdc_transaction USING 'ZXQ01' .
+*
+*    REFRESH: e_message. CLEAR: e_message.
+*    READ TABLE messtab WITH KEY msgtyp = 'E'.
+*    IF sy-subrc = 0.
+*      ROLLBACK WORK.
+*      LOOP AT messtab WHERE msgtyp = 'E'.
+*        it_xq0098-zmsg = messtab-msgv1.
+*        IF it_xq0098-zmsg = ''.
+*          it_xq0098-zmsg = 'XQ單產生失敗！'.
+*        ENDIF.
+*        MODIFY it_xq0098.
+*      ENDLOOP.
+*    ELSE.
+*
+*      LOOP AT messtab WHERE msgtyp = 'I'.
+*        it_xq0098-zxqno = messtab-msgv3.
+*        MODIFY it_xq0098.
+*      ENDLOOP.
+*    ENDIF.
+*
+*  ENDLOOP.
+*
+*  LOOP AT it_xq0098.
+*    LOOP AT it_xq0099 WHERE
+*                      werks   EQ it_xq0098-werks   AND
+*                      vtweg   EQ it_xq0098-vtweg   AND
+*                      zbcust  EQ it_xq0098-zbcust  AND
+*                      zscust  EQ it_xq0098-zscust  AND
+*                      zxqdat  EQ it_xq0098-zxqdat  AND
+*                      zxqline EQ it_xq0098-zxqline AND
+*                      zxqtyp  EQ it_xq0098-zxqtyp  AND
+*                      zunptyp EQ it_xq0098-zunptyp AND
+*                      zcpno   EQ it_xq0098-zcpno   AND
+*                      zcpnocn EQ it_xq0098-zcpnocn AND
+*                      zdesc   EQ it_xq0098-zdesc   AND
+*                      zrem1   EQ it_xq0098-zrem1 .
+*      it_xq0099-zxqno = it_xq0098-zxqno.
+*      it_xq0099-zxqmsg  = it_xq0098-zmsg.
+*      MODIFY it_xq0099.
+*    ENDLOOP.
+*  ENDLOOP.
+*ENDFORM.
+*
+*FORM bdc_dynpro USING program dynpro.
+*  CLEAR bdcdata.
+*  bdcdata-program  = program.
+*  bdcdata-dynpro   = dynpro.
+*  bdcdata-dynbegin = 'X'.
+*  APPEND bdcdata.
+*ENDFORM.
+*
+*FORM bdc_field USING fnam fval.
+**  IF FVAL <> NODATA.
+*  CLEAR bdcdata.
+*  bdcdata-fnam = fnam.
+*  bdcdata-fval = fval.
+*  APPEND bdcdata.
+**  ENDIF.
+*ENDFORM.
+*FORM bdc_transaction USING tcode .
+*  DATA: ctu_parameters TYPE ctu_params.
+*  ctu_parameters-dismode = 'N'.
+*  ctu_parameters-updmode = 'L'.
+*  ctu_parameters-racommit = 'X'. "No abortion by COMMIT WORK
+** call transaction using
+**測試可開此組設定
+**  CTU_PARAMETERS-DISMODE = 'A'.
+**  CTU_PARAMETERS-UPDMODE = 'L'.
+**  CTU_PARAMETERS-RACOMMIT = ''. "No abortion by COMMIT WORK
+*
+*  REFRESH messtab.
+*  CLEAR: messtab.
+*  CALL TRANSACTION tcode USING bdcdata
+*                   OPTIONS FROM ctu_parameters
+*                   MESSAGES INTO messtab.
+*
+*  REFRESH bdcdata.
+*ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form frm_get_model_unit
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      --> GT_MAT
+*&      --> GT_MAT_OUT
+*&---------------------------------------------------------------------*
+FORM frm_get_model_unit  TABLES gt_mat STRUCTURE zscx0030a
+                                  gt_mat_out STRUCTURE zscx0030b.
+  DATA:lr_idnrk TYPE RANGE OF ztcx0004-idnrk.
+  LOOP AT gt_mat  INTO DATA(ls_mat).
+    lr_idnrk = VALUE #( sign = 'I' option = 'EQ' ( low = ls_mat-idnrk ) ).
+
+    cl_salv_bs_runtime_info=>set( display  = abap_false
+                                  metadata = abap_false
+                                  data     = abap_true ).
+
+    SUBMIT rcs15001m WITH s_idnrk IN lr_idnrk
+                     WITH pm_werks = ls_mat-werks
+                     WITH pm_rmeng = 1000
+                     WITH pm_mehrs = 'X' "Multilevel
+      AND RETURN .
+
+    TRY.
+        cl_salv_bs_runtime_info=>get_data_ref( IMPORTING r_data = DATA(lobj_data) ).
+        ASSIGN lobj_data->* TO FIELD-SYMBOL(<lfs_data>).
+      CATCH cx_salv_bs_sc_runtime_info.
+    ENDTRY.
+
+    IF <lfs_data> IS ASSIGNED.
+      DATA: lt_stpov_alv TYPE TABLE OF stpov_alv.
+      lt_stpov_alv = CORRESPONDING #( <lfs_data> ).
+      LOOP AT lt_stpov_alv INTO DATA(ls_stpov) WHERE crtfg = 'X'."最上層
+        SELECT SINGLE mara~matnr,mara~ersda,ztmara~skuitem,ztmara~wl2_brand
+          FROM mara LEFT OUTER JOIN ztmara ON mara~matnr = ztmara~matnr
+        WHERE mara~matnr = @ls_stpov-dobjt
+          AND mara~mtart = 'ZFRT'
+          AND ( mstae = 'A' OR mstae = 'E' )
+        INTO @DATA(ls_mara).
+        IF sy-subrc = 0.
+          CLEAR:gs_mat_out.
+          gs_mat_out-werks = ls_mat-werks.
+          gs_mat_out-idnrk = ls_mat-idnrk.
+          gs_mat_out-matnr = ls_mara-matnr.
+          gs_mat_out-ersda = ls_mara-ersda.
+          gs_mat_out-skuitem = ls_mara-skuitem.
+          REPLACE ALL OCCURRENCES OF ',' IN ls_stpov-dimng WITH ''.
+          gs_mat_out-dimng = ls_stpov-dimng.
+          REPLACE ALL OCCURRENCES OF ',' IN ls_stpov-drmng WITH ''.
+          gs_mat_out-drmng = ls_stpov-drmng.
+          APPEND gs_mat_out TO gt_mat_out.
+        ENDIF.
+      ENDLOOP.
+    ENDIF.
+    cl_salv_bs_runtime_info=>clear_all( ).
+    CLEAR:ls_mat.
+  ENDLOOP.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form new_item
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM new_item .
+  DATA: stinst      LIKE stdata,
+        lcfield(30),
+        lcwaers     TYPE waers,
+        lixqseq     LIKE stdata-zxqseq.
+  CLEAR stdata.
+  MOVE-CORRESPONDING ls_ztsd0098 TO stdata.
+  stdata-zpno = ls_ztsd0099-zpno.
+  stdata-zdesc = ls_ztsd0099-zdesc.
+  CLEAR: stsd89.
+  SELECT SINGLE * INTO stsd89 FROM ztsd0089 WHERE vtweg = ls_ztsd0098-vtweg AND zprdate = ls_ztsd0098-zym.
+  IF sy-subrc <> 0.
+    SELECT * INTO stsd89 FROM ztsd0089 WHERE vtweg = ls_ztsd0098-vtweg ORDER BY zprdate DESCENDING.
+      EXIT.
+    ENDSELECT.
+  ENDIF.
+  DATA struct_descr TYPE REF TO cl_abap_structdescr.
+
+  TRY.
+      struct_descr ?= cl_abap_typedescr=>describe_by_data( stsd89 ).
+    CATCH cx_sy_move_cast_error.
+      RETURN.
+  ENDTRY.
+
+  LOOP AT struct_descr->components ASSIGNING FIELD-SYMBOL(<comp_descr>) WHERE type_kind = 'P'.
+    lcfield = 'STSD89-' && <comp_descr>-name.
+    ASSIGN (lcfield) TO FIELD-SYMBOL(<nent>).
+    IF <nent> = 1.
+      CASE <comp_descr>-name.
+        WHEN 'Z_NTRATE'. lcwaers = 'TWD'.
+        WHEN 'Z_RMBRATE'. lcwaers = 'CNY'.
+        WHEN 'Z_HKRATE'. lcwaers = 'HKD'.
+        WHEN 'Z_USRATE'. lcwaers = 'USD'.
+        WHEN 'Z_EURRATE'. lcwaers = 'EUR'.
+      ENDCASE.
+    ENDIF.
+  ENDLOOP.
+  stdata-zxqseq = ls_ztsd0099-zxqseq .
+  stdata-zdat = ls_ztsd0099-zdat.
+  stdata-zxqwrktyp = '1'.
+  stdata-zpcnycur = 'CNY'.
+  stdata-zusdcur = 'USD'.
+  stdata-zptwdcur = 'TWD'.
+  stdata-zbasecur = lcwaers.
+
+  stdata-zptwd_per = '1'.
+  stdata-zpcny_per = '1'.
+  stdata-zbaseup_per = '1'.
+  stdata-zwrkup_per = '1'.
+  stdata-zup_per = '1'.
+  stdata-zxqclass = '2'.
+
+  stdata-zpcur = ls_ztsd0099-zpcur.
+  stdata-zpup = ls_ztsd0099-zpup.
+  stdata-zpup_per = ls_ztsd0099-zpup_per.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_zbaseup
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_zbaseup .
+  DATA:      gcprifd(30).
+  FIELD-SYMBOLS: <rate> TYPE any.
+  DATA:gcwaers TYPE waers,
+       gcfortp TYPE zformulatype,
+       stupup  TYPE ttdata,
+       sts107  TYPE ztsd0107.
+  "20200629 yinglung V003 begin
+  DATA: l_twdup  TYPE zptwdup,
+        l_twdper TYPE zptwd_per.
+  "20200629 yinglung V003 end
+
+*  IF stdata-zpno IS NOT INITIAL.
+*    "" "" SELECT SINGLE zpno zpno_cn zuq zpnocode zpno_edesc zpno_desc
+*    "" ""   INTO (stdata-zpno,gcpnocn,stdata-zuq,stdata-zpnocode,gcedesc,gczdesc)
+*    "" ""   FROM ztsd0130 WHERE zauthorg = stsd98-zauthorg AND zpno = stdata-zpno.
+*
+*    SELECT SINGLE matnr wl2_thenameoftheerp wl2_englishspecifications wl2_erpspecification
+*      INTO (stdata-zpno,gcpnocn,gcedesc,gczdesc)
+*      FROM ztmara WHERE matnr =  stdata-zpno.
+*
+*    SELECT  meinh INTO stdata-zuq FROM marm UP TO 1 ROWS
+*      WHERE matnr =  stdata-zpno
+*       ORDER BY PRIMARY KEY.
+*    ENDSELECT.
+*
+*    IF sy-subrc <> 0.
+*      MESSAGE e000 WITH TEXT-011.  "'輸入預採件號不存在'.
+*    ELSE.
+**      IF stdata-zdesc IS INITIAL.
+*      SELECT SINGLE zdesc INTO stdata-zdesc FROM ztsd0093
+*       WHERE vtweg = stsd98-vtweg AND zbcust = stsd98-zbcust AND zpno = stdata-zpno.
+*      IF sy-subrc <> 0.
+**        stdata-zdesc = gcpnocn.
+*        stdata-zdesc = gcedesc && ` ` && gczdesc.
+*      ENDIF.
+**      ENDIF.
+*    ENDIF.
+*  ELSE.
+*    MESSAGE e000 WITH TEXT-012.  "'輸入預採件號不可為空'.
+*  ENDIF.
+
+  IF stdata-zpup_per <> 0.
+* 2021/04/13 V008 kiwi mark begin
+*    gffactr = 0.
+*    curr_factor_get stdata-zpcur '' gffactr.
+*    gfpurtr = gffactr.
+*    IF gffactr = 0.
+*      gffactr = 1.
+*    ENDIF.
+
+**20200903 yinglung V004 begin
+*    PERFORM CONVERT_PRICE USING stdata-zpcur stdata-zpup
+*                            CHANGING l_TWDUP
+*                                     l_TWDPER.
+*    stdata-zpup     = stdata-zpup * l_TWDPER.
+*    IF l_TWDPER NE 1. "20200909 yinglung V006
+*      stdata-zpup_per = l_TWDPER.
+*    ENDIF.
+**20200903 yinglung V004 end
+* 2021/04/13 V008 kiwi mark End
+
+*20200904 yinglung V005 begin
+    stdata-zpup_dis = stdata-zpup.
+    IF stdata-zpup_per NE 0.
+      stdata-zpup_dis = stdata-zpup / stdata-zpup_per.
+    ENDIF.
+    stdata-zpup_amt = stdata-zqty * stdata-zpup_dis.
+    "stdata-zpup_dis = stdata-zpup / stdata-zpup_per.
+    "stdata-zpup_amt = stdata-zqty * stdata-zpup / ( stdata-zpup_per * gffactr ).
+*20200904 yinglung V005 end
+
+
+*   2021/04/13 V008 Kiwi Begin
+    DATA : l_zpup TYPE bapicurr-bapicurr,
+           l_amt  TYPE bapicurr-bapicurr.
+    l_amt = stdata-zpup_amt.
+    CALL FUNCTION 'BAPI_CURRENCY_CONV_TO_INTERNAL'
+      EXPORTING
+        currency             = stdata-zpcur
+        amount_external      = l_amt
+        max_number_of_digits = 10
+      IMPORTING
+        amount_internal      = l_zpup.
+    stdata-zpup_amt = l_zpup.
+*   2021/04/13 V008 Kiwi End
+
+  ELSE.
+    stdata-zpup_dis = 0.
+  ENDIF.
+  CASE stdata-zpcur.
+    WHEN 'TWD'. gcprifd = 'STSD89-Z_NTRATE'.
+    WHEN 'CNY'. gcprifd = 'STSD89-Z_RMBRATE'.
+    WHEN 'HKD'. gcprifd = 'STSD89-Z_HKRATE'.
+    WHEN 'USD'. gcprifd = 'STSD89-Z_USRATE'.
+    WHEN 'EUR'. gcprifd = 'STSD89-Z_EURRATE'.
+  ENDCASE.
+  ASSIGN (gcprifd) TO <rate>.
+  IF sy-subrc = 0 AND <rate> <> 0.
+*    IF stdata-zbasecur = ''.
+*      stdata-zbasecur = gcwaers.
+*    ENDIF.
+* 2021/04/13 V008 kiwi mark begin
+*    gffactr = 0.
+*    curr_factor_get stdata-zbasecur '' gffactr.
+*    IF gffactr = 0.
+*      gffactr = 1.
+*    ENDIF.
+* 2021/04/13 V008 kiwi mark End
+    stdata-zbaseup = stdata-zpup * <rate>.
+    stdata-zbaseup_per = stdata-zpup_per.
+    "20200904 yinglung V005 begin
+    stdata-zbaseup_dis = stdata-zbaseup.
+    IF stdata-zbaseup_per NE 0.
+      stdata-zbaseup_dis = stdata-zbaseup / stdata-zbaseup_per.
+    ENDIF.
+    "20200904 yinglung V005 END
+
+    "20200903 yinglung V004 begin
+    "stdata-zbaseup_amt = ( stdata-zqty * stdata-zbaseup * gffactr ) / stdata-zbaseup_per.
+    stdata-zbaseup_amt = stdata-zqty * stdata-zbaseup_dis.
+    "20200903 yinglung V004 end
+
+    IF stdata-zpcur <> 'CNY'.
+      stdata-zpcnyup = stdata-zbaseup / stsd89-z_rmbrate.
+      stdata-zpcny_per = stdata-zpup_per.
+      stdata-zpcnyup_dis = stdata-zpcnyup / stdata-zpcny_per.
+      stdata-zpcnyup_amt  = stdata-zqty * stdata-zpcnyup / stdata-zpcny_per.
+    ELSE.
+      stdata-zpcnyup = stdata-zpup.
+      stdata-zpcny_per = stdata-zpup_per.
+      stdata-zpcnyup_dis = stdata-zpup_dis.
+      stdata-zpcnyup_amt  = stdata-zpup_amt.
+    ENDIF.
+* 2021/04/13 V008 kiwi mark begin
+*    IF stdata-zpcur <> 'TWD'.
+**20200903 yinglung V004 Begin
+*      gffactr = 0.
+*      curr_factor_get stdata-ZPTWDCUR '' gffactr.
+*      IF gffactr = 0.
+*        gffactr = 1.
+*      ENDIF.
+* 2021/04/13 V008 kiwi mark End
+    "20210423 yinglung V010 BEGIN
+*      stdata-zbaseup_per = stdata-zpup_per.
+*      stdata-zbaseup_dis = stdata-zbaseup.
+    "20210423 yinglung V010 END
+    IF stsd89-z_ntrate NE 0.
+      stdata-zptwdup = stdata-zbaseup / stsd89-z_ntrate.
+    ENDIF.
+*      stdata-zptwdup = stdata-zbaseup.
+*      IF stsd89-z_ntrate NE 0.
+*        stdata-zptwdup = stdata-zbaseup / stsd89-z_ntrate.
+*      ENDIF.
+* 2021/04/13 V008 kiwi mark begin
+*      PERFORM CONVERT_PRICE USING stdata-ZPTWDCUR stdata-zptwdup
+*                            CHANGING l_TWDUP
+*                                     l_TWDPER.
+*      stdata-zptwdup = stdata-zptwdup * l_TWDPER.
+*      stdata-zptwd_per = l_TWDPER.
+* 2021/04/13 V008 kiwi mark End
+    stdata-zptwd_per = stdata-zpup_per.
+    stdata-zptwdup_dis = stdata-zptwdup.
+    IF stdata-zptwd_per NE 0.
+      stdata-zptwdup_dis = stdata-zptwdup / stdata-zptwd_per.
+    ENDIF.
+    "20210423 yinglung V010 begin
+    IF stdata-zpcur EQ 'TWD'.
+      stdata-zptwdup = stdata-zpup.
+      stdata-zptwd_per = stdata-zpup_per.
+      stdata-zptwdup_dis = stdata-zpup_dis.
+    ENDIF.
+    "20210423 yinglung V010 end
+    stdata-zptwdup_amt = stdata-zqty * stdata-zptwdup_dis.
+* 2021/04/13 V008 kiwi mark begin
+*      stdata-zptwdup = stdata-zbaseup / stsd89-z_ntrate.
+*      stdata-zptwd_per = stdata-zbaseup_per.
+*      stdata-zptwdup_dis = stdata-zptwdup / stdata-zptwd_per.
+*      stdata-zptwdup_amt = ( stdata-zqty * stdata-zptwdup  * gfpurtr ) / stdata-zptwd_per.
+**20200903 yinglung V004 end
+**    ELSE.
+**      stdata-zptwdup = stdata-zpup.
+**      stdata-zptwd_per = stdata-zpup_per.
+**      stdata-zptwdup_dis = stdata-zpup_dis.
+**20200903 yinglung V004 Begin
+**此欄位格式不一致，不可直接覆蓋，須重算
+**      "stdata-zptwdup_amt  = stdata-zpup_amt.
+**      stdata-zptwdup_amt  = stdata-zpup_dis * stdata-zqty.
+**20200903 yinglung V004 end
+**    ENDIF.
+* 2021/04/13 V008 kiwi mark End
+  ENDIF.
+* 2022/03/29 V016      Kiwi    Begin 還原此段程式
+* 2021/04/13 V008 kiwi mark Begin
+*20200629 yinglung V003 begin
+*此段是為了傳入 zsd_odm_xq_price 計算台幣要取加價的範圍使用
+  PERFORM convert_price USING 'TWD' stdata-zptwdup_dis
+                             CHANGING l_twdup
+                                      l_twdper.
+*20200629 yinglung V003 end
+* 2021/04/13 V008 kiwi mark End
+* 2022/03/29 V016      Kiwi    End
+  CALL FUNCTION 'ZSD_ODM_XQ_PRICE'
+    EXPORTING
+      i_vtweg        = ls_ztsd0098-vtweg
+      i_zpno         = stdata-zpno
+      i_zpnocode     = stdata-zpnocode
+      i_meins        = stdata-zuq
+      i_zmoqline     = ls_ztsd0098-zxqline        "gcxqlin           "stsd98-zxqline
+      i_prsdt        = sy-datum
+      i_zpcur        = stdata-zpcur
+      i_zpup         = stdata-zpup
+      i_zpup_per     = stdata-zpup_per
+      i_zpcnyup      = stdata-zpcnyup
+      i_zpcny_per    = stdata-zpcny_per
+* 2022/03/29 V016      Kiwi    Begin 還原此段程式
+* 2021/04/13 V008 kiwi Begin
+      i_zptwdup      = l_twdup    "20200629 yinglung V003
+      i_zptwd_per    = l_twdper   "20200629 yinglung V003
+*     i_zptwdup      = stdata-zptwdup
+*     i_zptwd_per    = stdata-zptwd_per
+* 2021/04/13 V008 kiwi End
+* 2022/03/29 V016      Kiwi    End
+*     i_ztsd0107     = sts107
+    IMPORTING
+      e_zcalcur      = gcwaers
+      e_zformulatype = gcfortp
+      e_zup_cur      = stdata-zusdcur
+      e_zup          = stupup-zup
+      e_zup_per      = stupup-zup_per
+      e_zupformula   = stdata-zupformula
+      e_ztsd0107     = sts107.
+  IF sts107 IS NOT INITIAL.
+*    stsd98-zxqline = gcxqlin.
+    stdata-zuptyp = gcfortp.   " 價格選項
+    stdata-zup = stupup-zup.
+    stdata-zup_per = stupup-zup_per.
+    IF stdata-zup_per <> 0.
+* 2021/04/13 V008 kiwi mark begin
+*      gffactr = 0.
+*      curr_factor_get stdata-zusdcur '' gffactr.
+*      IF gffactr = 0.
+*        gffactr = 1.
+*      ENDIF.
+*      stdata-zup_dis = stdata-zup / stdata-zup_per.
+*      stdata-zup_amt = stdata-zqty * stdata-zup / ( stdata-zup_per * gffactr ).
+      stdata-zup_dis = stdata-zup / stdata-zup_per.
+      stdata-zup_amt = stdata-zqty * stdata-zup /  stdata-zup_per .
+* 2021/04/13 V008 kiwi mark begin
+    ELSE.
+      stdata-zup_dis = 0.
+    ENDIF.
+  ENDIF.
+
+  "20210423 yinglung V010 begin 記錄修改的暫存值
+  stdata-ztmppup        = stdata-zpup.
+  stdata-ztmppup_per    = stdata-zpup_per.
+  stdata-ztmppup_dis    = stdata-zpup_dis.
+  stdata-ztmptwdpup     = stdata-zptwdup.
+  stdata-ztmptwdpup_per = stdata-zptwd_per.
+  stdata-ztmptwdpup_dis = stdata-zptwdup_dis.
+  "20210423 yinglung V010 end
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form back62
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM back62 .
+  DATA : l_zpup TYPE bapicurr-bapicurr,
+         l_amt  TYPE bapicurr-bapicurr.
+  CLEAR:tmp_stdata.
+  MOVE-CORRESPONDING stdata TO tmp_stdata.
+
+  "20210423 yinglung V010 begin
+  PERFORM convert_price USING tmp_stdata-zpcur         " 原採購單價，幣別未知，畫面輸入決定
+                              tmp_stdata-zpup_dis
+                        CHANGING tmp_stdata-zpup
+                                 tmp_stdata-zpup_per.
+  PERFORM convert_price USING tmp_stdata-zptwdcur
+                              tmp_stdata-zptwdup_dis   " 折台幣單價
+                        CHANGING tmp_stdata-zptwdup
+                                 tmp_stdata-zptwd_per.
+  IF stdata-zpcur EQ 'TWD'. " 原採購單價 = TWD ，折台幣單價需一致，避免換算有尾差
+    tmp_stdata-zptwdup = tmp_stdata-zpup.
+    tmp_stdata-zptwd_per = tmp_stdata-zpup_per.
+  ENDIF.
+
+  l_amt = tmp_stdata-zpup_dis * tmp_stdata-zqty.
+  CALL FUNCTION 'BAPI_CURRENCY_CONV_TO_INTERNAL'
+    EXPORTING
+      currency             = tmp_stdata-zpcur
+      amount_external      = l_amt
+      max_number_of_digits = 10
+    IMPORTING
+      amount_internal      = l_zpup.
+  tmp_stdata-zpup_amt = l_zpup.
+
+  tmp_stdata-zptwdup_amt = tmp_stdata-zptwdup_dis * tmp_stdata-zqty.
+ENDFORM.
+
+
+*Messages
+*----------------------------------------------------------
+*
+* Message class: Hard coded
+*   處理完成！
+
+----------------------------------------------------------------------------------
+Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2026. Sap Release 757

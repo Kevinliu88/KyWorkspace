@@ -1,0 +1,428 @@
+*&---------------------------------------------------------------------*
+*& Report ZTGCX0026
+*&---------------------------------------------------------------------*
+*&
+*&---------------------------------------------------------------------*
+REPORT ztgcx0026.
+
+TABLES:ztsd0098,ztsd0099.
+*----------------------------------------------------------------------*
+* TYPE-POOLS
+*----------------------------------------------------------------------*
+TYPE-POOLS: slis.
+*交通燈引用類型池
+TYPE-POOLS:icon.
+*&---------------------------------------------------------------------*
+*&聲明ALV參數
+*&---------------------------------------------------------------------*
+DATA:gt_fieldcat TYPE lvc_t_fcat, "字段目錄#表
+     gs_fieldcat TYPE lvc_s_fcat, "字段目錄工作區
+     gs_layout   TYPE lvc_s_layo. "用於定義ALV表單的相關格式、屬性
+
+TYPES:BEGIN OF ty_alv,
+        period     TYPE ztcx0026-period, "期別
+        zitem      TYPE ztcx0026-zitem, "流水序號
+        zym        TYPE ztsd0098-zym, "XQ單預採帳年月
+        werks      TYPE ztsd0098-werks, "工廠
+        vtweg      TYPE ztsd0098-vtweg, "配銷通路
+        zpno       TYPE ztsd0099-zpno,  "預採件號
+        maktx      TYPE makt-maktx,   "物料描述
+        zxqno      TYPE ztsd0099-zxqno, "XQ單號
+        zxqseq     TYPE ztsd0099-zxqseq, "XQ單序號
+        zcpnocn    TYPE ztsd0098-zcpnocn, "XQ單型號
+        zunptyp    TYPE ztsd0098-zunptyp, "UNPAY排序
+        zdesc      TYPE ztsd0098-zdesc, "UNPAY敘述
+        ztunyn     TYPE ztsd0099-ztunyn, "系統是否轉出
+        zxqwrktyp  TYPE ztsd0099-zxqwrktyp, "XQ單狀態
+        zqtybalace TYPE ztcx0026-zqtybalace, "XQ單庫存餘數
+        zxqdat     TYPE ztsd0098-zxqdat, "XQ單產生日期
+        zqty_sy    TYPE ztcx0026-zqty_sy,  "剩餘XQ
+        zquan      TYPE ztcx0026-zquan, "轉出數量
+        menge_sy   TYPE ztcx0026-menge_sy, "剩餘IQ
+        zportalno  TYPE ztcx0001-zportalno, "詢單單號
+        zseq       TYPE ztcx0001-zseq, "帳本編號
+        qq         TYPE ztcx0001-qq,  "QQ單號
+        qq_seq     TYPE ztcx0001-qq_seq, "QQ單序號
+        vbeln      TYPE ztcx0001-vbeln, "銷售文件
+        posnr      TYPE ztcx0001-posnr, "銷售文件項目
+        skuitem    TYPE ztcx0001-skuitem,  "IQ單型號
+        audat      TYPE ztcx0026-audat, "確認日期
+        menge      TYPE ztcx0026-menge, "轉正數量
+        werks_iq   TYPE ztcx0001-werks, "IQ工廠
+        ernam	     TYPE ztcx0026-ernam,
+        erdat	     TYPE ztcx0026-erdat,
+        ertim	     TYPE ztcx0026-ertim,
+        check      TYPE c,
+      END OF ty_alv.
+DATA:gt_alv TYPE TABLE OF ty_alv,
+     gs_alv TYPE ty_alv.
+
+*&---------------------------------------------------------------------*
+*搜索幫助
+*&---------------------------------------------------------------------*
+SELECTION-SCREEN BEGIN OF BLOCK b1 WITH FRAME TITLE TEXT-001. "選擇準則
+  SELECT-OPTIONS: s_zym FOR ztsd0098-zym DEFAULT sy-datum+0(6) OBLIGATORY NO INTERVALS NO-EXTENSION, "期別
+                               s_vtweg FOR ztsd0098-vtweg, "配銷通路
+                               s_zdate FOR ztsd0098-zxqdat OBLIGATORY. "詢單轉正起迄日期
+SELECTION-SCREEN END OF BLOCK b1.
+
+AT SELECTION-SCREEN OUTPUT.
+
+START-OF-SELECTION.
+  PERFORM frm_get_data.   "獲取數據
+  PERFORM frm_set_fieldcat."設置字段
+  PERFORM frm_set_layout.  "設置顯示格式
+  PERFORM frm_display_alv. "ALV報表展示
+*&---------------------------------------------------------------------*
+*& Form frm_get_data
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM frm_get_data.
+  TYPES:BEGIN OF ty_ztcx0001,
+          werks     TYPE ztcx0001-werks,
+          vtweg     TYPE ztcx0001-vtweg,
+          zseq      TYPE ztcx0001-zseq,
+          zportalno TYPE ztcx0001-zportalno,
+          idnrk     TYPE ztcx0001-idnrk,
+          qq        TYPE ztcx0001-qq,
+          qq_seq    TYPE ztcx0001-qq_seq,
+          vbeln     TYPE ztcx0001-vbeln,
+          posnr     TYPE ztcx0001-posnr,
+          skuitem   TYPE ztcx0001-skuitem,
+          menge     TYPE ztcx0026-menge,
+          erdat     TYPE ztcx0001-erdat,
+          audat_0   TYPE ztsd0028-audat,
+          audat     TYPE ztsd0028-audat,
+        END OF ty_ztcx0001.
+  DATA:lt_ztcx0001      TYPE TABLE OF ty_ztcx0001,
+       lt_ztcx0001_copy TYPE TABLE OF ty_ztcx0001.
+  DATA:lt_ztcx0026 TYPE TABLE OF ztcx0026,
+       ls_ztcx0026 TYPE ztcx0026.
+  DATA:lv_zqty  TYPE ztcx0026-zqtybalace,
+       lv_menge TYPE ztcx0026-menge.
+  DATA:lv_exist TYPE c.
+  DATA:lv_condition   TYPE string.
+  DATA:lv_zitem TYPE ztcx0026-zitem.
+*  DATA: lv_date_from TYPE ztcx0017_1-zdt_start,
+*        lv_date_to   TYPE ztcx0017_1-zdt_end.
+  SELECT *
+    INTO TABLE @DATA(lt_ztcx0026_2)
+    FROM ztcx0026_2
+    WHERE period = @s_zym-low
+    AND vtweg IN @s_vtweg.
+  IF lt_ztcx0026_2 IS NOT INITIAL.
+    MESSAGE '該期別和該配銷通路範圍#存在已經進行XQ單轉出的數據，不能重新計算，請檢查！' TYPE 'S' DISPLAY LIKE 'E'.
+    LEAVE LIST-PROCESSING.
+  ENDIF.
+*  CLEAR:lv_date_from,lv_date_to.
+*  SELECT SINGLE zdt_start, zdt_end
+*    INTO (@lv_date_from, @lv_date_to)
+*    FROM ztcx0017_1
+*   WHERE period = @s_zym-low.
+*  IF sy-subrc <> 0.
+*    MESSAGE '找不到該期別的起訖日期，請先至 ZTCX0017_1 維護。' TYPE 'S' DISPLAY LIKE 'E'.
+*    LEAVE LIST-PROCESSING.
+*  ENDIF.
+  CLEAR:gt_alv.
+  SELECT
+    a~werks,
+    a~zxqno,
+    a~zxqseq,
+    a~zpno,
+    a~ztunyn,
+    a~zxqwrktyp,
+    a~zqtybalace,
+    b~zym,
+    b~vtweg,
+    b~zcpnocn,  "型號
+    b~zunptyp,
+    b~zdesc,
+    b~zxqdat,
+    b~zsono "銷售文件
+    INTO TABLE @DATA(lt_ztsd0099)
+    FROM ztsd0099 AS a
+    JOIN ztsd0098 AS b ON a~werks = b~werks AND a~zxqno = b~zxqno
+    WHERE b~vtweg IN @s_vtweg
+    AND a~zqtybalace > 0
+    AND a~zxqwrktyp <> '8'
+    AND a~ztunyn <> ''.   "系統轉出不#空
+  SORT lt_ztsd0099 BY vtweg zpno zxqdat zxqno zxqseq.
+
+  IF  lt_ztsd0099 IS NOT INITIAL.
+    SELECT DISTINCT
+      a~matnr,
+      a~maktx
+      FROM makt AS a
+      JOIN @lt_ztsd0099 AS b ON a~matnr =  b~zpno
+      WHERE a~spras = @sy-langu
+      INTO TABLE @DATA(lt_makt).
+    SORT lt_makt BY matnr.
+    CLEAR:lt_ztcx0001,lt_ztcx0001_copy.
+    SELECT DISTINCT
+      a~werks,
+      a~vtweg,
+      a~zseq,
+      a~zportalno,
+      a~idnrk,
+      a~qq,
+      a~qq_seq,
+      a~vbeln,
+      a~posnr,
+      a~skuitem,  "型號
+      CASE WHEN a~beskz IS INITIAL THEN a~menge ELSE a~moq_confirm END AS menge,
+      a~erdat,
+      b~zapropd AS audat_0,    "第0版確認日期
+      CASE WHEN a~erdat >= b~zapropd THEN a~erdat ELSE b~zapropd END AS audat
+      FROM ztcx0001 AS a
+      JOIN ztsd0028 AS b ON a~vbeln = b~vbeln AND b~zvsnmr_v = '000'
+      JOIN @lt_ztsd0099 AS c ON a~vtweg = c~vtweg AND a~idnrk = c~zpno
+      WHERE a~loekz = ''
+      AND a~qq_status <> 'C'
+      AND ( a~zind01 = '' OR a~zind01 = 'C' )
+      AND ( CASE WHEN a~beskz IS INITIAL THEN a~menge ELSE a~moq_confirm END ) > 0
+*      AND CASE WHEN a~erdat >= b~zapropd THEN a~erdat ELSE b~zapropd END BETWEEN @lv_date_from AND @lv_date_to
+      AND ( CASE WHEN a~erdat >= b~zapropd THEN a~erdat ELSE b~zapropd END ) IN @s_zdate
+      INTO TABLE @lt_ztcx0001.
+    SORT  lt_ztcx0001 BY vtweg zportalno idnrk menge DESCENDING.
+    DELETE ADJACENT DUPLICATES FROM lt_ztcx0001 COMPARING vtweg zportalno idnrk.
+    SORT lt_ztcx0001 BY vtweg idnrk audat.
+    MOVE-CORRESPONDING lt_ztcx0001 TO lt_ztcx0001_copy.
+    SORT lt_ztcx0001_copy BY werks vtweg zseq zportalno idnrk.
+
+    CLEAR:lv_zitem.
+    LOOP AT lt_ztsd0099 INTO DATA(ls_ztsd0099).
+      CLEAR:lv_zqty,lv_exist.
+      lv_zqty =  ls_ztsd0099-zqtybalace.
+      CLEAR:lv_condition.
+      IF ls_ztsd0099-ztunyn = 'C'.
+        lv_condition = ' VTWEG = LS_ZTSD0099-VTWEG AND IDNRK = LS_ZTSD0099-ZPNO AND SKUITEM = LS_ZTSD0099-ZCPNOCN AND AUDAT >= LS_ZTSD0099-ZXQDAT '.
+      ELSE.
+        lv_condition = ' VTWEG = LS_ZTSD0099-VTWEG AND IDNRK = LS_ZTSD0099-ZPNO AND AUDAT >= LS_ZTSD0099-ZXQDAT '.
+      ENDIF.
+      LOOP AT lt_ztcx0001 ASSIGNING FIELD-SYMBOL(<fs_ztcx0001>) WHERE (lv_condition) .
+        lv_exist = 'X'.
+        CLEAR:lv_menge.
+        lv_menge = <fs_ztcx0001>-menge.
+        CLEAR:gs_alv.
+        MOVE-CORRESPONDING ls_ztsd0099 TO gs_alv.
+        READ TABLE lt_makt INTO DATA(ls_makt) WITH KEY matnr = gs_alv-zpno BINARY SEARCH.
+        IF sy-subrc = 0.
+          gs_alv-maktx = ls_makt-maktx.
+          CLEAR:ls_makt.
+        ENDIF.
+        gs_alv-zportalno   =    <fs_ztcx0001>-zportalno.
+        gs_alv-zseq    =     <fs_ztcx0001>-zseq.
+        gs_alv-werks_iq    =     <fs_ztcx0001>-werks.
+        gs_alv-qq   =     <fs_ztcx0001>-qq.
+        gs_alv-qq_seq   =     <fs_ztcx0001>-qq_seq.
+        gs_alv-vbeln   =     <fs_ztcx0001>-vbeln.
+        gs_alv-posnr   =     <fs_ztcx0001>-posnr.
+        gs_alv-skuitem   =     <fs_ztcx0001>-skuitem.
+        gs_alv-audat   =    <fs_ztcx0001>-audat.
+        READ TABLE lt_ztcx0001_copy INTO DATA(ls_ztcx0001_copy) WITH KEY werks = <fs_ztcx0001>-werks vtweg = <fs_ztcx0001>-vtweg zseq = <fs_ztcx0001>-zseq zportalno = <fs_ztcx0001>-zportalno idnrk = <fs_ztcx0001>-idnrk BINARY SEARCH.
+        IF sy-subrc = 0 .
+          gs_alv-menge   =     ls_ztcx0001_copy-menge.
+          CLEAR:ls_ztcx0001_copy.
+        ENDIF.
+        IF lv_zqty >= lv_menge.
+          gs_alv-zquan = lv_menge.
+        ELSE.
+          gs_alv-zquan = lv_zqty.
+        ENDIF.
+        lv_zqty = lv_zqty - gs_alv-zquan.
+        lv_menge =  lv_menge - gs_alv-zquan.
+        gs_alv-zqty_sy =  lv_zqty.
+        gs_alv-menge_sy =  lv_menge.
+        IF lv_menge <= 0 .
+          DELETE lt_ztcx0001.
+        ELSE.
+          <fs_ztcx0001>-menge = lv_menge.
+        ENDIF.
+        lv_zitem = lv_zitem + 1.
+        gs_alv-zitem = lv_zitem.
+        gs_alv-period = s_zym-low.
+        gs_alv-ernam = sy-uname.
+        gs_alv-erdat = sy-datum.
+        gs_alv-ertim = sy-uzeit.
+        APPEND gs_alv TO gt_alv.
+        IF lv_zqty <= 0.
+          EXIT.
+        ENDIF.
+      ENDLOOP.
+
+      IF lv_exist = ''.
+        CLEAR:gs_alv.
+        MOVE-CORRESPONDING ls_ztsd0099 TO gs_alv.
+        READ TABLE lt_makt INTO ls_makt WITH KEY matnr = gs_alv-zpno BINARY SEARCH.
+        IF sy-subrc = 0.
+          gs_alv-maktx = ls_makt-maktx.
+          CLEAR:ls_makt.
+        ENDIF.
+        IF gs_alv-zunptyp = '2' AND gs_alv-zym = s_zym-low AND ls_ztsd0099-zsono <> ''.
+          gs_alv-zquan = gs_alv-zqtybalace.
+        ELSE.
+          gs_alv-zqty_sy =  gs_alv-zqtybalace.
+        ENDIF.
+        lv_zitem = lv_zitem + 1.
+        gs_alv-zitem = lv_zitem.
+        gs_alv-period = s_zym-low.
+        gs_alv-ernam = sy-uname.
+        gs_alv-erdat = sy-datum.
+        gs_alv-ertim = sy-uzeit.
+        APPEND gs_alv TO gt_alv.
+      ELSEIF lv_exist = 'X' AND lv_zqty > 0.
+        CLEAR:gs_alv.
+        MOVE-CORRESPONDING ls_ztsd0099 TO gs_alv.
+        READ TABLE lt_makt INTO ls_makt WITH KEY matnr = gs_alv-zpno BINARY SEARCH.
+        IF sy-subrc = 0.
+          gs_alv-maktx = ls_makt-maktx.
+          CLEAR:ls_makt.
+        ENDIF.
+        gs_alv-zqty_sy =  lv_zqty.
+        lv_zitem = lv_zitem + 1.
+        gs_alv-zitem = lv_zitem.
+        gs_alv-period = s_zym-low.
+        gs_alv-ernam = sy-uname.
+        gs_alv-erdat = sy-datum.
+        gs_alv-ertim = sy-uzeit.
+        APPEND gs_alv TO gt_alv.
+      ENDIF.
+      CLEAR:ls_ztsd0099,gs_alv.
+    ENDLOOP.
+
+  ENDIF.
+
+  DELETE FROM ztcx0026 WHERE period = s_zym-low AND vtweg IN s_vtweg.
+  IF sy-subrc = 0.
+    COMMIT WORK AND WAIT.
+  ENDIF.
+  "保存Liability計算結果至ZTCX0026
+  CLEAR:lt_ztcx0026.
+  MOVE-CORRESPONDING gt_alv TO lt_ztcx0026.
+  IF  lt_ztcx0026 IS NOT INITIAL.
+    MODIFY ztcx0026 FROM TABLE lt_ztcx0026.
+    IF sy-subrc = 0.
+      COMMIT WORK.
+    ENDIF.
+  ENDIF.
+
+*  IF gt_alv IS INITIAL.
+*    MESSAGE  TEXT-002  TYPE 'S' DISPLAY LIKE 'E'.   "未獲取到數據！
+*    LEAVE LIST-PROCESSING.
+*  ENDIF.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form FRM_SET_FIELDCAT
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM frm_set_fieldcat.
+  REFRESH gt_fieldcat.
+  PERFORM frm_set_fieldcat_line USING 'PERIOD'   '期別'  'ZTCX0026'  'PERIOD' ''  ''.
+  PERFORM frm_set_fieldcat_line USING 'ZITEM'   '流水序號'  'ZTCX0026'  'ZITEM' ''  ''.
+  PERFORM frm_set_fieldcat_line USING 'ZYM'   'XQ單預採帳年月'  'ZTSD0098'  'ZYM' ''  ''.
+  PERFORM frm_set_fieldcat_line USING 'VTWEG'   '配銷通路'  'ZTSD0098'  'VTWEG' ''  ''.
+  PERFORM frm_set_fieldcat_line USING 'ZPNO'   '預採件號'  'ZTSD0099'  'ZPNO' ''  ''.
+  PERFORM frm_set_fieldcat_line USING 'MAKTX'   '物料描述'  'MAKT'  'MAKTX' ''  ''.
+  PERFORM frm_set_fieldcat_line USING 'WERKS'   'XQ工廠'  'ZTSD0099'  'WERKS' ''  ''.
+  PERFORM frm_set_fieldcat_line USING 'ZXQNO'   'XQ單號'  'ZTSD0099'  'ZXQNO' ''  ''.
+  PERFORM frm_set_fieldcat_line USING 'ZXQSEQ'   'XQ單序號'  'ZTSD0099'  'ZXQSEQ' ''  ''.
+  PERFORM frm_set_fieldcat_line USING 'ZCPNOCN'   'XQ單型號'  'ZTSD0098'  'ZCPNOCN' ''  ''.
+  PERFORM frm_set_fieldcat_line USING 'ZUNPTYP'   'UNPAY排序'  'ZTSD0098'  'ZUNPTYP' ''  ''.
+  PERFORM frm_set_fieldcat_line USING 'ZDESC'   'UNPAY敘述'  'ZTSD0098'  'ZDESC' ''  ''.
+  PERFORM frm_set_fieldcat_line USING 'ZTUNYN'   '系統是否轉出'  'ZTSD0099'  'ZTUNYN' ''  ''.
+  PERFORM frm_set_fieldcat_line USING 'ZXQWRKTYP'   'XQ單狀態'  'ZTSD0099'  'ZXQWRKTYP' ''  ''.
+  PERFORM frm_set_fieldcat_line USING 'ZQTYBALACE'   'XQ單庫存餘數'  'ZTCX0026'  'ZQTYBALACE' ''  ''.
+  PERFORM frm_set_fieldcat_line USING 'ZXQDAT'   'XQ單產生日期'  'ZTSD0098'  'ZXQDAT' ''  ''.
+  PERFORM frm_set_fieldcat_line USING 'ZQTY_SY'   '剩餘XQ'  'ZTCX0026'  'ZQTY_SY' ''  ''.
+  PERFORM frm_set_fieldcat_line USING 'ZQUAN'   '轉出數量'  'ZTCX0026'  'ZQUAN' ''  ''.
+  PERFORM frm_set_fieldcat_line USING 'MENGE_SY'   '剩餘IQ'  'ZTCX0026'  'MENGE_SY' ''  ''.
+  PERFORM frm_set_fieldcat_line USING 'ZPORTALNO'   '詢單單號'  'ZTCX0001'  'ZPORTALNO' ''  ''.
+  PERFORM frm_set_fieldcat_line USING 'ZSEQ'   '帳本編號'  'ZTCX0001'  'ZSEQ' ''  ''.
+  PERFORM frm_set_fieldcat_line USING 'WERKS_IQ'   'IQ工廠'  'ZTCX0001'  'WERKS' ''  ''.
+  PERFORM frm_set_fieldcat_line USING 'QQ'   'QQ單號'  'ZTCX0001'  'QQ' ''  ''.
+  PERFORM frm_set_fieldcat_line USING 'QQ_SEQ'   'QQ單序號'  'ZTCX0001'  'QQ_SEQ' ''  ''.
+  PERFORM frm_set_fieldcat_line USING 'VBELN'   '銷售文件'  'ZTCX0001'  'VBELN' ''  ''.
+  PERFORM frm_set_fieldcat_line USING 'POSNR'   '銷售文件項目'  'ZTCX0001'  'POSNR' ''  ''.
+  PERFORM frm_set_fieldcat_line USING 'SKUITEM'   'IQ單型號'  'ZTCX0001'  'SKUITEM' ''  ''.
+  PERFORM frm_set_fieldcat_line USING 'AUDAT'   '確認日期'  'ZTCX0026'  'AUDAT' ''  ''.
+  PERFORM frm_set_fieldcat_line USING 'MENGE'   '轉正數量'  'ZTCX0026'  'MENGE' ''  ''.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&FRM_SET_FIELDCAT_LINE
+*&---------------------------------------------------------------------*
+FORM frm_set_fieldcat_line USING pv_name TYPE char100
+                                 pv_title TYPE char100
+                                 pv_table TYPE char30
+                                 pv_field TYPE char30
+                                 pv_zero TYPE char1
+                                 pv_hotspot TYPE char1.
+  CLEAR gs_fieldcat.
+  gs_fieldcat-fieldname = pv_name."數據字段
+  gs_fieldcat-coltext = pv_title.       "字段描述
+  gs_fieldcat-ref_table = pv_table.
+  gs_fieldcat-ref_field = pv_field.
+  gs_fieldcat-no_zero = pv_zero.
+  gs_fieldcat-hotspot = pv_hotspot.
+  APPEND gs_fieldcat TO gt_fieldcat.
+ENDFORM. " frm_set_fieldcat_line
+*&---------------------------------------------------------------------*
+*& Form FRM_SET_LAYOUT
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM frm_set_layout .
+  "ALV界面格式
+  CLEAR gs_layout.
+  gs_layout-box_fname  = 'CHECK'. "選擇行控制
+  gs_layout-sel_mode = 'A'.       "設置行模式
+  gs_layout-cwidth_opt = 'X'.     "優化列寬設置
+  gs_layout-zebra = 'X'.          "設置斑馬#
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form FRM_DISPLAY_ALV
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM frm_display_alv.
+  "報表展示
+  CALL FUNCTION 'REUSE_ALV_GRID_DISPLAY_LVC'
+    EXPORTING
+      i_callback_program = sy-repid
+*     i_callback_pf_status_set = 'SET_PF_STATUS '
+*     i_callback_user_command  = 'ALV_USER_COMMAND '
+      is_layout_lvc      = gs_layout      "界面格式
+      it_fieldcat_lvc    = gt_fieldcat    "字段屬性
+      i_save             = 'A'
+*   IMPORTING
+*     E_EXIT_CAUSED_BY_CALLER  =
+*     ES_EXIT_CAUSED_BY_USER   =
+    TABLES
+      t_outtab           = gt_alv
+    EXCEPTIONS
+      program_error      = 1
+      OTHERS             = 2.
+ENDFORM.
+
+
+*Messages
+*----------------------------------------------------------
+*
+* Message class: Hard coded
+*   該期別和該配銷通路範圍#存在已經進行XQ單轉出的數據，不能重新計算，請檢查！
+
+----------------------------------------------------------------------------------
+Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2026. Sap Release 757
