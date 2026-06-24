@@ -1,0 +1,31 @@
+[ZTPPRP0002]
+MANDT | MANDT | CLNT | 000003 | 000000 | Client
+PRJNO | ZPRJNO | CHAR | 000010 | 000000 | 專案編號
+POSNR | POSNR | NUMC | 000006 | 000000 | Item number of the SD document
+VOID | ZVOID | CHAR | 000001 | 000000 | 結案註記
+MATNR | MATNR | CHAR | 000040 | 000000 | Material Number
+SKUITEM | ZCN | CHAR | 000020 | 000000 | Model Number
+APQTY | ZAPQTY | QUAN | 000013 | 000003 | 預採數量
+REMAINQTY | ZREMAINQTY | QUAN | 000013 | 000003 | 預採合約扣用剩餘數量
+MEINS | MEINS | UNIT | 000003 | 000000 | Base Unit of Measure
+ORICDT | ZORICDT | DATS | 000008 | 000000 | 原切完成日
+CURCDT | ZCURCDT | DATS | 000008 | 000000 | 現切完成日
+AUFNR | AUFNR | CHAR | 000012 | 000000 | Order Number
+OLDATE | ZOLDATE | DATS | 000008 | 000000 | 上線日期
+WO_FACTORY | ZWO_FACTORY | CHAR | 000004 | 000000 | 工單工廠
+ERDAT | ERDAT | DATS | 000008 | 000000 | Record Created On
+ERZET | ERZET | TIMS | 000006 | 000000 | Entry time
+ERNAM | ERNAM | CHAR | 000012 | 000000 | Name of Person Responsible for Creating the Object
+AEDAT | AEDAT | DATS | 000008 | 000000 | Last Changed On
+AEZET | AEZET | TIMS | 000006 | 000000 | Time last change was made
+AENAM | AENAM | CHAR | 000012 | 000000 | Name of Person Who Changed Object
+TCODE | TCODE | CHAR | 000020 | 000000 | Transaction Code
+SYS_ID | BAPILOGSYS | CHAR | 000010 | 000000 | Logical system from which message originates
+MSGTY | WTYMP_MSGTY | CHAR | 000001 | 000000 | Message Type
+MSG_ID | SYMSGID | CHAR | 000020 | 000000 | Message Class
+MSG_NO | SYMSGNO | NUMC | 000003 | 000000 | Message Number
+MESSAGE | BAPI_MSG | CHAR | 000220 | 000000 | Message Text
+ZALLITEM | ZFGOODS | CHAR | 000001 | 000000 | 備成品
+ZUPDATE1 | ZUPDATE1 | CHAR | 000001 | 000000 | 更新剩餘合約數量完成
+ZUPDATE2 | ZUPDATE2 | CHAR | 000001 | 000000 | 更新VA43合約數量完成
+ZBFSL2 | ZBFSL2 | QUAN | 000013 | 000003 | 更新VA43合約前備份數量

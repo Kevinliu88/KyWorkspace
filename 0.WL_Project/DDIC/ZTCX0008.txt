@@ -1,0 +1,5 @@
+[ZTCX0008]
+MANDT | MANDT | CLNT | 000003 | 000000 | Client
+VTWEG | VTWEG | CHAR | 000002 | 000000 | Distribution Channel
+ZSEQ | ZCXSEQ | NUMC | 000002 | 000000 | Ledger number
+WERKS | WERKS_D | CHAR | 000004 | 000000 | Plant

@@ -1,0 +1,9 @@
+[ZTCX0014]
+MANDT | MANDT | CLNT | 000003 | 000000 | Client
+MATKL | MATKL | CHAR | 000009 | 000000 | Material Group
+MATNR | MATNR | CHAR | 000040 | 000000 | Material Number
+BESKZ | BESKZ | CHAR | 000001 | 000000 | Procurement Type
+SOBSL | SOBSL | CHAR | 000002 | 000000 | Special Procurement Type
+MEINS | MEINS | UNIT | 000003 | 000000 | Base Unit of Measure
+MAKTX | MAKTX | CHAR | 000040 | 000000 | Material Description
+ISMOQ | ZISMOQ | CHAR | 000001 | 000000 | 不報 MOQ

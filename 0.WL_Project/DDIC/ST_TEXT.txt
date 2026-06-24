@@ -1,0 +1,2 @@
+[ST_TEXT]
+(ELEMENT) | ST_TEXT |  | 000000 | 000000 |

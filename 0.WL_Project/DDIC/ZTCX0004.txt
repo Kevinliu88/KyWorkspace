@@ -1,0 +1,77 @@
+[ZTCX0004]
+MANDT | MANDT | CLNT | 000003 | 000000 | Client
+XJ | ZXJ | CHAR | 000012 | 000000 | XJ Order number
+XJ_ITEM | ZXJ_ITEM | NUMC | 000006 | 000000 | XJ Item
+VBELN | VBELN_VA | CHAR | 000010 | 000000 | Sales Document
+POSNR | POSNR_VA | NUMC | 000006 | 000000 | Sales Document Item
+KUNNR | KUNNR | CHAR | 000010 | 000000 | Customer Number
+VTWEG | ZCX_VTWEG | CHAR | 000002 | 000000 | 預採帳客戶別
+ZSEQ | ZCXSEQ | NUMC | 000002 | 000000 | Ledger number
+WERKS | WERKS_D | CHAR | 000004 | 000000 | Plant
+MATNR | MATNR | CHAR | 000040 | 000000 | Material Number
+SKUITEM | ZCN | CHAR | 000020 | 000000 | Model Number
+KWMENG | KWMENG | QUAN | 000015 | 000003 | Cumulative order quantity in sales units
+CANC_QTY | ZCX_CANC_QTY | QUAN | 000013 | 000003 | 取消數量
+VRKME | VRKME | UNIT | 000003 | 000000 | Sales Unit
+IDNRK | MATNR | CHAR | 000040 | 000000 | Material Number
+MAKTX | MAKTX | CHAR | 000040 | 000000 | Material Description
+WL2_ERPSPECIFICATION | ZWL2_ERPSPECIFICATION | CHAR | 000128 | 000000 | 完整規格說明
+WL2_ENGLISHSPECIFICATIONS | ZWL2_ENGLISHSPECIFICATIONS | CHAR | 000300 | 000000 | 英文詳細規格
+ZIND01 | ZIND01 | CHAR | 000001 | 000000 | 特殊標記
+ZDESC | ZDESC30 | CHAR | 000040 | 000000 | Description
+ZXQNO | ZXQNO | CHAR | 000012 | 000000 | XQ單號
+ZXQSEQ | ZXQSEQ | NUMC | 000006 | 000000 | XQ單序號
+ZDEFAULT_VENDOR | ZDEFAULT_VENDOR | CHAR | 000010 | 000000 | 預設供應商
+NAME1 | NAME1 | CHAR | 000030 | 000000 | Name
+BESKZ | BESKZ | CHAR | 000001 | 000000 | Procurement Type
+SOBSL | SOBSL | CHAR | 000002 | 000000 | Special Procurement Type
+EKGRP | EKGRP | CHAR | 000003 | 000000 | Purchasing Group
+MEINS | MEINS | UNIT | 000003 | 000000 | Base Unit of Measure
+CALC_DATE | ZCALC_DATE | DATS | 000008 | 000000 | Calculation date
+ZEX_HIER | ZEX_HIER | NUMC | 000004 | 000000 | Expand hierarchy
+DEL12 | DEL12 | CHAR | 000012 | 000000 | MRP element number
+DELNR | DEL12 | CHAR | 000012 | 000000 | MRP element number
+BDMNG | BDMNG | QUAN | 000013 | 000003 | Requirement Quantity
+LABST | NSDM_STOCK_QTY | QUAN | 000031 | 000014 | Stock Quantity
+FEAUB | FEAUB | QUAN | 000013 | 000003 | Production orders in total
+PLAFB | PLAFB | QUAN | 000013 | 000003 | Planned Orders
+INSME | INSME | QUAN | 000013 | 000003 | Stock in Quality Inspection
+BEBST | BEBST | QUAN | 000013 | 000003 | Purchase orders
+BANFB | BANFB | QUAN | 000013 | 000003 | Purchase requisitions
+BMENG | ZCX_BMENG | QUAN | 000031 | 000003 | Required Quantity
+TOT_REQ_QTY | ZCX_TOT_REQ_QTY | QUAN | 000031 | 000003 | 總需求量
+ZTRANS_QTY | ZTRANS_QTY | QUAN | 000031 | 000003 | 推移庫存
+BSTMI | BSTMI | QUAN | 000013 | 000003 | Minimum Lot Size
+BSTRF | BSTRF | QUAN | 000013 | 000003 | Rounding value for purchase order quantity
+SUB_QTY | ZSUB_QTY | QUAN | 000031 | 000003 | 在途量
+STOCK_QTY | ZCX_STOCK_QTY | QUAN | 000031 | 000003 | Quantity reported in stock
+NETPR | ZUP_M | DEC | 000010 | 000004 | 料價(外顯值)
+WAERS | WAERS | CUKY | 000005 | 000000 | Currency Key
+REP | ZREP | CHAR | 000001 | 000000 | 可轉不可轉
+PROD | ZCX_PROD | CHAR | 000200 | 000000 | 適用型號
+SALES_WAERS | ZCX_SALES_WAERS | CUKY | 000005 | 000000 | 業務幣別
+SALES_NETPR | ZCX_SALES_NETPR_DEC | DEC | 000011 | 000006 | 業務單價
+SALES_AMT | ZCX_SALES_AMT | DEC | 000013 | 000002 | 業務金額
+CUST_DATE | ZCUST_DATE | DATS | 000008 | 000000 | Customer agreed date
+PP_REMARK | ZPP_REMARK | CHAR | 000050 | 000000 | Production management notes
+PP_CHG_DATE | ZPP_CHG_DATE | DATS | 000008 | 000000 | Production management maintenance date
+PP_CHG_TIME | ZPP_CHG_TIME | TIMS | 000006 | 000000 | 生管維護時間
+PP_UNAME | ZPP_UNAME | CHAR | 000012 | 000000 | Production management maintenance personnel
+PUR_REMARK | ZPUR_REMARK | CHAR | 000050 | 000000 | Purchase remarks
+PUR_CHG_DATE | ZPUR_CHG_DATE | DATS | 000008 | 000000 | Purchase maintenance date
+PUR_CHG_TIME | ZPUR_CHG_TIME | TIMS | 000006 | 000000 | 採購維護時間
+PUR_UNAME | ZPUR_UNAME | CHAR | 000012 | 000000 | Purchase maintenance personnel
+SA_REMARK | ZSA_REMARK | CHAR | 000050 | 000000 | Sales notes
+SA_CHG_DATE | ZSA_CHG_DATE | DATS | 000008 | 000000 | Sales maintenance date
+SA_CHG_TIME | ZSA_CHG_TIME | TIMS | 000006 | 000000 | 業務維護時間
+SA_UNAME | ZSA_UNAME | CHAR | 000012 | 000000 | Sales maintenance personnel
+XJ_STATUS | ZXJ_STATUS | CHAR | 000001 | 000000 | XJ status
+XJ_ERDAT | ERDAT | DATS | 000008 | 000000 | Record Created On
+XJ_ERTIM | /AIF/CREATE_TIME | TIMS | 000006 | 000000 | Creation Time
+XJ_ERNAM | ERNAM | CHAR | 000012 | 000000 | Name of Person Responsible for Creating the Object
+CUST_QTY | ZCUST_QTY | QUAN | 000013 | 000003 | Customer agreed quantity
+CUST_AMT | ZCUST_AMT | CURR | 000011 | 000002 | Customer agreed amount
+NETPR_CNY | ZUP_M | DEC | 000010 | 000004 | 料價(外顯值)
+WAERS_CNY | WAERS | CUKY | 000005 | 000000 | Currency Key
+NETPR_TWD | ZUP_M | DEC | 000010 | 000004 | 料價(外顯值)
+WAERS_TWD | WAERS | CUKY | 000005 | 000000 | Currency Key

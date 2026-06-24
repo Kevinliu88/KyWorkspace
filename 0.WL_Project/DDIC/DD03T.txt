@@ -1,0 +1,6 @@
+[DD03T]
+TABNAME | TABNAME | CHAR | 000030 | 000000 | Table Name
+DDLANGUAGE | DDLANGUAGE | LANG | 000001 | 000000 | Language Key
+AS4LOCAL | AS4LOCAL | CHAR | 000001 | 000000 | Activation State of Repository Object
+FIELDNAME | FIELDNAME | CHAR | 000030 | 000000 | Field Name
+DDTEXT | AS4TEXT | CHAR | 000060 | 000000 | Short Description of Repository Objects
