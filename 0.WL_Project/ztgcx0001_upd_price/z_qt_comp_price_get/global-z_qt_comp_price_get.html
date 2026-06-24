@@ -1,0 +1,253 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="application/xhtml+xml; charset=UTF-8" />
+<title>LZQT_SYSTEMTOP</title>
+<style type="text/css">
+.code{ font-family:"Courier New", Courier, monospace; color:#000; font-size:14px; background-color:#F2F4F7 }
+  .codeComment {font-family:"Courier New", Courier, monospace; color:#0000F0; font-size:14px; background-color:#F2F4F7 }
+  .normalBold{ font-family:Arial, Helvetica, sans-serif; color:#000; font-size:12px; font-weight:800 }
+  .normalBoldLarge{ font-family:Arial, Helvetica, sans-serif; color:#000; font-size:16px; font-weight:800 }
+</style>
+<style type="text/css">
+  .normal{ font-family:Arial, Helvetica, sans-serif; color:#000; font-size:12px }
+  .footer{ font-family:Arial, Helvetica, sans-serif; color:#000; font-size:12px; text-align: center }
+  h2{ font-family:Arial, Helvetica, sans-serif; color:#000; font-size:16px; font-weight:800 }
+  h3{ font-family:Arial, Helvetica, sans-serif; color:#000; font-size:14px; font-weight:800 }
+  .outerTable{
+   background-color:#E0E7ED;
+   width:100%;
+   border-top-width: thin;
+   border-right-width: thin;
+   border-right-width: thin;
+   border-left-width: thin;
+   border-top-style: solid;
+   border-right-style: solid;
+   border-bottom-style: solid;
+   border-left-style: solid;
+  }
+  .innerTable{
+   background-color:#F2F4F7;
+   width:100%;
+   border-top-width: thin;
+   border-right-width: thin;
+   border-bottom-width: thin;
+   border-left-width: thin;
+   border-top-style: solid;
+   border-right-style: solid;
+   border-bottom-style: solid;
+   border-left-style: solid;
+  }
+</style>
+</head>
+<body>
+<table class="outerTable">
+  <tr class="normalBoldLarge">
+     <td><h2>Code listing for: LZQT_SYSTEMTOP</h2>
+<h3> Description: </h3></td>
+   </tr>
+  <tr>
+     <td>
+     <table class="innerTable">
+       <tr>
+          <td>
+   <div class="code">
+FUNCTION-POOL zqt_system.                   "MESSAGE-ID ..<br />
+   </div>
+   <div class="codeComment">
+*&nbsp;INCLUDE&nbsp;LZQT_SYSTEMD...&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"&nbsp;Local&nbsp;class&nbsp;definition<br />
+   </div>
+   <div class="code">
+TABLES: konh, konp.<br />
+<br />
+DATA: it_exch_rate LIKE bapi1093_0 OCCURS 0 WITH HEADER LINE.<br />
+DATA: ls_wa   TYPE REF TO data,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;lt_itab&nbsp;TYPE&nbsp;REF&nbsp;TO&nbsp;data,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;p_tabix&nbsp;LIKE&nbsp;sy-tabix,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;wa_konv&nbsp;TYPE&nbsp;konv.<br />
+<br />
+FIELD-SYMBOLS: &lt;fs_itab&gt;    TYPE ANY TABLE,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;fs_wa_itab&gt;&nbsp;TYPE&nbsp;any.<br />
+DATA: e_tabname  TYPE dntab-tabname,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;g_kschl&nbsp;&nbsp;&nbsp;&nbsp;TYPE&nbsp;kscha,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;g_kotabnr&nbsp;&nbsp;TYPE&nbsp;kotabnr,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;it_details&nbsp;TYPE&nbsp;abap_compdescr_tab,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;wa_details&nbsp;TYPE&nbsp;abap_compdescr,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;it_nametab&nbsp;LIKE&nbsp;dntab&nbsp;OCCURS&nbsp;0&nbsp;WITH&nbsp;HEADER&nbsp;LINE,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;p_factor&nbsp;&nbsp;&nbsp;TYPE&nbsp;isoc_factor.<br />
+DATA: ref_table_des TYPE REF TO cl_abap_structdescr,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;lr_table&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;TYPE&nbsp;REF&nbsp;TO&nbsp;data,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;gt_fieldcat&nbsp;&nbsp;&nbsp;TYPE&nbsp;slis_t_fieldcat_alv.<br />
+<br />
+DATA: it_xkondat LIKE vkondat OCCURS 0 WITH HEADER LINE,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;it_xkonh&nbsp;&nbsp;&nbsp;LIKE&nbsp;konhdb&nbsp;OCCURS&nbsp;0&nbsp;WITH&nbsp;HEADER&nbsp;LINE,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;it_xkonm&nbsp;&nbsp;&nbsp;LIKE&nbsp;vkonm&nbsp;OCCURS&nbsp;0&nbsp;WITH&nbsp;HEADER&nbsp;LINE,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;it_xkonp&nbsp;&nbsp;&nbsp;LIKE&nbsp;konpdb&nbsp;OCCURS&nbsp;0&nbsp;WITH&nbsp;HEADER&nbsp;LINE,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;it_xkonw&nbsp;&nbsp;&nbsp;LIKE&nbsp;vkonw&nbsp;OCCURS&nbsp;0&nbsp;WITH&nbsp;HEADER&nbsp;LINE,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;it_ykondat&nbsp;LIKE&nbsp;vkondat&nbsp;OCCURS&nbsp;0&nbsp;WITH&nbsp;HEADER&nbsp;LINE,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;it_ykonh&nbsp;&nbsp;&nbsp;LIKE&nbsp;konhdb&nbsp;OCCURS&nbsp;0&nbsp;WITH&nbsp;HEADER&nbsp;LINE,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;it_ykonm&nbsp;&nbsp;&nbsp;LIKE&nbsp;vkonm&nbsp;OCCURS&nbsp;0&nbsp;WITH&nbsp;HEADER&nbsp;LINE,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;it_ykonp&nbsp;&nbsp;&nbsp;LIKE&nbsp;konpdb&nbsp;OCCURS&nbsp;0&nbsp;WITH&nbsp;HEADER&nbsp;LINE,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;it_ykonw&nbsp;&nbsp;&nbsp;LIKE&nbsp;vkonw&nbsp;OCCURS&nbsp;0&nbsp;WITH&nbsp;HEADER&nbsp;LINE.<br />
+DATA: it_condct      LIKE bapicondct OCCURS 0 WITH HEADER LINE,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;it_condhd&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;LIKE&nbsp;bapicondhd&nbsp;OCCURS&nbsp;0&nbsp;WITH&nbsp;HEADER&nbsp;LINE,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;it_condit&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;LIKE&nbsp;bapicondit&nbsp;OCCURS&nbsp;0&nbsp;WITH&nbsp;HEADER&nbsp;LINE,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;it_condqs&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;LIKE&nbsp;bapicondqs&nbsp;OCCURS&nbsp;0&nbsp;WITH&nbsp;HEADER&nbsp;LINE,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;it_condvs&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;LIKE&nbsp;bapicondvs&nbsp;OCCURS&nbsp;0&nbsp;WITH&nbsp;HEADER&nbsp;LINE,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;it_return&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;LIKE&nbsp;bapiret2&nbsp;OCCURS&nbsp;0&nbsp;WITH&nbsp;HEADER&nbsp;LINE,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;it_knumhs&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;LIKE&nbsp;bapiknumhs&nbsp;OCCURS&nbsp;0&nbsp;WITH&nbsp;HEADER&nbsp;LINE,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;it_mem_initial&nbsp;LIKE&nbsp;cnd_mem_initial&nbsp;OCCURS&nbsp;0&nbsp;WITH&nbsp;HEADER&nbsp;LINE.<br />
+DATA: delete_mode TYPE msgfn VALUE '003',<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;change_mode&nbsp;TYPE&nbsp;msgfn&nbsp;VALUE&nbsp;'004',<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;create_mode&nbsp;TYPE&nbsp;msgfn&nbsp;VALUE&nbsp;'009'.<br />
+DATA idoc_amount(16).<br />
+<br />
+DATA: BEGIN OF itab OCCURS 0,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;werks_d&nbsp;TYPE&nbsp;werks_d,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;datuv_d&nbsp;TYPE&nbsp;datuv,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;matnr&nbsp;&nbsp;&nbsp;TYPE&nbsp;matnr,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;END&nbsp;OF&nbsp;itab.<br />
+TYPES: BEGIN OF alv_ltb_m.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;INCLUDE&nbsp;STRUCTURE&nbsp;stpov_alv.<br />
+TYPES:   info(3) TYPE c,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sel&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;TYPE&nbsp;c,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"N_2907642<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;END&nbsp;OF&nbsp;alv_ltb_m.<br />
+DATA: it_outtab TYPE TABLE OF alv_ltb_m,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;wa_outtab&nbsp;TYPE&nbsp;alv_ltb_m.<br />
+FIELD-SYMBOLS: &lt;it_outtab&gt; LIKE it_outtab.<br />
+RANGES: s_idnrk FOR stpov_alv-idnrk.<br />
+<br />
+DATA: p_repid TYPE repid VALUE 'RCS15001M', " CS15M<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;gt_data&nbsp;TYPE&nbsp;REF&nbsp;TO&nbsp;data.<br />
+<br />
+FIELD-SYMBOLS: &lt;dyn_table&gt; TYPE STANDARD TABLE,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;dyn_wa&gt;,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;dyn_field&gt;.<br />
+DATA: dy_table TYPE REF TO data,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;dy_line&nbsp;&nbsp;TYPE&nbsp;REF&nbsp;TO&nbsp;data,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;wa_fcat&nbsp;&nbsp;TYPE&nbsp;lvc_s_fcat,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;it_fcat&nbsp;&nbsp;TYPE&nbsp;lvc_t_fcat.<br />
+   </div>
+   <div class="codeComment">
+*field&nbsp;symbols&nbsp;declaration<br />
+   </div>
+   <div class="code">
+FIELD-SYMBOLS: &lt;it_table&gt; TYPE STANDARD TABLE,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;fs_table&gt;,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;dyn_str&gt;&nbsp;&nbsp;TYPE&nbsp;any,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;str_comp&gt;&nbsp;TYPE&nbsp;abap_compdescr.<br />
+FIELD-SYMBOLS: &lt;fs_wa&gt;    TYPE any,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;fs_field&gt;&nbsp;TYPE&nbsp;any.<br />
+<br />
+FIELD-SYMBOLS: &lt;fs_datbi&gt;, &lt;fs_datab&gt;, &lt;fs_knumh&gt;.<br />
+FIELD-SYMBOLS: &lt;fs_zterm&gt;, &lt;fs_kpein&gt;, &lt;fs_kmein&gt;, &lt;fs_kbetr&gt;,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;fs_waers&gt;,&nbsp;&lt;fs_kappl&gt;,&nbsp;&lt;fs_kschl&gt;.<br />
+<br />
+DATA: g_kappl   LIKE konp-kappl VALUE 'V'.<br />
+<br />
+   </div>
+   <div class="codeComment">
+*Connect&nbsp;external&nbsp;db<br />
+   </div>
+   <div class="code">
+DATA: lv_tabname          TYPE tabname,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;lv_con_name&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;TYPE&nbsp;dbcon-con_name,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;lr_cx_sql_exception&nbsp;TYPE&nbsp;REF&nbsp;TO&nbsp;cx_sql_exception,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;lr_connection&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;TYPE&nbsp;REF&nbsp;TO&nbsp;cl_sql_connection,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;lv_sql&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;TYPE&nbsp;string,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;lr_data&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;TYPE&nbsp;REF&nbsp;TO&nbsp;data.<br />
+DATA: i_con_name TYPE dbcon-con_name,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;gv_sql&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;TYPE&nbsp;string,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sel_sql&nbsp;&nbsp;&nbsp;&nbsp;TYPE&nbsp;string,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;lv_text&nbsp;&nbsp;&nbsp;&nbsp;TYPE&nbsp;string.<br />
+DATA: selec_list  TYPE string,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;where_conds&nbsp;TYPE&nbsp;string,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;alias_name&nbsp;&nbsp;TYPE&nbsp;string.<br />
+DATA: lv_error_text          TYPE string,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;lv_exec_ref&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;TYPE&nbsp;REF&nbsp;TO&nbsp;cx_sy_native_sql_error,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;con_ref&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;TYPE&nbsp;REF&nbsp;TO&nbsp;cl_sql_connection,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;stmt_ref&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;TYPE&nbsp;REF&nbsp;TO&nbsp;cl_sql_statement,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;cx_sql_exception&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;TYPE&nbsp;REF&nbsp;TO&nbsp;cx_sql_exception,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;cx_sy_struct_comp_name&nbsp;TYPE&nbsp;REF&nbsp;TO&nbsp;cx_sy_struct_comp_name.<br />
+DATA: gt_sql LIKE zsqt_self_made_basepricing OCCURS 0 WITH HEADER LINE.<br />
+DATA: gt_ztmm0050 LIKE ztmm0050 OCCURS 0 WITH HEADER LINE.<br />
+DATA: gt_color LIKE zsmm_object_color OCCURS 0 WITH HEADER LINE.<br />
+DATA: gt_ztmara LIKE ztmara OCCURS 0 WITH HEADER LINE.<br />
+DATA: gt_ztmarc LIKE ztmarc OCCURS 0 WITH HEADER LINE.<br />
+DATA: BEGIN OF gt_pir OCCURS 0,  "a017 & konp<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;kschl_h&nbsp;LIKE&nbsp;a017-kschl,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;lifnr_h&nbsp;LIKE&nbsp;a017-lifnr,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;matnr&nbsp;&nbsp;&nbsp;LIKE&nbsp;a017-matnr,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ekorg&nbsp;&nbsp;&nbsp;LIKE&nbsp;a017-ekorg,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;werks&nbsp;&nbsp;&nbsp;LIKE&nbsp;a017-werks,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;esokz&nbsp;&nbsp;&nbsp;LIKE&nbsp;a017-esokz,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;datbi&nbsp;&nbsp;&nbsp;LIKE&nbsp;a017-datbi,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;datab&nbsp;&nbsp;&nbsp;LIKE&nbsp;a017-datab.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;INCLUDE&nbsp;STRUCTURE&nbsp;konp.<br />
+DATA: END OF gt_pir.<br />
+DATA: e_conv   LIKE ekpo-menge,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;e_factor&nbsp;LIKE&nbsp;&nbsp;bapicurr-bapicurr.<br />
+<br />
+   </div>
+   <div class="codeComment">
+*CKM3N的實際成本<br />
+   </div>
+   <div class="code">
+DATA: BEGIN OF gt_ckm3n OCCURS 0,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;matnr&nbsp;LIKE&nbsp;mbew-matnr,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;bwkey&nbsp;LIKE&nbsp;mbew-bwkey.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;INCLUDE&nbsp;STRUCTURE&nbsp;ckmlcr.<br />
+DATA: END OF gt_ckm3n.<br />
+<br />
+DATA: gt_qt0029 LIKE ztqt0029 OCCURS 0 WITH HEADER LINE.<br />
+DATA: gt_ztwqt0039 LIKE zstwqt0039 OCCURS 0 WITH HEADER LINE. "submit ztwqt0039<br />
+DATA: gt_ztwqt0040 LIKE zstwqt0040 OCCURS 0 WITH HEADER LINE. "submit ztwqt0040<br />
+DATA: gt_ztwqt0043 LIKE zstwqt0043 OCCURS 0 WITH HEADER LINE. "submit ztwqt0043<br />
+DEFINE cls.<br />
+&nbsp;&nbsp;CLEAR&nbsp;&1.&nbsp;REFRESH&nbsp;&1.<br />
+END-OF-DEFINITION.<br />
+DEFINE assign_range_table.<br />
+&nbsp;&nbsp;&1-sign&nbsp;=&nbsp;&2.&nbsp;&1-option&nbsp;=&nbsp;&3.<br />
+&nbsp;&nbsp;&1-low&nbsp;&nbsp;=&nbsp;&4.&nbsp;&1-high&nbsp;=&nbsp;&5.<br />
+&nbsp;&nbsp;APPEND&nbsp;&1.&nbsp;CLEAR&nbsp;&1.<br />
+END-OF-DEFINITION.<br />
+<br />
+DEFINE exit_alpha_input.<br />
+&nbsp;&nbsp;CALL&nbsp;FUNCTION&nbsp;'CONVERSION_EXIT_ALPHA_INPUT'<br />
+&nbsp;&nbsp;&nbsp;&nbsp;EXPORTING<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;input&nbsp;&nbsp;=&nbsp;&1<br />
+&nbsp;&nbsp;&nbsp;&nbsp;IMPORTING<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;output&nbsp;=&nbsp;&2.<br />
+END-OF-DEFINITION.<br />
+<br />
+DEFINE zexit_alpha_input.<br />
+   </div>
+   <div class="codeComment">
+**料號專用<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;call&nbsp;function&nbsp;<a&nbsp;href&nbsp;="../zconversion_exit_alpha_input/zconversion_exit_alpha_input.html">'ZCONVERSION_EXIT_ALPHA_INPUT'</a><br />
+&nbsp;&nbsp;&nbsp;&nbsp;EXPORTING<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;input&nbsp;&nbsp;=&nbsp;&1<br />
+&nbsp;&nbsp;&nbsp;&nbsp;IMPORTING<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;output&nbsp;=&nbsp;&2.<br />
+END-OF-DEFINITION.<br />
+DEFINE exit_alpha_output.<br />
+&nbsp;&nbsp;CALL&nbsp;FUNCTION&nbsp;'CONVERSION_EXIT_ALPHA_OUTPUT'<br />
+&nbsp;&nbsp;&nbsp;&nbsp;EXPORTING<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;input&nbsp;&nbsp;=&nbsp;&1<br />
+&nbsp;&nbsp;&nbsp;&nbsp;IMPORTING<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;output&nbsp;=&nbsp;&2.<br />
+END-OF-DEFINITION.<br />
+            </div>
+          </td>
+        </tr>
+      </table>
+      </td>
+      </tr>
+   <tr>
+<td class="footer">Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2026. Sap Release 757</td>
+   </tr>
+</table>
+</body>
+</html>

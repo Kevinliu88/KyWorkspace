@@ -1,0 +1,219 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="application/xhtml+xml; charset=UTF-8" />
+<title>ZSD_ODM_GET_ZTSD0107</title>
+<style type="text/css">
+.code{ font-family:"Courier New", Courier, monospace; color:#000; font-size:14px; background-color:#F2F4F7 }
+  .codeComment {font-family:"Courier New", Courier, monospace; color:#0000F0; font-size:14px; background-color:#F2F4F7 }
+  .normalBold{ font-family:Arial, Helvetica, sans-serif; color:#000; font-size:12px; font-weight:800 }
+  .normalBoldLarge{ font-family:Arial, Helvetica, sans-serif; color:#000; font-size:16px; font-weight:800 }
+</style>
+<style type="text/css">
+  .normal{ font-family:Arial, Helvetica, sans-serif; color:#000; font-size:12px }
+  .footer{ font-family:Arial, Helvetica, sans-serif; color:#000; font-size:12px; text-align: center }
+  h2{ font-family:Arial, Helvetica, sans-serif; color:#000; font-size:16px; font-weight:800 }
+  h3{ font-family:Arial, Helvetica, sans-serif; color:#000; font-size:14px; font-weight:800 }
+  .outerTable{
+   background-color:#E0E7ED;
+   width:100%;
+   border-top-width: thin;
+   border-right-width: thin;
+   border-right-width: thin;
+   border-left-width: thin;
+   border-top-style: solid;
+   border-right-style: solid;
+   border-bottom-style: solid;
+   border-left-style: solid;
+  }
+  .innerTable{
+   background-color:#F2F4F7;
+   width:100%;
+   border-top-width: thin;
+   border-right-width: thin;
+   border-bottom-width: thin;
+   border-left-width: thin;
+   border-top-style: solid;
+   border-right-style: solid;
+   border-bottom-style: solid;
+   border-left-style: solid;
+  }
+</style>
+</head>
+<body>
+<table class="outerTable">
+  <tr class="normalBoldLarge">
+     <td><h2>Code listing for function ZSD_ODM_GET_ZTSD0107</h2>
+<h3> Description: Get 預採帳公式類別</h3></td>
+   </tr>
+  <tr>
+     <td>
+     <table class="innerTable">
+       <tr>
+          <td>
+   <div class="code">
+FUNCTION ZSD_ODM_GET_ZTSD0107.<br />
+   </div>
+   <div class="codeComment">
+*"----------------------------------------------------------------------<br />
+*"*"Local Interface:<br />
+*"  IMPORTING<br />
+*"     VALUE(I_VTWEG) TYPE  VTWEG<br />
+*"     VALUE(I_MATKL) TYPE  MATKL<br />
+*"     VALUE(I_ZPNO) TYPE  ZPNO OPTIONAL<br />
+*"     VALUE(I_ZPNOCODE) TYPE  ZPNOCODE OPTIONAL<br />
+*"     VALUE(I_MEINS) TYPE  MEINS OPTIONAL<br />
+*"     VALUE(I_ZPCUR) TYPE  ZPCUR OPTIONAL<br />
+*"     VALUE(I_ZMOQLINE) TYPE  ZMOQLINE OPTIONAL<br />
+*"  EXPORTING<br />
+*"     VALUE(E_ZTSD0107) TYPE  ZTSD0107<br />
+*"----------------------------------------------------------------------<br />
+* 2025/03/05  V001      Francie          S4調整<br />
+*                       1. 不再使用ZTSD0107-ZAUTHORG,ZTSD0107-KUNNR<br />
+*-----------------------------------------------------------------------<br />
+
+<div class="codeComment">*       <a href ="global-zsd_odm_get_ztsd0107.html">Global data declarations</a></div><br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;TABLES:&nbsp;ZTSD0089.<br />
+&nbsp;&nbsp;DATA:&nbsp;ZTSD0107_CUR&nbsp;TYPE&nbsp;ZPCUR,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;GT_ZTSD0107&nbsp;&nbsp;LIKE&nbsp;ZTSD0107&nbsp;OCCURS&nbsp;0&nbsp;WITH&nbsp;HEADER&nbsp;LINE,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;P_FLAG(1).<br />
+&nbsp;&nbsp;RANGES:&nbsp;R_ZMOQLINE&nbsp;FOR&nbsp;ZTSD0107-ZMOQLINE,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;R_ZPNO&nbsp;FOR&nbsp;ZTSD0107-ZPNO,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;R_ZPCUR&nbsp;FOR&nbsp;ZTSD0107-ZPCUR,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;R_MEINS&nbsp;FOR&nbsp;ZTSD0107-MEINS,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;R_ZPNOCODE_IN&nbsp;FOR&nbsp;ZTSD0107-ZPNOCODE_IN.<br />
+<br />
+   </div>
+   <div class="codeComment">
+*select ztsd0089<br />
+*最新一筆ztsd0089中匯率為1的幣別判斷		<br />
+*select single * from ztsd0089 whre zauthorg = 傳入的權限組織  order by zprdate descending		<br />
+*抓到的ztsd0089 逐個欄位判斷哪個欄位為1，則以該欄位所代表的幣別去select ztsd0107		<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;SELECT&nbsp;*<br />
+&nbsp;&nbsp;&nbsp;&nbsp;FROM&nbsp;ZTSD0089<br />
+   </div>
+   <div class="codeComment">
+*&gt;&gt; V001 modify start<br />
+*   WHERE ZAUTHORG = I_ZAUTHORG<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;&nbsp;where&nbsp;vtweg&nbsp;=&nbsp;i_vtweg<br />
+   </div>
+   <div class="codeComment">
+*&lt;&lt; V001 modify end<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;ORDER&nbsp;BY&nbsp;ZPRDATE&nbsp;DESCENDING.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;EXIT.<br />
+&nbsp;&nbsp;ENDSELECT.<br />
+&nbsp;&nbsp;IF&nbsp;SY-SUBRC&nbsp;=&nbsp;0.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;ZTSD0089-Z_NTRATE&nbsp;=&nbsp;1.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ZTSD0107_CUR&nbsp;=&nbsp;'TWD'.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ELSEIF&nbsp;ZTSD0089-Z_RMBRATE&nbsp;=&nbsp;1.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ZTSD0107_CUR&nbsp;=&nbsp;'CNY'.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ELSEIF&nbsp;ZTSD0089-Z_HKRATE&nbsp;=&nbsp;1.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ZTSD0107_CUR&nbsp;=&nbsp;'HKD'.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ELSEIF&nbsp;ZTSD0089-Z_USRATE&nbsp;=&nbsp;1.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ZTSD0107_CUR&nbsp;=&nbsp;'USD'.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ELSEIF&nbsp;ZTSD0089-Z_EURRATE&nbsp;=&nbsp;1.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ZTSD0107_CUR&nbsp;=&nbsp;'EUR'.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+&nbsp;&nbsp;ENDIF.<br />
+<br />
+&nbsp;&nbsp;REFRESH:&nbsp;GT_ZTSD0107.<br />
+&nbsp;&nbsp;SELECT&nbsp;*<br />
+&nbsp;&nbsp;&nbsp;&nbsp;INTO&nbsp;TABLE&nbsp;GT_ZTSD0107<br />
+&nbsp;&nbsp;&nbsp;&nbsp;FROM&nbsp;ZTSD0107<br />
+   </div>
+   <div class="codeComment">
+*&gt;&gt; V001 modify start<br />
+*   WHERE ZAUTHORG = I_ZAUTHORG<br />
+*     AND KUNNR = I_ZBCUST.<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;where&nbsp;vtweg&nbsp;=&nbsp;i_vtweg<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;and&nbsp;matkl&nbsp;=&nbsp;i_matkl.<br />
+   </div>
+   <div class="codeComment">
+*&lt;&lt; V001 modify end<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;SORT&nbsp;GT_ZTSD0107&nbsp;BY&nbsp;KOZGF.<br />
+&nbsp;&nbsp;CLEAR:&nbsp;P_FLAG.<br />
+&nbsp;&nbsp;LOOP&nbsp;AT&nbsp;GT_ZTSD0107.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;REFRESH:&nbsp;R_ZMOQLINE,R_ZPNO,R_ZPCUR,R_MEINS,R_ZPNOCODE_IN.<br />
+   </div>
+   <div class="codeComment">
+*預採帳線別	range value : IEQ<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;GT_ZTSD0107-ZMOQLINE&nbsp;&lt;&gt;&nbsp;''.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CONCATENATE&nbsp;'IEQ'&nbsp;GT_ZTSD0107-ZMOQLINE&nbsp;INTO&nbsp;R_ZMOQLINE.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;APPEND&nbsp;R_ZMOQLINE.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+   </div>
+   <div class="codeComment">
+*廠內件號	range value : ICP<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;GT_ZTSD0107-ZPNO&nbsp;&lt;&gt;&nbsp;''.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CONCATENATE&nbsp;'ICP'&nbsp;GT_ZTSD0107-ZPNO&nbsp;INTO&nbsp;R_ZPNO.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;APPEND&nbsp;R_ZPNO.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+   </div>
+   <div class="codeComment">
+*原採購幣別	range value : IEQ<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;GT_ZTSD0107-ZPCUR&nbsp;&lt;&gt;&nbsp;''.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CONCATENATE&nbsp;'IEQ'&nbsp;GT_ZTSD0107-ZPCUR&nbsp;INTO&nbsp;R_ZPCUR.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;APPEND&nbsp;R_ZPCUR.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+   </div>
+   <div class="codeComment">
+*基礎計量單位	range value : IEQ<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;GT_ZTSD0107-MEINS&nbsp;&lt;&gt;&nbsp;''.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CONCATENATE&nbsp;'IEQ'&nbsp;GT_ZTSD0107-MEINS&nbsp;INTO&nbsp;R_MEINS.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;APPEND&nbsp;R_MEINS.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+   </div>
+   <div class="codeComment">
+*存貨費用類別判斷	依內容值放range value<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;GT_ZTSD0107-ZPNOCODE_IN&nbsp;&lt;&gt;&nbsp;''.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;R_ZPNOCODE_IN&nbsp;=&nbsp;GT_ZTSD0107-ZPNOCODE_IN.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;APPEND&nbsp;R_ZPNOCODE_IN.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;I_ZMOQLINE&nbsp;IN&nbsp;R_ZMOQLINE<br />
+&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;I_ZPNO&nbsp;IN&nbsp;R_ZPNO<br />
+&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;I_ZPCUR&nbsp;IN&nbsp;R_ZPCUR<br />
+&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;I_MEINS&nbsp;IN&nbsp;R_MEINS<br />
+&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;I_ZPNOCODE&nbsp;IN&nbsp;R_ZPNOCODE_IN.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;P_FLAG&nbsp;=&nbsp;'X'.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;EXIT.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+&nbsp;&nbsp;ENDLOOP.<br />
+&nbsp;&nbsp;IF&nbsp;P_FLAG&nbsp;=&nbsp;'X'.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;E_ZTSD0107&nbsp;=&nbsp;GT_ZTSD0107.<br />
+&nbsp;&nbsp;ENDIF.<br />
+<br />
+ENDFUNCTION.<br />
+            </div>
+          </td>
+        </tr>
+      </table>
+      </td>
+      </tr>
+   <tr>
+<td class="footer">Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2026. Sap Release 757</td>
+   </tr>
+</table>
+</body>
+</html>

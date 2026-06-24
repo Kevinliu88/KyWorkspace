@@ -1,0 +1,401 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="application/xhtml+xml; charset=UTF-8" />
+<title>ZSD_ODM_XQ_PRICE</title>
+<style type="text/css">
+.code{ font-family:"Courier New", Courier, monospace; color:#000; font-size:14px; background-color:#F2F4F7 }
+  .codeComment {font-family:"Courier New", Courier, monospace; color:#0000F0; font-size:14px; background-color:#F2F4F7 }
+  .normalBold{ font-family:Arial, Helvetica, sans-serif; color:#000; font-size:12px; font-weight:800 }
+  .normalBoldLarge{ font-family:Arial, Helvetica, sans-serif; color:#000; font-size:16px; font-weight:800 }
+</style>
+<style type="text/css">
+  .normal{ font-family:Arial, Helvetica, sans-serif; color:#000; font-size:12px }
+  .footer{ font-family:Arial, Helvetica, sans-serif; color:#000; font-size:12px; text-align: center }
+  h2{ font-family:Arial, Helvetica, sans-serif; color:#000; font-size:16px; font-weight:800 }
+  h3{ font-family:Arial, Helvetica, sans-serif; color:#000; font-size:14px; font-weight:800 }
+  .outerTable{
+   background-color:#E0E7ED;
+   width:100%;
+   border-top-width: thin;
+   border-right-width: thin;
+   border-right-width: thin;
+   border-left-width: thin;
+   border-top-style: solid;
+   border-right-style: solid;
+   border-bottom-style: solid;
+   border-left-style: solid;
+  }
+  .innerTable{
+   background-color:#F2F4F7;
+   width:100%;
+   border-top-width: thin;
+   border-right-width: thin;
+   border-bottom-width: thin;
+   border-left-width: thin;
+   border-top-style: solid;
+   border-right-style: solid;
+   border-bottom-style: solid;
+   border-left-style: solid;
+  }
+</style>
+</head>
+<body>
+<table class="outerTable">
+  <tr class="normalBoldLarge">
+     <td><h2>Code listing for function ZSD_ODM_XQ_PRICE</h2>
+<h3> Description: Get 預採帳公式類別</h3></td>
+   </tr>
+  <tr>
+     <td>
+     <table class="innerTable">
+       <tr>
+          <td>
+   <div class="code">
+FUNCTION ZSD_ODM_XQ_PRICE.<br />
+   </div>
+   <div class="codeComment">
+*"----------------------------------------------------------------------<br />
+*"*"Local Interface:<br />
+*"  IMPORTING<br />
+*"     VALUE(I_VTWEG) TYPE  VTWEG OPTIONAL<br />
+*"     VALUE(I_MATKL) TYPE  MATKL OPTIONAL<br />
+*"     VALUE(I_ZPNO) TYPE  ZPNO OPTIONAL<br />
+*"     VALUE(I_ZPNOCODE) TYPE  ZPNOCODE OPTIONAL<br />
+*"     VALUE(I_MEINS) TYPE  MEINS OPTIONAL<br />
+*"     VALUE(I_ZMOQLINE) TYPE  ZMOQLINE OPTIONAL<br />
+*"     VALUE(I_PRSDT) TYPE  PRSDT<br />
+*"     VALUE(I_ZPCUR) TYPE  ZPCUR OPTIONAL<br />
+*"     VALUE(I_ZPUP) TYPE  ZPUP OPTIONAL<br />
+*"     VALUE(I_ZPUP_PER) TYPE  ZPUP_PER OPTIONAL<br />
+*"     VALUE(I_ZPCNYUP) TYPE  ZPCNYUP OPTIONAL<br />
+*"     VALUE(I_ZPCNY_PER) TYPE  ZPCNY_PER OPTIONAL<br />
+*"     VALUE(I_ZPTWDUP) TYPE  ZPTWDUP OPTIONAL<br />
+*"     VALUE(I_ZPTWD_PER) TYPE  ZPTWD_PER OPTIONAL<br />
+*"     VALUE(I_ZTSD0107) TYPE  ZTSD0107 OPTIONAL<br />
+*"  EXPORTING<br />
+*"     VALUE(E_ZCALCUR) TYPE  WAERS<br />
+*"     VALUE(E_ZFORMULATYPE) TYPE  ZFORMULATYPE<br />
+*"     VALUE(E_ZUP_CUR) TYPE  ZUSDCUR<br />
+*"     VALUE(E_ZUP) TYPE  ZUP9<br />
+*"     VALUE(E_ZUP_PER) TYPE  ZUP_PER<br />
+*"     VALUE(E_ZUPFORMULA) TYPE  ZUPFORMULA<br />
+*"     VALUE(E_ZTSD0107) TYPE  ZTSD0107<br />
+*"----------------------------------------------------------------------<br />
+* 2025/03/05  V001      Francie          S4調整<br />
+*                       1. 不再使用ZTSD0107-ZAUTHORG,ZTSD0107-KUNNR<br />
+*----------------------------------------------------------------------<br />
+
+<div class="codeComment">*       <a href ="global-zsd_odm_xq_price.html">Global data declarations</a></div><br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;TABLES:&nbsp;KOMV,RV45A.<br />
+&nbsp;&nbsp;DATA:&nbsp;FS_KOMK&nbsp;TYPE&nbsp;KOMK,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FS_KOMP&nbsp;TYPE&nbsp;KOMP.<br />
+&nbsp;&nbsp;DATA:&nbsp;FT_KOMV&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;TYPE&nbsp;STANDARD&nbsp;TABLE&nbsp;OF&nbsp;KOMV.<br />
+&nbsp;&nbsp;DATA:&nbsp;WK_AMT(15)&nbsp;TYPE&nbsp;P&nbsp;DECIMALS&nbsp;6,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;C_AMT(15)&nbsp;&nbsp;TYPE&nbsp;C,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;C_INT(15)&nbsp;&nbsp;TYPE&nbsp;C,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;C_DEC(6)&nbsp;&nbsp;&nbsp;TYPE&nbsp;C,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;I_LEN&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;TYPE&nbsp;I.<br />
+&nbsp;&nbsp;DATA:&nbsp;WK_BASE&nbsp;TYPE&nbsp;MENGE_D&nbsp;VALUE&nbsp;'1000000'.<br />
+&nbsp;&nbsp;CLEAR:&nbsp;E_ZCALCUR,E_ZFORMULATYPE,E_ZUP_CUR,E_ZUP,E_ZUP_PER,E_ZUPFORMULA,E_ZTSD0107.<br />
+&nbsp;&nbsp;IF&nbsp;I_ZTSD0107&nbsp;IS&nbsp;INITIAL.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;call&nbsp;function&nbsp;<a&nbsp;href&nbsp;="../zsd_odm_get_ztsd0107/zsd_odm_get_ztsd0107.html">'ZSD_ODM_GET_ZTSD0107'</a><br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;EXPORTING<br />
+   </div>
+   <div class="codeComment">
+*&gt;&gt;V001 modify start<br />
+*        I_ZAUTHORG = I_ZAUTHORG<br />
+*        I_ZBCUST   = I_ZBCUST<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;i_vtweg&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;i_vtweg<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;i_matkl&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;i_matkl<br />
+   </div>
+   <div class="codeComment">
+*&lt;&lt;V001 modify end<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;I_ZPNO&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;I_ZPNO<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;I_ZPNOCODE&nbsp;=&nbsp;I_ZPNOCODE<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;I_MEINS&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;I_MEINS<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;I_ZPCUR&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;I_ZPCUR<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;I_ZMOQLINE&nbsp;=&nbsp;I_ZMOQLINE<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IMPORTING<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;E_ZTSD0107&nbsp;=&nbsp;E_ZTSD0107.<br />
+&nbsp;&nbsp;ELSE.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;E_ZTSD0107&nbsp;=&nbsp;I_ZTSD0107.<br />
+&nbsp;&nbsp;ENDIF.<br />
+<br />
+&nbsp;&nbsp;CHECK&nbsp;E_ZTSD0107&nbsp;IS&nbsp;NOT&nbsp;INITIAL.<br />
+<br />
+   </div>
+   <div class="codeComment">
+*傳入相關欄位決定第一層價格: 採購價加價 & 美金匯率換算  : 當ZTSD0107-ZCALCUR &lt;&gt; 'USD'時<br />
+*call function 'Pricing' 決定加價(1) / 匯率/ 匯率base   : 傳入參數詳見 SHEET CALL FUNCTIN PRICING說明 : 項次2<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;IF&nbsp;E_ZCALCUR&nbsp;=&nbsp;SPACE.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;E_ZCALCUR&nbsp;=&nbsp;E_ZTSD0107-ZCALCUR.<br />
+&nbsp;&nbsp;ENDIF.<br />
+&nbsp;&nbsp;IF&nbsp;E_ZCALCUR&nbsp;=&nbsp;'USD'.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;FS_KOMK-KALSM&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;'ZZ03'.<br />
+&nbsp;&nbsp;ELSE.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;FS_KOMK-KALSM&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;'ZZ01'.<br />
+&nbsp;&nbsp;ENDIF.<br />
+   </div>
+   <div class="codeComment">
+*&gt;&gt;V001 modify start<br />
+*  FS_KOMK-ZAUTHORG     = E_ZTSD0107-ZAUTHORG.<br />
+*  FS_KOMK-KUNNR        = E_ZTSD0107-KUNNR.<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;FS_KOMK-vtweg&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;E_ZTSD0107-VTWEG.<br />
+   </div>
+   <div class="codeComment">
+*&lt;&lt;V001 modify end<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;FS_KOMK-WAERK&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;E_ZTSD0107-WAERS.<br />
+&nbsp;&nbsp;FS_KOMK-ZMOQLINE&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;E_ZTSD0107-ZMOQLINE.<br />
+&nbsp;&nbsp;FS_KOMK-PRSDT&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;I_PRSDT.<br />
+&nbsp;&nbsp;FS_KOMK-KAPPL&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;'V'.<br />
+&nbsp;&nbsp;FS_KOMK-BELNR&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;'$000000001'.<br />
+&nbsp;&nbsp;FS_KOMK-KNUMV&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;'$000000001'.<br />
+&nbsp;&nbsp;FS_KOMK-HWAER&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;'USD'.&nbsp;"本國幣別&nbsp;:&nbsp;以客戶收款幣別為本國幣別<br />
+&nbsp;&nbsp;FS_KOMP-ZFORMULATYPE&nbsp;=&nbsp;E_ZTSD0107-ZFORMULATYPE.<br />
+&nbsp;&nbsp;FS_KOMP-MGAME&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;WK_BASE.&nbsp;&nbsp;"以1000000為BASE&nbsp;減少小數位差<br />
+&nbsp;&nbsp;FS_KOMP-MGLME&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;WK_BASE.&nbsp;&nbsp;"以1000000為BASE&nbsp;減少小數位差<br />
+&nbsp;&nbsp;FS_KOMP-LMENG&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;WK_BASE.&nbsp;&nbsp;"以1000000為BASE&nbsp;減少小數位差<br />
+&nbsp;&nbsp;FS_KOMP-PRSFD&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;'X'.<br />
+&nbsp;&nbsp;FS_KOMP-PRSOK&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;'X'.<br />
+&nbsp;&nbsp;FS_KOMP-EVRWR&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;'X'.<br />
+&nbsp;&nbsp;FS_KOMP-KURSK&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;1.&nbsp;"匯率固定為1<br />
+&nbsp;&nbsp;FS_KOMP-MEINS&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;'PC'.<br />
+&nbsp;&nbsp;FS_KOMP-LAGME&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;'PC'.<br />
+&nbsp;&nbsp;FS_KOMP-VRKME&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;'PC'.<br />
+&nbsp;&nbsp;FS_KOMP-KPOSN&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;'000010'.<br />
+&nbsp;&nbsp;FS_KOMP-TAXPS&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;'000010'.<br />
+&nbsp;&nbsp;FS_KOMP-AUPOS&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;'000010'.<br />
+   </div>
+   <div class="codeComment">
+*&gt;&gt;V001 modify start<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;FS_KOMP-matkl&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;E_ZTSD0107-MATKL.<br />
+   </div>
+   <div class="codeComment">
+*&lt;&lt;V001 modify end<br />
+<br />
+**台幣金額若不為0,以台幣單價放入毛重,針對不同毛重級距取得conditon value<br />
+**台幣單價:借用重量當作台幣單價使用<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;IF&nbsp;I_ZPTWDUP&nbsp;&lt;&gt;&nbsp;0.<br />
+   </div>
+   <div class="codeComment">
+**轉換為外顯值<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;I_ZPTWDUP&nbsp;=&nbsp;I_ZPTWDUP&nbsp;*&nbsp;100.<br />
+   </div>
+   <div class="codeComment">
+**台幣單價放入毛重<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;I_ZPTWD_PER&nbsp;NE&nbsp;0.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FS_KOMP-BRGEW&nbsp;=&nbsp;I_ZPTWDUP&nbsp;/&nbsp;I_ZPTWD_PER.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ELSE.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FS_KOMP-BRGEW&nbsp;=&nbsp;0.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+&nbsp;&nbsp;ELSE.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;FS_KOMP-BRGEW&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;E_ZTSD0107-KSTBM.<br />
+&nbsp;&nbsp;ENDIF.<br />
+&nbsp;&nbsp;FS_KOMP-GEWEI&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;'KG'.<br />
+&nbsp;&nbsp;FS_KOMP-AUBEL&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;'$TEMP'.<br />
+&nbsp;&nbsp;FS_KOMP-IX_KOMK&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;1.<br />
+&nbsp;&nbsp;FS_KOMP-UMVKZ&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;1.<br />
+&nbsp;&nbsp;FS_KOMP-UMVKN&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;1.<br />
+&nbsp;&nbsp;FS_KOMP-ANZ_TAGE&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;1.<br />
+&nbsp;&nbsp;FS_KOMP-ANZ_MONATE&nbsp;&nbsp;&nbsp;=&nbsp;1.<br />
+&nbsp;&nbsp;FS_KOMP-ANZ_WOCHEN&nbsp;&nbsp;&nbsp;=&nbsp;1.<br />
+&nbsp;&nbsp;FS_KOMP-ANZ_JAHRE&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;1.<br />
+&nbsp;&nbsp;FS_KOMP-STF_TAGE&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;1.<br />
+&nbsp;&nbsp;FS_KOMP-STF_MONATE&nbsp;&nbsp;&nbsp;=&nbsp;1.<br />
+&nbsp;&nbsp;FS_KOMP-STF_WOCHEN&nbsp;&nbsp;&nbsp;=&nbsp;1.<br />
+&nbsp;&nbsp;FS_KOMP-STF_JAHRE&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;1.<br />
+   </div>
+   <div class="codeComment">
+**<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;CALL&nbsp;FUNCTION&nbsp;'PRICING'<br />
+&nbsp;&nbsp;&nbsp;&nbsp;EXPORTING<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CALCULATION_TYPE&nbsp;=&nbsp;'C'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"Carry&nbsp;out&nbsp;new&nbsp;Pricing<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;COMM_HEAD_I&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;FS_KOMK<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;COMM_ITEM_I&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;FS_KOMP<br />
+   </div>
+   <div class="codeComment">
+*     PRELIMINARY      = ' '<br />
+*     NO_CALCULATION   = ' '<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;IMPORTING<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;COMM_HEAD_E&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;FS_KOMK<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;COMM_ITEM_E&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;FS_KOMP<br />
+&nbsp;&nbsp;&nbsp;&nbsp;TABLES<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;TKOMV&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;FT_KOMV<br />
+   </div>
+   <div class="codeComment">
+*     SVBAP            =<br />
+*   CHANGING<br />
+*     REBATE_DETERMINED       = ' '<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;EXCEPTIONS<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;OTHERS&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;0.&nbsp;&nbsp;"No&nbsp;SUBRC&nbsp;check&nbsp;required,&nbsp;as&nbsp;we&nbsp;handle&nbsp;this&nbsp;below<br />
+   </div>
+   <div class="codeComment">
+*  CALL FUNCTION 'ZSD_ODM_XQ_FORMULA'<br />
+*    IMPORTING<br />
+*      E_ZUPFORMULA = E_ZUPFORMULA<br />
+*    TABLES<br />
+*      TKOMV        = FT_KOMV.<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;call&nbsp;function&nbsp;<a&nbsp;href&nbsp;="../zsd_odm_xq_formula/zsd_odm_xq_formula.html">'ZSD_ODM_XQ_FORMULA'</a><br />
+&nbsp;&nbsp;&nbsp;&nbsp;EXPORTING<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;E_ZTSD0107&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;E_ZTSD0107<br />
+&nbsp;&nbsp;&nbsp;&nbsp;IMPORTING<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;E_ZUPFORMULA&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;E_ZUPFORMULA<br />
+&nbsp;&nbsp;&nbsp;&nbsp;TABLES<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;TKOMV&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;FT_KOMV.<br />
+<br />
+   </div>
+   <div class="codeComment">
+*P_KSCHL = 'ZZ01'<br />
+*P_KBETR = 根據ZTSD0107-WAERS決定要用那個單價欄位    "目前只有CNY單價<br />
+*P_KOEIN = ZTSD0107-WAERS<br />
+*P_KRECH = 'C'      "Calculation type for condition<br />
+*P_Kpein  = 根據ZTSD0107-WAERS決定要用那個單價定價單位欄位    "目前是CNY單價定價單位<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;CHECK&nbsp;I_ZPCNYUP&nbsp;NE&nbsp;0.<br />
+&nbsp;&nbsp;CHECK&nbsp;I_ZPCNY_PER&nbsp;NE&nbsp;0.<br />
+&nbsp;&nbsp;IF&nbsp;E_ZCALCUR&nbsp;=&nbsp;'USD'.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;KOMV-KSCHL&nbsp;=&nbsp;'ZZ07'.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;I_ZPCUR&nbsp;=&nbsp;'USD'.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;KOMV-KBETR&nbsp;=&nbsp;I_ZPUP.<br />
+   </div>
+   <div class="codeComment">
+**定價單位長度5 與預採帳7 的處理: 待定<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;I_ZPCNY_PER&nbsp;&gt;&nbsp;99999.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;KOMV-KPEIN&nbsp;=&nbsp;10000.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ELSE.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;KOMV-KPEIN&nbsp;=&nbsp;I_ZPUP_PER.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+&nbsp;&nbsp;ELSE.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;KOMV-KSCHL&nbsp;=&nbsp;'ZZ01'.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;KOMV-KBETR&nbsp;=&nbsp;I_ZPCNYUP.<br />
+   </div>
+   <div class="codeComment">
+**定價單位長度5 與預採帳7 的處理: 待定<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;I_ZPCNY_PER&nbsp;&gt;&nbsp;99999.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;KOMV-KPEIN&nbsp;=&nbsp;10000.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ELSE.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;KOMV-KPEIN&nbsp;=&nbsp;I_ZPCNY_PER.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+&nbsp;&nbsp;ENDIF.<br />
+&nbsp;&nbsp;KOMV-KRECH&nbsp;=&nbsp;'C'.<br />
+&nbsp;&nbsp;RV45A-KOEIN&nbsp;=&nbsp;'CNY'.<br />
+<br />
+   </div>
+   <div class="codeComment">
+* Remove any statistical or inactive conditions<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;CALL&nbsp;FUNCTION&nbsp;'PRICING_MANUAL_INPUT'<br />
+&nbsp;&nbsp;&nbsp;&nbsp;EXPORTING<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;I_KOMK&nbsp;&nbsp;=&nbsp;FS_KOMK<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;I_KOMP&nbsp;&nbsp;=&nbsp;FS_KOMP<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;I_KSCHL&nbsp;=&nbsp;KOMV-KSCHL<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;I_KBETR&nbsp;=&nbsp;KOMV-KBETR<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;I_WAERS&nbsp;=&nbsp;RV45A-KOEIN<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;I_KRECH&nbsp;=&nbsp;KOMV-KRECH<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;I_KPEIN&nbsp;=&nbsp;KOMV-KPEIN<br />
+   </div>
+   <div class="codeComment">
+*     I_KMEIN =<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;IMPORTING<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;E_KOMK&nbsp;&nbsp;=&nbsp;FS_KOMK<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;E_KOMP&nbsp;&nbsp;=&nbsp;FS_KOMP<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;E_KSCHL&nbsp;=&nbsp;KOMV-KSCHL<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;E_KBETR&nbsp;=&nbsp;KOMV-KBETR<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;E_WAERS&nbsp;=&nbsp;RV45A-KOEIN<br />
+&nbsp;&nbsp;&nbsp;&nbsp;TABLES<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;TKOMV&nbsp;&nbsp;&nbsp;=&nbsp;FT_KOMV.<br />
+   </div>
+   <div class="codeComment">
+* EXCEPTIONS<br />
+*   FIELD_INITIAL         = 1<br />
+*   LINE_NOT_UNIQUE       = 2<br />
+*   CHECKS_FAILED         = 3<br />
+*   OTHERS                = 4<br />
+* Call the Pricing module<br />
+<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;E_ZCALCUR&nbsp;=&nbsp;E_ZTSD0107-ZCALCUR.<br />
+&nbsp;&nbsp;E_ZFORMULATYPE&nbsp;=&nbsp;E_ZTSD0107-ZFORMULATYPE.<br />
+   </div>
+   <div class="codeComment">
+*計算最終業務單價 (到小數下6位) = 項次5.2 回傳的 fs_komp-netwr / 1000000                              "因為回傳的金額是數量1000000的總金額<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;CHECK&nbsp;FS_KOMP-NETWR&nbsp;NE&nbsp;0.<br />
+&nbsp;&nbsp;WK_AMT&nbsp;=&nbsp;FS_KOMP-NETWR&nbsp;/&nbsp;WK_BASE.&nbsp;&nbsp;"1000000<br />
+&nbsp;&nbsp;WRITE&nbsp;WK_AMT&nbsp;TO&nbsp;C_AMT&nbsp;LEFT-JUSTIFIED&nbsp;NO-ZERO.<br />
+&nbsp;&nbsp;SHIFT&nbsp;C_AMT&nbsp;RIGHT&nbsp;DELETING&nbsp;TRAILING&nbsp;SPACE.<br />
+&nbsp;&nbsp;SHIFT&nbsp;C_AMT&nbsp;RIGHT&nbsp;DELETING&nbsp;TRAILING&nbsp;'0'.<br />
+&nbsp;&nbsp;SHIFT&nbsp;C_AMT&nbsp;LEFT&nbsp;DELETING&nbsp;LEADING&nbsp;SPACE.<br />
+&nbsp;&nbsp;SPLIT&nbsp;C_AMT&nbsp;AT&nbsp;'.'&nbsp;INTO:&nbsp;C_INT&nbsp;C_DEC.<br />
+&nbsp;&nbsp;I_LEN&nbsp;=&nbsp;STRLEN(&nbsp;C_DEC&nbsp;).<br />
+&nbsp;&nbsp;E_ZUP_CUR&nbsp;=&nbsp;'USD'.<br />
+&nbsp;&nbsp;CASE&nbsp;I_LEN.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;WHEN&nbsp;0&nbsp;OR&nbsp;1&nbsp;OR&nbsp;2.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;E_ZUP&nbsp;&nbsp;=&nbsp;WK_AMT.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;E_ZUP_PER&nbsp;=&nbsp;1.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;WHEN&nbsp;3.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;E_ZUP&nbsp;&nbsp;=&nbsp;WK_AMT&nbsp;*&nbsp;10.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;E_ZUP_PER&nbsp;=&nbsp;10.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;WHEN&nbsp;4.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;E_ZUP&nbsp;&nbsp;=&nbsp;WK_AMT&nbsp;*&nbsp;100.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;E_ZUP_PER&nbsp;=&nbsp;100.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;WHEN&nbsp;5.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;E_ZUP&nbsp;&nbsp;=&nbsp;WK_AMT&nbsp;*&nbsp;1000.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;E_ZUP_PER&nbsp;=&nbsp;1000.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;WHEN&nbsp;6.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;E_ZUP&nbsp;&nbsp;=&nbsp;WK_AMT&nbsp;*&nbsp;10000.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;E_ZUP_PER&nbsp;=&nbsp;10000.<br />
+&nbsp;&nbsp;ENDCASE.<br />
+ENDFUNCTION.<br />
+            </div>
+          </td>
+        </tr>
+      </table>
+      </td>
+      </tr>
+   <tr>
+<td class="footer">Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2026. Sap Release 757</td>
+   </tr>
+</table>
+</body>
+</html>

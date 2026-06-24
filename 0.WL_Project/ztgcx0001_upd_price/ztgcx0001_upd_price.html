@@ -1,0 +1,653 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="application/xhtml+xml; charset=UTF-8" />
+<title>ZTGCX0001_UPD_PRICE</title>
+<style type="text/css">
+.code{ font-family:"Courier New", Courier, monospace; color:#000; font-size:14px; background-color:#F2F4F7 }
+  .codeComment {font-family:"Courier New", Courier, monospace; color:#0000F0; font-size:14px; background-color:#F2F4F7 }
+  .normalBold{ font-family:Arial, Helvetica, sans-serif; color:#000; font-size:12px; font-weight:800 }
+  .normalBoldLarge{ font-family:Arial, Helvetica, sans-serif; color:#000; font-size:16px; font-weight:800 }
+</style>
+<style type="text/css">
+  .normal{ font-family:Arial, Helvetica, sans-serif; color:#000; font-size:12px }
+  .footer{ font-family:Arial, Helvetica, sans-serif; color:#000; font-size:12px; text-align: center }
+  h2{ font-family:Arial, Helvetica, sans-serif; color:#000; font-size:16px; font-weight:800 }
+  h3{ font-family:Arial, Helvetica, sans-serif; color:#000; font-size:14px; font-weight:800 }
+  .outerTable{
+   background-color:#E0E7ED;
+   width:100%;
+   border-top-width: thin;
+   border-right-width: thin;
+   border-right-width: thin;
+   border-left-width: thin;
+   border-top-style: solid;
+   border-right-style: solid;
+   border-bottom-style: solid;
+   border-left-style: solid;
+  }
+  .innerTable{
+   background-color:#F2F4F7;
+   width:100%;
+   border-top-width: thin;
+   border-right-width: thin;
+   border-bottom-width: thin;
+   border-left-width: thin;
+   border-top-style: solid;
+   border-right-style: solid;
+   border-bottom-style: solid;
+   border-left-style: solid;
+  }
+</style>
+</head>
+<body>
+<table class="outerTable">
+  <tr class="normalBoldLarge">
+     <td><h2>Code listing for: ZTGCX0001_UPD_PRICE</h2>
+<h3> Description: </h3></td>
+   </tr>
+  <tr>
+     <td>
+     <table class="innerTable">
+       <tr>
+          <td>
+   <div class="codeComment">
+*&---------------------------------------------------------------------*<br />
+*&&nbsp;Report&nbsp;ZTGCX0001_UPD_PRICE<br />
+*&---------------------------------------------------------------------*<br />
+*&nbsp;2026/05/30&nbsp;V002&nbsp;JosephLo&nbsp;寫回&nbsp;ZTCX0001&nbsp;改&nbsp;MODIFY&nbsp;整列→UPDATE&nbsp;SET&nbsp;單欄,&nbsp;消除&nbsp;race&nbsp;condition&nbsp;洗欄位(詳見&nbsp;FORM&nbsp;save_data&nbsp;內註解)<br />
+*&nbsp;2026/05/30&nbsp;V003&nbsp;JosephLo&nbsp;結構重構(拆&nbsp;collect/process/save/display&nbsp;分層)&nbsp;+&nbsp;race&nbsp;樂觀鎖加嚴(E段鎖&nbsp;netpr/waers&nbsp;防不一致折算;&nbsp;sales_*&nbsp;拆獨立&nbsp;UPDATE&nbsp;防洗業務價)&nbsp;—&nbsp;詳見&nbsp;FORM&nbsp;save_data<br />
+*&nbsp;2026/06/06&nbsp;V004&nbsp;JosephLo&nbsp;加隱藏旗標&nbsp;p_nodisp(NO-DISPLAY):&nbsp;供&nbsp;ZTGCX0032&nbsp;SUBMIT&nbsp;時跳過自身&nbsp;ALV(前景不多跳子視窗);&nbsp;手動執行畫面與行為完全不變<br />
+*&---------------------------------------------------------------------*<br />
+   </div>
+   <div class="code">
+REPORT ztgcx0001_upd_price.<br />
+TABLES: ztcx0001.<br />
+   </div>
+   <div class="codeComment">
+*PARAMETERS:p_001&nbsp;TYPE&nbsp;xfeld,<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;p_003&nbsp;TYPE&nbsp;xfeld.<br />
+   </div>
+   <div class="code">
+SELECT-OPTIONS: s_werks FOR ztcx0001-werks,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;s_vtweg&nbsp;FOR&nbsp;ztcx0001-vtweg,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;s_idnrk&nbsp;FOR&nbsp;ztcx0001-idnrk.<br />
+"隱藏旗標:呼叫端(ZTGCX0032)SUBMIT 帶 'X' 時跳過 END-OF-SELECTION 的 ALV 顯示;<br />
+"         NO-DISPLAY → 不顯示於選擇畫面,手動執行時畫面/行為不變。<br />
+"         # NO-DISPLAY 不可配 AS CHECKBOX(語法衝突),隱藏旗標用 TYPE c LENGTH 1 即可。<br />
+PARAMETERS p_nodisp TYPE c LENGTH 1 NO-DISPLAY.<br />
+<br />
+   </div>
+   <div class="codeComment">
+*&nbsp;V003&nbsp;兩條補價路徑各用一個內表(兩&nbsp;SELECT&nbsp;條件&nbsp;netpr&nbsp;空/非空&nbsp;互斥,&nbsp;不會重複):<br />
+   </div>
+   <div class="code">
+DATA: gt_001_f TYPE TABLE OF ztcx0001,   "市購F件、原幣價(netpr)待取 → 走報價系統(default_netpr_001)<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;gt_001_e&nbsp;TYPE&nbsp;TABLE&nbsp;OF&nbsp;ztcx0001.&nbsp;&nbsp;&nbsp;"已有原幣價、缺&nbsp;CNY&nbsp;&nbsp;&nbsp;&nbsp;→&nbsp;走匯率折算(process_e_items)<br />
+<br />
+   </div>
+   <div class="codeComment">
+*&---------------------------------------------------------------------*<br />
+*&nbsp;V003&nbsp;重構後主流程:&nbsp;取&nbsp;→&nbsp;算&nbsp;→&nbsp;寫&nbsp;→&nbsp;顯示&nbsp;各自收斂為一個&nbsp;FORM,<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;event&nbsp;block&nbsp;內只放&nbsp;PERFORM,&nbsp;不再有邏輯。<br />
+*&---------------------------------------------------------------------*<br />
+   </div>
+   <div class="code">
+START-OF-SELECTION.<br />
+&nbsp;&nbsp;PERFORM&nbsp;collect_data.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"一次抓出兩類要補價的列<br />
+&nbsp;&nbsp;PERFORM&nbsp;process_price.&nbsp;&nbsp;&nbsp;&nbsp;"算價(內部依路徑分流:&nbsp;F&nbsp;報價&nbsp;/&nbsp;E&nbsp;折算)<br />
+&nbsp;&nbsp;PERFORM&nbsp;save_data.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"UPDATE&nbsp;SET&nbsp;寫回(只動本程式算的欄,&nbsp;樂觀鎖)<br />
+<br />
+END-OF-SELECTION.<br />
+&nbsp;&nbsp;IF&nbsp;p_nodisp&nbsp;IS&nbsp;INITIAL.&nbsp;&nbsp;&nbsp;"呼叫端帶&nbsp;p_nodisp='X'&nbsp;時跳過(前景不多跳子&nbsp;ALV;背景本就進&nbsp;spool)<br />
+&nbsp;&nbsp;&nbsp;&nbsp;PERFORM&nbsp;display_alv.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"兩內表合併&nbsp;ALV&nbsp;顯示<br />
+&nbsp;&nbsp;ENDIF.<br />
+<br />
+   </div>
+   <div class="codeComment">
+*&---------------------------------------------------------------------*<br />
+*&&nbsp;Form&nbsp;collect_data<br />
+*&---------------------------------------------------------------------*<br />
+*&&nbsp;取資料:&nbsp;把「要補價」的列一次抓進兩個內表。<br />
+*&&nbsp;&nbsp;&nbsp;gt_001_f&nbsp;=&nbsp;市購F件且原幣價還沒取(netpr&nbsp;空)<br />
+*&&nbsp;&nbsp;&nbsp;gt_001_e&nbsp;=&nbsp;已有原幣價但缺&nbsp;CNY&nbsp;折算(netpr&nbsp;非空、netpr_cny&nbsp;空)<br />
+*&&nbsp;&nbsp;&nbsp;兩條件互斥(netpr&nbsp;空&nbsp;vs&nbsp;非空),&nbsp;同一筆不會同時落入兩表。<br />
+*&---------------------------------------------------------------------*<br />
+   </div>
+   <div class="code">
+FORM collect_data.<br />
+&nbsp;&nbsp;SELECT&nbsp;*&nbsp;FROM&nbsp;ztcx0001<br />
+&nbsp;&nbsp;&nbsp;&nbsp;WHERE&nbsp;werks&nbsp;IN&nbsp;@s_werks<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;vtweg&nbsp;IN&nbsp;@s_vtweg<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;idnrk&nbsp;IN&nbsp;@s_idnrk<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;netpr&nbsp;IS&nbsp;INITIAL<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;beskz&nbsp;=&nbsp;'F'<br />
+&nbsp;&nbsp;INTO&nbsp;TABLE&nbsp;@gt_001_f.<br />
+<br />
+&nbsp;&nbsp;SELECT&nbsp;*&nbsp;FROM&nbsp;ztcx0001<br />
+&nbsp;&nbsp;&nbsp;&nbsp;WHERE&nbsp;werks&nbsp;IN&nbsp;@s_werks<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;vtweg&nbsp;IN&nbsp;@s_vtweg<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;idnrk&nbsp;IN&nbsp;@s_idnrk<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;netpr&nbsp;IS&nbsp;NOT&nbsp;INITIAL<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;netpr_cny&nbsp;IS&nbsp;INITIAL<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"AND&nbsp;(&nbsp;beskz&nbsp;=&nbsp;'E'&nbsp;OR&nbsp;(&nbsp;beskz&nbsp;=&nbsp;'F'&nbsp;AND&nbsp;sobsl&nbsp;=&nbsp;'30'&nbsp;)&nbsp;)&nbsp;&nbsp;"原條件已註解,&nbsp;現抓所有&nbsp;beskz(範圍待業務確認)<br />
+&nbsp;&nbsp;INTO&nbsp;TABLE&nbsp;@gt_001_e.<br />
+ENDFORM.<br />
+<br />
+   </div>
+   <div class="codeComment">
+*&---------------------------------------------------------------------*<br />
+*&&nbsp;Form&nbsp;process_price<br />
+*&---------------------------------------------------------------------*<br />
+*&&nbsp;算價&nbsp;dispatcher:&nbsp;依兩條路徑分流。<br />
+*&&nbsp;&nbsp;&nbsp;F&nbsp;路徑:&nbsp;連原幣價都沒有&nbsp;→&nbsp;走報價系統&nbsp;Z_QT_COMP_PRICE_GET&nbsp;整套取<br />
+*&&nbsp;&nbsp;&nbsp;E&nbsp;路徑:&nbsp;原幣價已有、只缺&nbsp;CNY&nbsp;→&nbsp;走匯率&nbsp;BAPI&nbsp;折算<br />
+*&&nbsp;&nbsp;&nbsp;兩者算法不同是「刻意」(有報價走報價、無原幣才折算),&nbsp;故分成兩支表達。<br />
+*&---------------------------------------------------------------------*<br />
+   </div>
+   <div class="code">
+FORM process_price.<br />
+&nbsp;&nbsp;PERFORM&nbsp;process_f_items.<br />
+&nbsp;&nbsp;PERFORM&nbsp;process_e_items.<br />
+ENDFORM.<br />
+<br />
+   </div>
+   <div class="codeComment">
+*&---------------------------------------------------------------------*<br />
+*&&nbsp;Form&nbsp;process_f_items<br />
+*&---------------------------------------------------------------------*<br />
+*&&nbsp;F&nbsp;路徑:&nbsp;市購F件、原幣價待取。<br />
+*&&nbsp;&nbsp;&nbsp;default_netpr_001&nbsp;帶出原幣價&nbsp;+&nbsp;CNY/TWD&nbsp;+&nbsp;預設供應商,<br />
+*&&nbsp;&nbsp;&nbsp;業務單價若仍空再呼叫&nbsp;get_sales_price。<br />
+*&---------------------------------------------------------------------*<br />
+   </div>
+   <div class="code">
+FORM process_f_items.<br />
+&nbsp;&nbsp;LOOP&nbsp;AT&nbsp;gt_001_f&nbsp;ASSIGNING&nbsp;FIELD-SYMBOL(&lt;ls_f&gt;).<br />
+&nbsp;&nbsp;&nbsp;&nbsp;"帶出淨價<br />
+&nbsp;&nbsp;&nbsp;&nbsp;PERFORM&nbsp;default_netpr_001&nbsp;CHANGING&nbsp;&lt;ls_f&gt;.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;&lt;ls_f&gt;-sales_netpr_6&nbsp;IS&nbsp;INITIAL.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PERFORM&nbsp;get_sales_price&nbsp;USING&nbsp;&lt;ls_f&gt;.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+&nbsp;&nbsp;ENDLOOP.<br />
+ENDFORM.<br />
+<br />
+   </div>
+   <div class="codeComment">
+*&---------------------------------------------------------------------*<br />
+*&&nbsp;Form&nbsp;process_e_items<br />
+*&---------------------------------------------------------------------*<br />
+*&&nbsp;E&nbsp;路徑:&nbsp;已有原幣價、缺&nbsp;CNY。<br />
+*&&nbsp;&nbsp;&nbsp;用即期匯率(rate_type&nbsp;'M')把原幣&nbsp;netpr&nbsp;折算成&nbsp;CNY/TWD,<br />
+*&&nbsp;&nbsp;&nbsp;業務單價若仍空再呼叫&nbsp;get_sales_price。原幣&nbsp;netpr/waers&nbsp;不動。<br />
+*&---------------------------------------------------------------------*<br />
+   </div>
+   <div class="code">
+FORM process_e_items.<br />
+&nbsp;&nbsp;DATA:&nbsp;ls_exch_rate&nbsp;TYPE&nbsp;bapi1093_0,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ls_return&nbsp;&nbsp;&nbsp;&nbsp;TYPE&nbsp;bapiret1.<br />
+<br />
+&nbsp;&nbsp;LOOP&nbsp;AT&nbsp;gt_001_e&nbsp;ASSIGNING&nbsp;FIELD-SYMBOL(&lt;ls_e&gt;).<br />
+&nbsp;&nbsp;&nbsp;&nbsp;"CNY<br />
+&nbsp;&nbsp;&nbsp;&nbsp;CLEAR&nbsp;ls_exch_rate.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;CALL&nbsp;FUNCTION&nbsp;'BAPI_EXCHANGERATE_GETDETAIL'<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;EXPORTING<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rate_type&nbsp;&nbsp;=&nbsp;'M'<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;from_curr&nbsp;&nbsp;=&nbsp;&lt;ls_e&gt;-waers<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;to_currncy&nbsp;=&nbsp;'CNY'<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;date&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;sy-datum<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IMPORTING<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exch_rate&nbsp;&nbsp;=&nbsp;ls_exch_rate<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;ls_return.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;ls_e&gt;-netpr_cny&nbsp;=&nbsp;&lt;ls_e&gt;-netpr&nbsp;*&nbsp;ls_exch_rate-exch_rate.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;ls_e&gt;-waers_cny&nbsp;=&nbsp;'CNY'.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;"TWD<br />
+&nbsp;&nbsp;&nbsp;&nbsp;CALL&nbsp;FUNCTION&nbsp;'BAPI_EXCHANGERATE_GETDETAIL'<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;EXPORTING<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rate_type&nbsp;&nbsp;=&nbsp;'M'<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;from_curr&nbsp;&nbsp;=&nbsp;&lt;ls_e&gt;-waers<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;to_currncy&nbsp;=&nbsp;'TWD'<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;date&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;sy-datum<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IMPORTING<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exch_rate&nbsp;&nbsp;=&nbsp;ls_exch_rate<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;ls_return.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;ls_e&gt;-netpr_twd&nbsp;=&nbsp;&lt;ls_e&gt;-netpr&nbsp;*&nbsp;ls_exch_rate-exch_rate.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;ls_e&gt;-waers_twd&nbsp;=&nbsp;'TWD'.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;&lt;ls_e&gt;-sales_netpr_6&nbsp;IS&nbsp;INITIAL.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PERFORM&nbsp;get_sales_price&nbsp;USING&nbsp;&lt;ls_e&gt;.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+&nbsp;&nbsp;ENDLOOP.<br />
+ENDFORM.<br />
+<br />
+   </div>
+   <div class="codeComment">
+*&---------------------------------------------------------------------*<br />
+*&&nbsp;Form&nbsp;save_data<br />
+*&---------------------------------------------------------------------*<br />
+*&nbsp;寫回&nbsp;ZTCX0001&nbsp;—&nbsp;料價與業務價分開&nbsp;UPDATE,&nbsp;各自&nbsp;SET&nbsp;對應欄並帶樂觀鎖。<br />
+*&nbsp;======================================================================&nbsp;*<br />
+*&nbsp;2026/05/30&nbsp;V002&nbsp;JosephLo&nbsp;&nbsp;MODIFY&nbsp;整列&nbsp;→&nbsp;UPDATE&nbsp;SET&nbsp;單欄(消&nbsp;race&nbsp;洗欄位)&nbsp;&nbsp;*<br />
+*&nbsp;2026/05/30&nbsp;V003&nbsp;JosephLo&nbsp;&nbsp;樂觀鎖加嚴(code&nbsp;review&nbsp;兩個高風險發現)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*<br />
+*&nbsp;----------------------------------------------------------------------&nbsp;*<br />
+*&nbsp;背景(V002):&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*<br />
+*&nbsp;&nbsp;&nbsp;原&nbsp;`MODIFY&nbsp;ztcx0001&nbsp;FROM&nbsp;TABLE`&nbsp;整列回寫,&nbsp;會用&nbsp;collect_data&nbsp;的&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*<br />
+*&nbsp;&nbsp;&nbsp;`SELECT&nbsp;*`&nbsp;T0&nbsp;快照整列覆蓋,&nbsp;洗掉&nbsp;race&nbsp;期間別人寫的&nbsp;qq/qq_seq/moq_*/&nbsp;&nbsp;&nbsp;&nbsp;*<br />
+*&nbsp;&nbsp;&nbsp;zxqno...。改成&nbsp;`UPDATE&nbsp;...&nbsp;SET&nbsp;指定欄&nbsp;WHERE&nbsp;主鍵&nbsp;+&nbsp;樂觀鎖`,&nbsp;只動本程式&nbsp;&nbsp;*<br />
+*&nbsp;&nbsp;&nbsp;算的欄。process&nbsp;內呼叫&nbsp;Z_QT_COMP_PRICE_GET&nbsp;×2&nbsp;+&nbsp;ZSD_ODM_XQ_PRICE(重FM),*<br />
+*&nbsp;&nbsp;&nbsp;race&nbsp;window&nbsp;長達數秒~數十秒,&nbsp;撞車機率高。&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*<br />
+*&nbsp;加嚴(V003):&nbsp;上述&nbsp;V002&nbsp;樂觀鎖仍有兩個漏洞(review&nbsp;指出):&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*<br />
+*&nbsp;&nbsp;〔發現1〕E段折算來源未鎖。SET&nbsp;的&nbsp;netpr_cny/twd&nbsp;是用&nbsp;T0&nbsp;的&nbsp;netpr×waers&nbsp;&nbsp;&nbsp;*<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;匯率算的,&nbsp;但原&nbsp;WHERE&nbsp;只看&nbsp;netpr_cny&nbsp;IS&nbsp;INITIAL。若&nbsp;race&nbsp;期間採購經主&nbsp;&nbsp;&nbsp;*<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;程式上傳改了&nbsp;netpr/waers(主程式&nbsp;ZTGCX0001&nbsp;上傳,&nbsp;採購角色&nbsp;C&nbsp;會手&nbsp;key&nbsp;&nbsp;&nbsp;&nbsp;*<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;議定料價)而&nbsp;cny&nbsp;仍空,&nbsp;會把「舊&nbsp;netpr&nbsp;算的&nbsp;cny」貼到「新&nbsp;netpr」那筆&nbsp;→&nbsp;&nbsp;*<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;不自洽且不自癒(cny&nbsp;寫入後再跑&nbsp;E段&nbsp;SELECT&nbsp;抓不到)。&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;對策:&nbsp;E段料價&nbsp;WHERE&nbsp;加&nbsp;`netpr=T0&nbsp;AND&nbsp;waers=T0`,&nbsp;來源被改就跳過,&nbsp;該筆&nbsp;&nbsp;&nbsp;*<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;下一輪&nbsp;batch(cny&nbsp;仍空)會用新值重新折算,&nbsp;反而正確。&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*<br />
+*&nbsp;&nbsp;〔發現2〕sales_*&nbsp;無條件覆蓋。process&nbsp;只在&nbsp;sales_netpr_6&nbsp;空才重算,&nbsp;但&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;save&nbsp;無條件&nbsp;SET&nbsp;sales_*,&nbsp;會用&nbsp;T0&nbsp;快照洗掉別人更新的業務價(且&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;sales_amt=sales_netpr_6×moq_remain,&nbsp;moq_remain&nbsp;被主程式&nbsp;CONFIRM&nbsp;改時&nbsp;&nbsp;*<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;更不一致)。對策:&nbsp;sales_*&nbsp;抽成獨立&nbsp;UPDATE,&nbsp;WHERE&nbsp;加&nbsp;sales_netpr_6&nbsp;IS&nbsp;&nbsp;&nbsp;*<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;INITIAL(對應&nbsp;process「空才算」語意),&nbsp;DB&nbsp;已有業務價就不洗。&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;∵料價&nbsp;guard&nbsp;與&nbsp;sales&nbsp;guard&nbsp;條件不同、UPDATE&nbsp;又是&nbsp;all-or-nothing,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;故每段都拆成「料價&nbsp;UPDATE&nbsp;+&nbsp;業務價&nbsp;UPDATE」兩道。&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*<br />
+*&nbsp;主鍵(SE11&nbsp;ZTCX0001):&nbsp;WERKS&nbsp;/&nbsp;VTWEG&nbsp;/&nbsp;ZSEQ&nbsp;/&nbsp;ZPORTALNO&nbsp;/&nbsp;IDNRK&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*<br />
+*&nbsp;chdat/chtim/chnam&nbsp;兩道&nbsp;UPDATE&nbsp;都寫,&nbsp;任一動作都留追查痕跡(chnam=本程式)。&nbsp;&nbsp;*<br />
+*&nbsp;殘留(本版未處理):&nbsp;sales_amt&nbsp;仍用&nbsp;T0&nbsp;的&nbsp;moq_remain&nbsp;算,&nbsp;若&nbsp;race&nbsp;期間&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*<br />
+*&nbsp;&nbsp;&nbsp;moq_remain&nbsp;被改,&nbsp;sales_amt&nbsp;與&nbsp;DB&nbsp;現值會有落差。要強一致需&nbsp;save&nbsp;時以&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*<br />
+*&nbsp;&nbsp;&nbsp;DB&nbsp;現存&nbsp;moq_remain&nbsp;重算&nbsp;sales_amt,&nbsp;改動較大,&nbsp;留待後續評估。&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*<br />
+*&nbsp;======================================================================&nbsp;*<br />
+   </div>
+   <div class="code">
+FORM save_data.<br />
+&nbsp;&nbsp;DATA:&nbsp;lv_f_cnt&nbsp;TYPE&nbsp;i,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"F&nbsp;段料價成功寫回筆數(訊息/追查用)<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;lv_e_cnt&nbsp;TYPE&nbsp;i.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"E&nbsp;段料價成功寫回筆數<br />
+<br />
+   </div>
+   <div class="codeComment">
+*&nbsp;---&nbsp;第#段:&nbsp;F&nbsp;件且原幣價(netpr)原為空&nbsp;→&nbsp;(1)料價&nbsp;+&nbsp;(2)業務價&nbsp;兩道&nbsp;UPDATE&nbsp;---&nbsp;*<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;IF&nbsp;gt_001_f&nbsp;IS&nbsp;NOT&nbsp;INITIAL.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;LOOP&nbsp;AT&nbsp;gt_001_f&nbsp;ASSIGNING&nbsp;FIELD-SYMBOL(&lt;fs_upd&gt;).<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"(1)&nbsp;料價:&nbsp;補原幣價&nbsp;+&nbsp;CNY/TWD&nbsp;+&nbsp;預設供應商。netpr&nbsp;原為空才寫。<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"&nbsp;&nbsp;&nbsp;&nbsp;F段天然免疫〔發現1〕:&nbsp;若&nbsp;race&nbsp;期間採購上傳了&nbsp;netpr(非空),<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"&nbsp;&nbsp;&nbsp;&nbsp;`netpr&nbsp;IS&nbsp;INITIAL`&nbsp;即不成立而跳過,&nbsp;不會覆蓋採購手議價。<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;UPDATE&nbsp;ztcx0001<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SET&nbsp;netpr&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;@&lt;fs_upd&gt;-netpr,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"原幣料價<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;waers&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;@&lt;fs_upd&gt;-waers,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"原幣幣別<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;netpr_cny&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;@&lt;fs_upd&gt;-netpr_cny,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"CNY&nbsp;料價<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;waers_cny&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;@&lt;fs_upd&gt;-waers_cny,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"CNY&nbsp;幣別<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;netpr_twd&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;@&lt;fs_upd&gt;-netpr_twd,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"TWD&nbsp;料價<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;waers_twd&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;@&lt;fs_upd&gt;-waers_twd,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"TWD&nbsp;幣別<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;zdefault_vendor&nbsp;=&nbsp;@&lt;fs_upd&gt;-zdefault_vendor,&nbsp;&nbsp;"預設供應商<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;chdat&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;@sy-datum,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"更改痕跡<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;chtim&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;@sy-uzeit,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;chnam&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;@sy-uname<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;WHERE&nbsp;werks&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;@&lt;fs_upd&gt;-werks&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"↓&nbsp;5&nbsp;個主鍵欄定位本筆<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;vtweg&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;@&lt;fs_upd&gt;-vtweg<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;zseq&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;@&lt;fs_upd&gt;-zseq<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;zportalno&nbsp;=&nbsp;@&lt;fs_upd&gt;-zportalno<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;idnrk&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;@&lt;fs_upd&gt;-idnrk<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;netpr&nbsp;IS&nbsp;INITIAL&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"樂觀鎖:&nbsp;race&nbsp;期間別人已補價就跳過<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;beskz&nbsp;=&nbsp;'F'.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"與當初&nbsp;SELECT&nbsp;條件一致(防&nbsp;beskz&nbsp;被改)<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;sy-subrc&nbsp;=&nbsp;0.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;lv_f_cnt&nbsp;=&nbsp;lv_f_cnt&nbsp;+&nbsp;1.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"(2)&nbsp;業務價〔發現2〕:&nbsp;抽成獨立&nbsp;UPDATE,&nbsp;只在&nbsp;DB&nbsp;sales&nbsp;仍空才寫,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"&nbsp;&nbsp;&nbsp;&nbsp;不洗別人更新的業務價(對應&nbsp;process「sales&nbsp;空才算」語意)。<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;UPDATE&nbsp;ztcx0001<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SET&nbsp;sales_netpr_6&nbsp;=&nbsp;@&lt;fs_upd&gt;-sales_netpr_6,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"業務單價<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sales_waers&nbsp;&nbsp;&nbsp;=&nbsp;@&lt;fs_upd&gt;-sales_waers,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"業務幣別<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sales_amt&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;@&lt;fs_upd&gt;-sales_amt,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"業務金額<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;chdat&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;@sy-datum,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;chtim&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;@sy-uzeit,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;chnam&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;@sy-uname<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;WHERE&nbsp;werks&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;@&lt;fs_upd&gt;-werks<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;vtweg&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;@&lt;fs_upd&gt;-vtweg<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;zseq&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;@&lt;fs_upd&gt;-zseq<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;zportalno&nbsp;=&nbsp;@&lt;fs_upd&gt;-zportalno<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;idnrk&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;@&lt;fs_upd&gt;-idnrk<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;sales_netpr_6&nbsp;IS&nbsp;INITIAL.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"樂觀鎖:&nbsp;DB&nbsp;已有業務價就不覆蓋<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ENDLOOP.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;COMMIT&nbsp;WORK.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;MESSAGE&nbsp;s001(00)&nbsp;WITH&nbsp;|補價(F件)完成&nbsp;{&nbsp;lv_f_cnt&nbsp;}&nbsp;筆|.<br />
+&nbsp;&nbsp;ENDIF.<br />
+<br />
+   </div>
+   <div class="codeComment">
+*&nbsp;---&nbsp;第#段:&nbsp;已有原幣價但缺&nbsp;CNY&nbsp;→&nbsp;(1)折算&nbsp;+&nbsp;(2)業務價&nbsp;兩道&nbsp;UPDATE(原幣&nbsp;netpr/waers&nbsp;不動)&nbsp;---&nbsp;*<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;IF&nbsp;gt_001_e&nbsp;IS&nbsp;NOT&nbsp;INITIAL.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;LOOP&nbsp;AT&nbsp;gt_001_e&nbsp;ASSIGNING&nbsp;&lt;fs_upd&gt;.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"(1)&nbsp;折算〔發現1〕:&nbsp;WHERE&nbsp;鎖住折算來源&nbsp;netpr/waers(=&nbsp;T0&nbsp;SELECT&nbsp;讀到的值),<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"&nbsp;&nbsp;&nbsp;&nbsp;race&nbsp;期間被採購上傳改掉就跳過,&nbsp;避免把舊來源算的&nbsp;cny&nbsp;貼到新來源。<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"&nbsp;&nbsp;&nbsp;&nbsp;跳過的筆(cny&nbsp;仍空)下一輪&nbsp;batch&nbsp;會用新&nbsp;netpr/waers&nbsp;重新折算。<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;UPDATE&nbsp;ztcx0001<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SET&nbsp;netpr_cny&nbsp;=&nbsp;@&lt;fs_upd&gt;-netpr_cny,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"CNY&nbsp;料價(匯率折算)<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;waers_cny&nbsp;=&nbsp;@&lt;fs_upd&gt;-waers_cny,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"CNY&nbsp;幣別<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;netpr_twd&nbsp;=&nbsp;@&lt;fs_upd&gt;-netpr_twd,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"TWD&nbsp;料價(匯率折算)<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;waers_twd&nbsp;=&nbsp;@&lt;fs_upd&gt;-waers_twd,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"TWD&nbsp;幣別<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;chdat&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;@sy-datum,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;chtim&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;@sy-uzeit,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;chnam&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;@sy-uname<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;WHERE&nbsp;werks&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;@&lt;fs_upd&gt;-werks&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"↓&nbsp;5&nbsp;個主鍵欄定位本筆<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;vtweg&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;@&lt;fs_upd&gt;-vtweg<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;zseq&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;@&lt;fs_upd&gt;-zseq<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;zportalno&nbsp;=&nbsp;@&lt;fs_upd&gt;-zportalno<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;idnrk&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;@&lt;fs_upd&gt;-idnrk<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;netpr&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;@&lt;fs_upd&gt;-netpr&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"〔發現1〕折算來源(原幣價)須仍是&nbsp;T0&nbsp;值<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;waers&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;@&lt;fs_upd&gt;-waers&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"〔發現1〕折算來源(幣別)須仍是&nbsp;T0&nbsp;值<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;netpr_cny&nbsp;IS&nbsp;INITIAL.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"樂觀鎖:&nbsp;race&nbsp;期間別人已補&nbsp;CNY&nbsp;就跳過<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;sy-subrc&nbsp;=&nbsp;0.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;lv_e_cnt&nbsp;=&nbsp;lv_e_cnt&nbsp;+&nbsp;1.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"(2)&nbsp;業務價〔發現2〕:&nbsp;同&nbsp;F&nbsp;段(2),&nbsp;只在&nbsp;DB&nbsp;sales&nbsp;仍空才寫。<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;UPDATE&nbsp;ztcx0001<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SET&nbsp;sales_netpr_6&nbsp;=&nbsp;@&lt;fs_upd&gt;-sales_netpr_6,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sales_waers&nbsp;&nbsp;&nbsp;=&nbsp;@&lt;fs_upd&gt;-sales_waers,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sales_amt&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;@&lt;fs_upd&gt;-sales_amt,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;chdat&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;@sy-datum,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;chtim&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;@sy-uzeit,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;chnam&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;@sy-uname<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;WHERE&nbsp;werks&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;@&lt;fs_upd&gt;-werks<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;vtweg&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;@&lt;fs_upd&gt;-vtweg<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;zseq&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;@&lt;fs_upd&gt;-zseq<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;zportalno&nbsp;=&nbsp;@&lt;fs_upd&gt;-zportalno<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;idnrk&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;@&lt;fs_upd&gt;-idnrk<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;sales_netpr_6&nbsp;IS&nbsp;INITIAL.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"樂觀鎖:&nbsp;DB&nbsp;已有業務價就不覆蓋<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ENDLOOP.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;COMMIT&nbsp;WORK.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;MESSAGE&nbsp;s001(00)&nbsp;WITH&nbsp;|補匯率(E件)完成&nbsp;{&nbsp;lv_e_cnt&nbsp;}&nbsp;筆|.<br />
+&nbsp;&nbsp;ENDIF.<br />
+ENDFORM.<br />
+<br />
+   </div>
+   <div class="codeComment">
+*&---------------------------------------------------------------------*<br />
+*&&nbsp;Form&nbsp;display_alv<br />
+*&---------------------------------------------------------------------*<br />
+*&&nbsp;顯示:&nbsp;兩內表合併,&nbsp;REUSE_ALV&nbsp;以&nbsp;ZTCX0001&nbsp;結構顯示。<br />
+*&&nbsp;&nbsp;&nbsp;注意顯示的是記憶體計算結果,&nbsp;樂觀鎖跳過未寫&nbsp;DB&nbsp;的列仍會列出。<br />
+*&---------------------------------------------------------------------*<br />
+   </div>
+   <div class="code">
+FORM display_alv.<br />
+&nbsp;&nbsp;DATA:&nbsp;lt_data&nbsp;&nbsp;&nbsp;TYPE&nbsp;TABLE&nbsp;OF&nbsp;ztcx0001,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ls_layout&nbsp;TYPE&nbsp;slis_layout_alv.<br />
+<br />
+&nbsp;&nbsp;IF&nbsp;gt_001_f&nbsp;IS&nbsp;INITIAL&nbsp;AND&nbsp;gt_001_e&nbsp;IS&nbsp;INITIAL.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;MESSAGE&nbsp;s001(00)&nbsp;WITH&nbsp;'No&nbsp;data&nbsp;exist'.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;RETURN.<br />
+&nbsp;&nbsp;ENDIF.<br />
+<br />
+&nbsp;&nbsp;APPEND&nbsp;LINES&nbsp;OF&nbsp;gt_001_f&nbsp;TO&nbsp;lt_data.<br />
+&nbsp;&nbsp;APPEND&nbsp;LINES&nbsp;OF&nbsp;gt_001_e&nbsp;TO&nbsp;lt_data.<br />
+&nbsp;&nbsp;ls_layout-colwidth_optimize&nbsp;=&nbsp;'X'.<br />
+&nbsp;&nbsp;CALL&nbsp;FUNCTION&nbsp;'REUSE_ALV_GRID_DISPLAY'<br />
+&nbsp;&nbsp;&nbsp;&nbsp;EXPORTING<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;i_structure_name&nbsp;=&nbsp;'ZTCX0001'<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;is_layout&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;ls_layout<br />
+&nbsp;&nbsp;&nbsp;&nbsp;TABLES<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;t_outtab&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;lt_data<br />
+&nbsp;&nbsp;&nbsp;&nbsp;EXCEPTIONS<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;program_error&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;1<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;OTHERS&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;2.<br />
+&nbsp;&nbsp;IF&nbsp;sy-subrc&nbsp;&lt;&gt;&nbsp;0.<br />
+   </div>
+   <div class="codeComment">
+*&nbsp;Implement&nbsp;suitable&nbsp;error&nbsp;handling&nbsp;here<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;ENDIF.<br />
+ENDFORM.<br />
+<br />
+   </div>
+   <div class="codeComment">
+*&---------------------------------------------------------------------*<br />
+*&&nbsp;Form&nbsp;default_netpr_001<br />
+*&---------------------------------------------------------------------*<br />
+*&&nbsp;text<br />
+*&---------------------------------------------------------------------*<br />
+*&&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;--&nbsp;&lt;LS_1F&gt;<br />
+*&---------------------------------------------------------------------*<br />
+   </div>
+   <div class="code">
+FORM default_netpr_001  CHANGING p_data TYPE ztcx0001.<br />
+<br />
+&nbsp;&nbsp;"20250410改抓取Z_QT_COMP_PRICE_GET取價<br />
+&nbsp;&nbsp;DATA:lt_comp&nbsp;TYPE&nbsp;TABLE&nbsp;OF&nbsp;zsqt0201comp.<br />
+&nbsp;&nbsp;DATA:lv_msg&nbsp;TYPE&nbsp;string.<br />
+&nbsp;&nbsp;APPEND&nbsp;INITIAL&nbsp;LINE&nbsp;TO&nbsp;lt_comp&nbsp;ASSIGNING&nbsp;FIELD-SYMBOL(&lt;ls_comp&gt;).<br />
+&nbsp;&nbsp;&lt;ls_comp&gt;-idnrk&nbsp;=&nbsp;p_data-idnrk.<br />
+&nbsp;&nbsp;&lt;ls_comp&gt;-werks_c&nbsp;=&nbsp;p_data-werks.<br />
+&nbsp;&nbsp;&lt;ls_comp&gt;-menge_c&nbsp;&nbsp;=&nbsp;p_data-menge.<br />
+&nbsp;&nbsp;&lt;ls_comp&gt;-waers_d&nbsp;=&nbsp;'CNY'.<br />
+<br />
+&nbsp;&nbsp;call&nbsp;function&nbsp;<a&nbsp;href&nbsp;="z_qt_comp_price_get/z_qt_comp_price_get.html">'Z_QT_COMP_PRICE_GET'</a><br />
+&nbsp;&nbsp;&nbsp;&nbsp;EXPORTING<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;prsdt&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;sy-datum<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;source_c&nbsp;&nbsp;=&nbsp;'2'<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;priceflag&nbsp;=&nbsp;'X'<br />
+&nbsp;&nbsp;&nbsp;&nbsp;IMPORTING<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;e_msg&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;lv_msg<br />
+&nbsp;&nbsp;&nbsp;&nbsp;TABLES<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;et_comp&nbsp;&nbsp;&nbsp;=&nbsp;lt_comp.<br />
+&nbsp;&nbsp;READ&nbsp;TABLE&nbsp;lt_comp&nbsp;ASSIGNING&nbsp;&lt;ls_comp&gt;&nbsp;WITH&nbsp;KEY&nbsp;idnrk&nbsp;=&nbsp;p_data-idnrk.<br />
+&nbsp;&nbsp;IF&nbsp;sy-subrc&nbsp;=&nbsp;0.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;p_data-waers&nbsp;=&nbsp;&lt;ls_comp&gt;-waers_c.&nbsp;"原始幣別<br />
+&nbsp;&nbsp;&nbsp;&nbsp;p_data-netpr&nbsp;=&nbsp;&lt;ls_comp&gt;-up_m.&nbsp;&nbsp;"原始幣別&nbsp;料價<br />
+&nbsp;&nbsp;&nbsp;&nbsp;p_data-waers_cny&nbsp;=&nbsp;&lt;ls_comp&gt;-waers_d.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;p_data-netpr_cny&nbsp;=&nbsp;&lt;ls_comp&gt;-amt_d&nbsp;/&nbsp;&lt;ls_comp&gt;-menge_c."CNY料價<br />
+&nbsp;&nbsp;&nbsp;&nbsp;"有原幣/單價，但無CNY/&nbsp;TWD&nbsp;單價者&nbsp;(不報價)，由FM&nbsp;回傳的匯率計算&nbsp;CNY/TWD&nbsp;單價。<br />
+&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;p_data-netpr_cny&nbsp;IS&nbsp;INITIAL.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;p_data-netpr_cny&nbsp;=&nbsp;&lt;ls_comp&gt;-up_m&nbsp;*&nbsp;&lt;ls_comp&gt;-kurrf_c.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;p_data-waers_cny&nbsp;=&nbsp;'CNY'.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ELSE.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SELECT&nbsp;SINGLE&nbsp;ztmarc~zdefault_vendor<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FROM&nbsp;ztmarc&nbsp;INNER&nbsp;JOIN&nbsp;lfa1&nbsp;ON&nbsp;ztmarc~zdefault_vendor&nbsp;=&nbsp;lfa1~lifnr<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;WHERE&nbsp;ztmarc~werks&nbsp;=&nbsp;@p_data-werks<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;ztmarc~matnr&nbsp;=&nbsp;@p_data-idnrk<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;INTO&nbsp;(&nbsp;@p_data-zdefault_vendor&nbsp;).<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;&lt;ls_comp&gt;-up_m&nbsp;IS&nbsp;NOT&nbsp;INITIAL.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;p_data-zdefault_vendor&nbsp;=&nbsp;&lt;ls_comp&gt;-zdefault_vendor.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+&nbsp;&nbsp;ENDIF.<br />
+&nbsp;&nbsp;lt_comp[&nbsp;1&nbsp;]-waers_d&nbsp;=&nbsp;'TWD'.<br />
+&nbsp;&nbsp;call&nbsp;function&nbsp;<a&nbsp;href&nbsp;="z_qt_comp_price_get/z_qt_comp_price_get.html">'Z_QT_COMP_PRICE_GET'</a><br />
+&nbsp;&nbsp;&nbsp;&nbsp;EXPORTING<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;prsdt&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;sy-datum<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;source_c&nbsp;&nbsp;=&nbsp;'2'<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;priceflag&nbsp;=&nbsp;'X'<br />
+&nbsp;&nbsp;&nbsp;&nbsp;IMPORTING<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;e_msg&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;lv_msg<br />
+&nbsp;&nbsp;&nbsp;&nbsp;TABLES<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;et_comp&nbsp;&nbsp;&nbsp;=&nbsp;lt_comp.<br />
+&nbsp;&nbsp;READ&nbsp;TABLE&nbsp;lt_comp&nbsp;ASSIGNING&nbsp;&lt;ls_comp&gt;&nbsp;WITH&nbsp;KEY&nbsp;idnrk&nbsp;=&nbsp;p_data-idnrk.<br />
+&nbsp;&nbsp;IF&nbsp;sy-subrc&nbsp;=&nbsp;0.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;p_data-waers_twd&nbsp;=&nbsp;&lt;ls_comp&gt;-waers_d.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;p_data-netpr_twd&nbsp;=&nbsp;&lt;ls_comp&gt;-amt_d&nbsp;/&nbsp;&lt;ls_comp&gt;-menge_c."TWD料價<br />
+&nbsp;&nbsp;ENDIF.<br />
+&nbsp;&nbsp;IF&nbsp;p_data-netpr_twd&nbsp;IS&nbsp;INITIAL.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;p_data-netpr_twd&nbsp;=&nbsp;&lt;ls_comp&gt;-up_m&nbsp;*&nbsp;&lt;ls_comp&gt;-kurrf_c.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;p_data-waers_twd&nbsp;=&nbsp;'TWD'.<br />
+&nbsp;&nbsp;ENDIF.<br />
+&nbsp;&nbsp;IF&nbsp;p_data-netpr&nbsp;IS&nbsp;INITIAL.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;"有效的INFO&nbsp;RECORD<br />
+&nbsp;&nbsp;&nbsp;&nbsp;DATA:lv_factor&nbsp;TYPE&nbsp;isoc_factor.<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;SELECT&nbsp;SINGLE&nbsp;eine~effpr,eine~waers,eine~peinh&nbsp;FROM&nbsp;eine<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;INNER&nbsp;JOIN&nbsp;eina&nbsp;ON&nbsp;eine~infnr&nbsp;=&nbsp;eina~infnr<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;WHERE&nbsp;eina~matnr&nbsp;=&nbsp;@p_data-idnrk<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;eine~werks&nbsp;=&nbsp;@p_data-werks<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;eina~lifnr&nbsp;=&nbsp;@p_data-zdefault_vendor<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;eine~esokz&nbsp;=&nbsp;'0'<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;eina~loekz&nbsp;IS&nbsp;INITIAL<br />
+&nbsp;&nbsp;&nbsp;&nbsp;INTO&nbsp;@DATA(ls_info).<br />
+&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;sy-subrc&nbsp;=&nbsp;0.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CALL&nbsp;FUNCTION&nbsp;'CURRENCY_CONVERTING_FACTOR'<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;EXPORTING<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;currency&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;ls_info-waers<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IMPORTING<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;factor&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;lv_factor<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;EXCEPTIONS<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;too_many_decimals&nbsp;=&nbsp;1<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;OTHERS&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;2.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;sy-subrc&nbsp;&lt;&gt;&nbsp;0.<br />
+   </div>
+   <div class="codeComment">
+*&nbsp;Implement&nbsp;suitable&nbsp;error&nbsp;handling&nbsp;here<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;p_data-netpr&nbsp;=&nbsp;ls_info-effpr&nbsp;/&nbsp;ls_info-peinh&nbsp;*&nbsp;lv_factor.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;p_data-waers&nbsp;=&nbsp;ls_info-waers.<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;"CNY<br />
+&nbsp;&nbsp;&nbsp;&nbsp;DATA:ls_exch_rate&nbsp;TYPE&nbsp;bapi1093_0,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ls_return&nbsp;&nbsp;&nbsp;&nbsp;TYPE&nbsp;bapiret1.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;CALL&nbsp;FUNCTION&nbsp;'BAPI_EXCHANGERATE_GETDETAIL'<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;EXPORTING<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rate_type&nbsp;&nbsp;=&nbsp;'M'<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;from_curr&nbsp;&nbsp;=&nbsp;'USD'<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;to_currncy&nbsp;=&nbsp;'CNY'<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;date&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;sy-datum<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IMPORTING<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exch_rate&nbsp;&nbsp;=&nbsp;ls_exch_rate<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;ls_return.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;p_data-netpr_cny&nbsp;=&nbsp;p_data-netpr&nbsp;*&nbsp;ls_exch_rate-exch_rate.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;p_data-waers_cny&nbsp;=&nbsp;'CNY'.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;"TWD<br />
+&nbsp;&nbsp;&nbsp;&nbsp;CALL&nbsp;FUNCTION&nbsp;'BAPI_EXCHANGERATE_GETDETAIL'<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;EXPORTING<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rate_type&nbsp;&nbsp;=&nbsp;'M'<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;from_curr&nbsp;&nbsp;=&nbsp;'USD'<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;to_currncy&nbsp;=&nbsp;'TWD'<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;date&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;sy-datum<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IMPORTING<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exch_rate&nbsp;&nbsp;=&nbsp;ls_exch_rate<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;ls_return.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;p_data-netpr_twd&nbsp;=&nbsp;p_data-netpr&nbsp;*&nbsp;ls_exch_rate-exch_rate.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;p_data-waers_twd&nbsp;=&nbsp;'TWD'.<br />
+&nbsp;&nbsp;ENDIF.<br />
+<br />
+ENDFORM.<br />
+   </div>
+   <div class="codeComment">
+*&---------------------------------------------------------------------*<br />
+*&&nbsp;Form&nbsp;get_sales_price<br />
+*&---------------------------------------------------------------------*<br />
+*&&nbsp;text<br />
+*&---------------------------------------------------------------------*<br />
+*&&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--&gt;&nbsp;&lt;LS_1F&gt;<br />
+*&---------------------------------------------------------------------*<br />
+   </div>
+   <div class="code">
+FORM get_sales_price  USING   p_data TYPE ztcx0001.<br />
+&nbsp;&nbsp;DATA:i_vtweg&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;TYPE&nbsp;vtweg,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;i_matkl&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;TYPE&nbsp;matkl,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;i_zpno&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;TYPE&nbsp;zpno,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;i_zpnocode&nbsp;&nbsp;TYPE&nbsp;zpnocode,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;i_meins&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;TYPE&nbsp;meins,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;i_zmoqline&nbsp;&nbsp;TYPE&nbsp;zmoqline,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;i_prsdt&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;TYPE&nbsp;prsdt,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;i_zpcur&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;TYPE&nbsp;zpcur,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;i_zpup&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;TYPE&nbsp;zpup,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;i_zpup_per&nbsp;&nbsp;TYPE&nbsp;zpup_per,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;i_zpcnyup&nbsp;&nbsp;&nbsp;TYPE&nbsp;zpcnyup,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;i_zpcny_per&nbsp;TYPE&nbsp;zpcny_per,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;i_zptwdup&nbsp;&nbsp;&nbsp;TYPE&nbsp;zptwdup,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;i_zptwd_per&nbsp;TYPE&nbsp;zptwd_per.<br />
+&nbsp;&nbsp;DATA:&nbsp;e_zup_cur&nbsp;TYPE&nbsp;zusdcur,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;e_zup&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;TYPE&nbsp;zup9,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;e_zup_per&nbsp;TYPE&nbsp;zup_per.<br />
+&nbsp;&nbsp;i_vtweg&nbsp;=&nbsp;p_data-vtweg.<br />
+&nbsp;&nbsp;i_zpno&nbsp;=&nbsp;p_data-idnrk.<br />
+&nbsp;&nbsp;i_zpnocode&nbsp;=&nbsp;'M'.<br />
+&nbsp;&nbsp;i_meins&nbsp;=&nbsp;p_data-meins.<br />
+&nbsp;&nbsp;i_prsdt&nbsp;=&nbsp;sy-datum.<br />
+&nbsp;&nbsp;i_zpcur&nbsp;=&nbsp;p_data-waers.<br />
+&nbsp;&nbsp;i_zpup&nbsp;=&nbsp;100&nbsp;*&nbsp;p_data-netpr.<br />
+&nbsp;&nbsp;i_zpup_per&nbsp;=&nbsp;100.<br />
+&nbsp;&nbsp;i_zpcnyup&nbsp;=&nbsp;100&nbsp;*&nbsp;p_data-netpr_cny.<br />
+&nbsp;&nbsp;i_zpcny_per&nbsp;=&nbsp;100.<br />
+&nbsp;&nbsp;i_zptwdup&nbsp;=&nbsp;p_data-netpr_twd.<br />
+&nbsp;&nbsp;i_zptwd_per&nbsp;=&nbsp;100.<br />
+<br />
+&nbsp;&nbsp;call&nbsp;function&nbsp;<a&nbsp;href&nbsp;="zsd_odm_xq_price/zsd_odm_xq_price.html">'ZSD_ODM_XQ_PRICE'</a><br />
+&nbsp;&nbsp;&nbsp;&nbsp;EXPORTING<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;i_vtweg&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;i_vtweg<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;i_matkl&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;i_matkl<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;i_zpno&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;i_zpno<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;i_zpnocode&nbsp;&nbsp;=&nbsp;i_zpnocode<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;i_meins&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;i_meins<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;i_zmoqline&nbsp;&nbsp;=&nbsp;i_zmoqline<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;i_prsdt&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;i_prsdt<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;i_zpcur&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;i_zpcur<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;i_zpup&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;i_zpup<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;i_zpup_per&nbsp;&nbsp;=&nbsp;i_zpup_per<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;i_zpcnyup&nbsp;&nbsp;&nbsp;=&nbsp;i_zpcnyup<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;i_zpcny_per&nbsp;=&nbsp;i_zpcny_per<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;i_zptwdup&nbsp;&nbsp;&nbsp;=&nbsp;i_zptwdup<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;i_zptwd_per&nbsp;=&nbsp;i_zptwd_per<br />
+   </div>
+   <div class="codeComment">
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;I_ZTSD0107&nbsp;&nbsp;=<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;IMPORTING<br />
+   </div>
+   <div class="codeComment">
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;E_ZCALCUR&nbsp;&nbsp;&nbsp;=<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;E_ZFORMULATYPE&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;e_zup_cur&nbsp;&nbsp;&nbsp;=&nbsp;e_zup_cur<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;e_zup&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;e_zup<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;e_zup_per&nbsp;&nbsp;&nbsp;=&nbsp;e_zup_per<br />
+   </div>
+   <div class="codeComment">
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;E_ZUPFORMULA&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;E_ZTSD0107&nbsp;&nbsp;=<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;.<br />
+&nbsp;&nbsp;TRY.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"業務幣別<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;p_data-sales_waers&nbsp;=&nbsp;e_zup_cur.<br />
+<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"業務單價<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;p_data-sales_netpr_6&nbsp;=&nbsp;e_zup&nbsp;/&nbsp;e_zup_per.<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"業務金額&nbsp;=&nbsp;業務單價&nbsp;x&nbsp;該張單報&nbsp;MOQ&nbsp;or&nbsp;XJ&nbsp;的數量<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;p_data-sales_amt&nbsp;=&nbsp;p_data-sales_netpr_6&nbsp;*&nbsp;p_data-moq_remain.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;CATCH&nbsp;&nbsp;cx_sy_conversion_overflow&nbsp;INTO&nbsp;DATA(lr_cx).<br />
+<br />
+&nbsp;&nbsp;ENDTRY.<br />
+ENDFORM.<br />
+<br />
+<br />
+   </div>
+   <div class="codeComment">
+*Messages<br />
+*----------------------------------------------------------<br />
+*<br />
+*&nbsp;Message&nbsp;class:&nbsp;00<br />
+*001&nbsp;&nbsp;&nbsp;&1&2&3&4&5&6&7&8<br />
+            </div>
+          </td>
+        </tr>
+      </table>
+      </td>
+      </tr>
+   <tr>
+<td class="footer">Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2026. Sap Release 757</td>
+   </tr>
+</table>
+</body>
+</html>

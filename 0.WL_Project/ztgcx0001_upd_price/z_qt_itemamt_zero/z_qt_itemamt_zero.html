@@ -1,0 +1,238 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="application/xhtml+xml; charset=UTF-8" />
+<title>Z_QT_ITEMAMT_ZERO</title>
+<style type="text/css">
+.code{ font-family:"Courier New", Courier, monospace; color:#000; font-size:14px; background-color:#F2F4F7 }
+  .codeComment {font-family:"Courier New", Courier, monospace; color:#0000F0; font-size:14px; background-color:#F2F4F7 }
+  .normalBold{ font-family:Arial, Helvetica, sans-serif; color:#000; font-size:12px; font-weight:800 }
+  .normalBoldLarge{ font-family:Arial, Helvetica, sans-serif; color:#000; font-size:16px; font-weight:800 }
+</style>
+<style type="text/css">
+  .normal{ font-family:Arial, Helvetica, sans-serif; color:#000; font-size:12px }
+  .footer{ font-family:Arial, Helvetica, sans-serif; color:#000; font-size:12px; text-align: center }
+  h2{ font-family:Arial, Helvetica, sans-serif; color:#000; font-size:16px; font-weight:800 }
+  h3{ font-family:Arial, Helvetica, sans-serif; color:#000; font-size:14px; font-weight:800 }
+  .outerTable{
+   background-color:#E0E7ED;
+   width:100%;
+   border-top-width: thin;
+   border-right-width: thin;
+   border-right-width: thin;
+   border-left-width: thin;
+   border-top-style: solid;
+   border-right-style: solid;
+   border-bottom-style: solid;
+   border-left-style: solid;
+  }
+  .innerTable{
+   background-color:#F2F4F7;
+   width:100%;
+   border-top-width: thin;
+   border-right-width: thin;
+   border-bottom-width: thin;
+   border-left-width: thin;
+   border-top-style: solid;
+   border-right-style: solid;
+   border-bottom-style: solid;
+   border-left-style: solid;
+  }
+</style>
+</head>
+<body>
+<table class="outerTable">
+  <tr class="normalBoldLarge">
+     <td><h2>Code listing for function Z_QT_ITEMAMT_ZERO</h2>
+<h3> Description: </h3></td>
+   </tr>
+  <tr>
+     <td>
+     <table class="innerTable">
+       <tr>
+          <td>
+   <div class="code">
+FUNCTION z_qt_itemamt_zero.<br />
+   </div>
+   <div class="codeComment">
+*"----------------------------------------------------------------------<br />
+*"*"區域介面：<br />
+*"  IMPORTING<br />
+*"     VALUE(PRSDT) TYPE  PRSDT OPTIONAL<br />
+*"  TABLES<br />
+*"      ET_COMP STRUCTURE  ZSQT0201COMP OPTIONAL<br />
+*"      ET_DATA STRUCTURE  ZSQT0201D OPTIONAL<br />
+*"----------------------------------------------------------------------<br />
+* 2026/05/11  V001    Fangchyi 增加工塑件發泡不良率計算<br />
+*"----------------------------------------------------------------------<br />
+
+<div class="codeComment">*       <a href ="global-z_qt_itemamt_zero.html">Global data declarations</a></div><br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;DATA:&nbsp;process_stage(100),<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;pre_comp&nbsp;LIKE&nbsp;et_comp.<br />
+<br />
+   </div>
+   <div class="codeComment">
+*元件是否報價邏輯處理<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;PERFORM&nbsp;assign_zero_comp&nbsp;TABLES&nbsp;et_comp.<br />
+<br />
+   </div>
+   <div class="codeComment">
+*上下階是否報價邏輯處理<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;PERFORM&nbsp;assign_zero_bom&nbsp;TABLES&nbsp;et_comp.<br />
+<br />
+&nbsp;&nbsp;LOOP&nbsp;AT&nbsp;et_comp&nbsp;ASSIGNING&nbsp;FIELD-SYMBOL(&lt;fs&gt;).<br />
+   </div>
+   <div class="codeComment">
+*取得元件其他欄位值&計算估算金額欄位<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;PERFORM&nbsp;assign_comp_fields&nbsp;USING&nbsp;prsdt&nbsp;CHANGING&nbsp;&lt;fs&gt;&nbsp;pre_comp.<br />
+<br />
+   </div>
+   <div class="codeComment">
+*判斷對應估算明細是否缺價格<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;PERFORM&nbsp;assign_lack_up&nbsp;USING&nbsp;&lt;fs&gt;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CHANGING&nbsp;et_data-lack_up.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;et_data-lack_up&nbsp;=&nbsp;'X'.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;MODIFY&nbsp;et_data&nbsp;TRANSPORTING&nbsp;lack_up&nbsp;WHERE&nbsp;coseq&nbsp;=&nbsp;&lt;fs&gt;-coseq.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+&nbsp;&nbsp;ENDLOOP.<br />
+<br />
+   </div>
+   <div class="codeComment">
+*V001 added<br />
+*工塑件的發泡不良率需反映在下階的金額上，下階的金額 = 原下階的金額 * (1+發泡不良率)<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;DATA(tmp_comp)&nbsp;=&nbsp;et_comp[].<br />
+&nbsp;&nbsp;DELETE&nbsp;tmp_comp&nbsp;WHERE&nbsp;evadefectrate&nbsp;=&nbsp;0.<br />
+&nbsp;&nbsp;SORT&nbsp;tmp_comp&nbsp;BY&nbsp;coseq&nbsp;compseq.<br />
+&nbsp;&nbsp;LOOP&nbsp;AT&nbsp;tmp_comp&nbsp;INTO&nbsp;DATA(w_tmp).<br />
+&nbsp;&nbsp;&nbsp;&nbsp;LOOP&nbsp;AT&nbsp;et_comp&nbsp;ASSIGNING&nbsp;&lt;fs&gt;&nbsp;WHERE&nbsp;coseq&nbsp;=&nbsp;w_tmp-coseq<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;compseq&nbsp;&gt;&nbsp;w_tmp-compseq.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;&lt;fs&gt;-stufe&nbsp;&lt;=&nbsp;w_tmp-stufe.&nbsp;&nbsp;"非下階元件時，則跳出<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;EXIT.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CHECK&nbsp;&lt;fs&gt;-zero&nbsp;=&nbsp;''.&nbsp;&nbsp;"僅處理需報價項次<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;fs&gt;-amt_c&nbsp;=&nbsp;(&nbsp;&lt;fs&gt;-up_m&nbsp;+&nbsp;&lt;fs&gt;-up_p&nbsp;+&nbsp;&lt;fs&gt;-up_e&nbsp;)<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*&nbsp;&lt;fs&gt;-menge_c.<br />
+   </div>
+   <div class="codeComment">
+*下階的金額 = 原下階的金額 * (1+發泡不良率)<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;fs&gt;-amt_c&nbsp;=&nbsp;&lt;fs&gt;-amt_c&nbsp;*&nbsp;(&nbsp;1&nbsp;+&nbsp;w_tmp-evadefectrate&nbsp;).<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;fs&gt;-amt_d&nbsp;=&nbsp;&lt;fs&gt;-amt_c&nbsp;*&nbsp;&lt;fs&gt;-kurrf_c.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;fs&gt;-tax_amt_c&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;&lt;fs&gt;-amt_c&nbsp;*&nbsp;&lt;fs&gt;-taxrate.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;fs&gt;-tax_amt_d&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;&lt;fs&gt;-tax_amt_c&nbsp;*&nbsp;&lt;fs&gt;-kurrf_c.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;fs&gt;-customs_amt_c&nbsp;=&nbsp;&lt;fs&gt;-amt_c&nbsp;*&nbsp;&lt;fs&gt;-customs_rate.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;fs&gt;-customs_amt_d&nbsp;=&nbsp;&lt;fs&gt;-customs_amt_c&nbsp;*&nbsp;&lt;fs&gt;-kurrf_c.<br />
+<br />
+   </div>
+   <div class="codeComment">
+*不含稅時，清空稅額<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;&lt;fs&gt;-taxflag_d&nbsp;=&nbsp;''.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CLEAR:&nbsp;&lt;fs&gt;-customs_amt_c,&lt;fs&gt;-customs_amt_d,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;fs&gt;-tax_amt_c,&lt;fs&gt;-tax_amt_d.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ENDLOOP.<br />
+&nbsp;&nbsp;ENDLOOP.<br />
+   </div>
+   <div class="codeComment">
+*V001 end off<br />
+<br />
+*重新計算et_data各金額小計欄位<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;DATA:&nbsp;l_amt_c&nbsp;LIKE&nbsp;ztqt0201comp-amt_c,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;l_amt&nbsp;&nbsp;&nbsp;LIKE&nbsp;ztqt0201d-amt_m.<br />
+&nbsp;&nbsp;LOOP&nbsp;AT&nbsp;et_data&nbsp;ASSIGNING&nbsp;FIELD-SYMBOL(&lt;fs_data&gt;).<br />
+&nbsp;&nbsp;&nbsp;&nbsp;CLEAR:&nbsp;&lt;fs_data&gt;-amt,&nbsp;&lt;fs_data&gt;-customs_amt,&nbsp;&lt;fs_data&gt;-tax_amt,&nbsp;&lt;fs_data&gt;-amt_m,&nbsp;&lt;fs_data&gt;-amt_p,&nbsp;&lt;fs_data&gt;-amt_e.<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;LOOP&nbsp;AT&nbsp;&nbsp;et_comp&nbsp;ASSIGNING&nbsp;FIELD-SYMBOL(&lt;fs_comp&gt;)&nbsp;WHERE&nbsp;coseq&nbsp;=&nbsp;&lt;fs_data&gt;-coseq.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;&lt;fs_comp&gt;-zero&nbsp;=&nbsp;'X'.&nbsp;&nbsp;"不報價<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CLEAR:&nbsp;&lt;fs_comp&gt;-amt_c,&lt;fs_comp&gt;-amt_d,&lt;fs_comp&gt;-customs_amt_c,&lt;fs_comp&gt;-customs_amt_d,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;fs_comp&gt;-tax_amt_c,&lt;fs_comp&gt;-tax_amt_d.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ELSE.<br />
+   </div>
+   <div class="codeComment">
+**重算稅額<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;&lt;fs_data&gt;-taxflag_d&nbsp;=&nbsp;'X'.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;fs_comp&gt;-tax_amt_c&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;&lt;fs_comp&gt;-amt_c&nbsp;*&nbsp;&lt;fs_comp&gt;-taxrate.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;fs_comp&gt;-tax_amt_d&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;&lt;fs_comp&gt;-tax_amt_c&nbsp;*&nbsp;&lt;fs_comp&gt;-kurrf_c.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;fs_comp&gt;-customs_amt_c&nbsp;=&nbsp;&lt;fs_comp&gt;-amt_c&nbsp;*&nbsp;&lt;fs_comp&gt;-customs_rate.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;fs_comp&gt;-customs_amt_d&nbsp;=&nbsp;&lt;fs_comp&gt;-customs_amt_c&nbsp;*&nbsp;&lt;fs_comp&gt;-kurrf_c.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ELSE.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CLEAR:&nbsp;&lt;fs_comp&gt;-customs_amt_c,&lt;fs_comp&gt;-customs_amt_d,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;fs_comp&gt;-tax_amt_c,&lt;fs_comp&gt;-tax_amt_d.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;&lt;fs_comp&gt;-plmin_mcn&nbsp;=&nbsp;'-'.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SUBTRACT&nbsp;&lt;fs_comp&gt;-amt_d&nbsp;FROM&nbsp;&lt;fs_data&gt;-amt.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SUBTRACT&nbsp;&lt;fs_comp&gt;-customs_amt_d&nbsp;FROM&nbsp;&lt;fs_data&gt;-customs_amt.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SUBTRACT&nbsp;&lt;fs_comp&gt;-tax_amt_d&nbsp;FROM&nbsp;&lt;fs_data&gt;-tax_amt.<br />
+   </div>
+   <div class="codeComment">
+*料、工、其他加價小計 = &lt;fs_comp&gt;-up_m  * &lt;fs_comp&gt;-menge_c = 先取得 amt_c = amt_c * &lt;fs_comp&gt;-kurrf<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;l_amt_c&nbsp;=&nbsp;&lt;fs_comp&gt;-up_m&nbsp;*&nbsp;&lt;fs_comp&gt;-menge_c.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;l_amt&nbsp;=&nbsp;l_amt_c&nbsp;*&nbsp;&lt;fs_comp&gt;-kurrf_c.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SUBTRACT&nbsp;l_amt&nbsp;FROM&nbsp;&lt;fs_data&gt;-amt_m&nbsp;.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;l_amt_c&nbsp;=&nbsp;&lt;fs_comp&gt;-up_p&nbsp;*&nbsp;&lt;fs_comp&gt;-menge_c.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;l_amt&nbsp;=&nbsp;l_amt_c&nbsp;*&nbsp;&lt;fs_comp&gt;-kurrf_c.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SUBTRACT&nbsp;l_amt&nbsp;FROM&nbsp;&lt;fs_data&gt;-amt_p&nbsp;.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;l_amt_c&nbsp;=&nbsp;&lt;fs_comp&gt;-up_e&nbsp;*&nbsp;&lt;fs_comp&gt;-menge_c.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;l_amt&nbsp;=&nbsp;l_amt_c&nbsp;*&nbsp;&lt;fs_comp&gt;-kurrf_c.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SUBTRACT&nbsp;l_amt&nbsp;FROM&nbsp;&lt;fs_data&gt;-amt_e&nbsp;.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ELSE.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ADD&nbsp;&lt;fs_comp&gt;-amt_d&nbsp;TO&nbsp;&lt;fs_data&gt;-amt&nbsp;.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ADD&nbsp;&lt;fs_comp&gt;-customs_amt_d&nbsp;TO&nbsp;&lt;fs_data&gt;-customs_amt&nbsp;.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ADD&nbsp;&lt;fs_comp&gt;-tax_amt_d&nbsp;TO&nbsp;&lt;fs_data&gt;-tax_amt&nbsp;.<br />
+   </div>
+   <div class="codeComment">
+*料、工、其他加價小計 = &lt;fs_comp&gt;-up_m * &lt;fs_comp&gt;-kurrf * &lt;fs_comp&gt;-menge_c<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;l_amt_c&nbsp;=&nbsp;&lt;fs_comp&gt;-up_m&nbsp;*&nbsp;&lt;fs_comp&gt;-menge_c.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;l_amt&nbsp;=&nbsp;l_amt_c&nbsp;*&nbsp;&lt;fs_comp&gt;-kurrf_c.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ADD&nbsp;l_amt&nbsp;TO&nbsp;&lt;fs_data&gt;-amt_m&nbsp;.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;l_amt_c&nbsp;=&nbsp;&lt;fs_comp&gt;-up_p&nbsp;*&nbsp;&lt;fs_comp&gt;-menge_c.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;l_amt&nbsp;=&nbsp;l_amt_c&nbsp;*&nbsp;&lt;fs_comp&gt;-kurrf_c.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ADD&nbsp;l_amt&nbsp;TO&nbsp;&lt;fs_data&gt;-amt_p&nbsp;.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;l_amt_c&nbsp;=&nbsp;&lt;fs_comp&gt;-up_e&nbsp;*&nbsp;&lt;fs_comp&gt;-menge_c.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;l_amt&nbsp;=&nbsp;l_amt_c&nbsp;*&nbsp;&lt;fs_comp&gt;-kurrf_c.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ADD&nbsp;l_amt&nbsp;TO&nbsp;&lt;fs_data&gt;-amt_e&nbsp;.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ENDLOOP&nbsp;.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;&lt;fs_data&gt;-taxflag_d&nbsp;=&nbsp;''.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CLEAR:&nbsp;&lt;fs_data&gt;-customs_amt,&lt;fs_data&gt;-tax_amt.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+&nbsp;&nbsp;ENDLOOP&nbsp;.<br />
+<br />
+ENDFUNCTION.<br />
+            </div>
+          </td>
+        </tr>
+      </table>
+      </td>
+      </tr>
+   <tr>
+<td class="footer">Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2026. Sap Release 757</td>
+   </tr>
+</table>
+</body>
+</html>

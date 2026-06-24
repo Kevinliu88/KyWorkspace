@@ -1,0 +1,299 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="application/xhtml+xml; charset=UTF-8" />
+<title>Z_QT_COMP_PRICE_GET</title>
+<style type="text/css">
+.code{ font-family:"Courier New", Courier, monospace; color:#000; font-size:14px; background-color:#F2F4F7 }
+  .codeComment {font-family:"Courier New", Courier, monospace; color:#0000F0; font-size:14px; background-color:#F2F4F7 }
+  .normalBold{ font-family:Arial, Helvetica, sans-serif; color:#000; font-size:12px; font-weight:800 }
+  .normalBoldLarge{ font-family:Arial, Helvetica, sans-serif; color:#000; font-size:16px; font-weight:800 }
+</style>
+<style type="text/css">
+  .normal{ font-family:Arial, Helvetica, sans-serif; color:#000; font-size:12px }
+  .footer{ font-family:Arial, Helvetica, sans-serif; color:#000; font-size:12px; text-align: center }
+  h2{ font-family:Arial, Helvetica, sans-serif; color:#000; font-size:16px; font-weight:800 }
+  h3{ font-family:Arial, Helvetica, sans-serif; color:#000; font-size:14px; font-weight:800 }
+  .outerTable{
+   background-color:#E0E7ED;
+   width:100%;
+   border-top-width: thin;
+   border-right-width: thin;
+   border-right-width: thin;
+   border-left-width: thin;
+   border-top-style: solid;
+   border-right-style: solid;
+   border-bottom-style: solid;
+   border-left-style: solid;
+  }
+  .innerTable{
+   background-color:#F2F4F7;
+   width:100%;
+   border-top-width: thin;
+   border-right-width: thin;
+   border-bottom-width: thin;
+   border-left-width: thin;
+   border-top-style: solid;
+   border-right-style: solid;
+   border-bottom-style: solid;
+   border-left-style: solid;
+  }
+</style>
+</head>
+<body>
+<table class="outerTable">
+  <tr class="normalBoldLarge">
+     <td><h2>Code listing for function Z_QT_COMP_PRICE_GET</h2>
+<h3> Description: </h3></td>
+   </tr>
+  <tr>
+     <td>
+     <table class="innerTable">
+       <tr>
+          <td>
+   <div class="code">
+FUNCTION z_qt_comp_price_get.<br />
+   </div>
+   <div class="codeComment">
+*"----------------------------------------------------------------------<br />
+*"*"區域介面：<br />
+*"  IMPORTING<br />
+*"     VALUE(PRSDT) TYPE  PRSDT<br />
+*"     VALUE(SOURCE_C) TYPE  ZSOURCE_COMP OPTIONAL<br />
+*"     VALUE(PRICEFLAG) TYPE  FLAG DEFAULT 'X'<br />
+*"  EXPORTING<br />
+*"     REFERENCE(E_MSG) TYPE  STRING<br />
+*"  TABLES<br />
+*"      ET_COMP STRUCTURE  ZSQT0201COMP OPTIONAL<br />
+*"      ET_LOG STRUCTURE  ZTQT0201LOG OPTIONAL<br />
+*"      ET_LOG2 STRUCTURE  ZTQT0201LOG2 OPTIONAL<br />
+*"      ET_DATA STRUCTURE  ZSQT0201D OPTIONAL<br />
+*"      ET_LOG3 STRUCTURE  ZTQT0201LOG3 OPTIONAL<br />
+*"      ET_LOG4 STRUCTURE  ZTQT0201LOG4 OPTIONAL<br />
+*"      ET_LOG5 STRUCTURE  ZTQT0201LOG5 OPTIONAL<br />
+*"----------------------------------------------------------------------<br />
+*注意事項<br />
+*1.若新增不報價判斷邏輯時(et_comp-zero = 'X')，需同時調整 FUNCTION Z_QT_COMPPRICE_GET_MONTHLY<br />
+*"----------------------------------------------------------------------<br />
+************************************************************************<br />
+* MODIFICATION LOG<br />
+************************************************************************<br />
+* CHANGE DATE VERSION MODIFIER DESCRIPTION<br />
+* =========== ======= ======== =========================================<br />
+* 2025/10/27  V001    Fangchyi 增加傳入 I_WERKS & ET_DATA 判斷是否計算泰國運費<br />
+*                              增加傳入ET_LOG3<br />
+*                              增加PERFORM get_th_data & cal_th_data<br />
+* 2025/11/18  V002    Fangchyi 取得鐵管加工計算內容<br />
+*                              增加傳入ET_LOG4<br />
+*                              增加perform get_new_formula & cal_new_price<br />
+* 2026/05/11  V003    Fangchyi 取得工塑計算內容<br />
+*                              增加傳入ET_LOG5<br />
+*                              增加perform get_a04_formula & cal_a04_price<br />
+************************************************************************<br />
+<br />
+
+<div class="codeComment">*       <a href ="global-z_qt_comp_price_get.html">Global data declarations</a></div><br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;DATA:&nbsp;process_stage(100),<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;pre_comp&nbsp;LIKE&nbsp;et_comp.<br />
+<br />
+&nbsp;&nbsp;CHECK&nbsp;et_comp[]&nbsp;IS&nbsp;NOT&nbsp;INITIAL.<br />
+<br />
+&nbsp;&nbsp;CHECK&nbsp;priceflag&nbsp;=&nbsp;'X'.&nbsp;&nbsp;"才往下取得價格<br />
+<br />
+&nbsp;&nbsp;SORT&nbsp;et_comp&nbsp;BY&nbsp;cono&nbsp;coseq&nbsp;compseq.<br />
+<br />
+&nbsp;&nbsp;process_stage&nbsp;=&nbsp;'取得計算元件單價的相關資料中...'.<br />
+&nbsp;&nbsp;CALL&nbsp;FUNCTION&nbsp;'SAPGUI_PROGRESS_INDICATOR'<br />
+&nbsp;&nbsp;&nbsp;&nbsp;EXPORTING<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;text&nbsp;=&nbsp;process_stage.<br />
+<br />
+&nbsp;&nbsp;IF&nbsp;gt_sql[]&nbsp;IS&nbsp;INITIAL.&nbsp;&nbsp;"<br />
+   </div>
+   <div class="codeComment">
+**取得SQL上自製件工費及非BOM料號的料費<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;PERFORM&nbsp;get_sql_data&nbsp;USING&nbsp;source_c<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CHANGING&nbsp;e_msg.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;CHECK&nbsp;e_msg&nbsp;IS&nbsp;INITIAL.&nbsp;&nbsp;"缺SQL資料，則不往下執行<br />
+&nbsp;&nbsp;ENDIF.<br />
+   </div>
+   <div class="codeComment">
+**Get PIR<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;PERFORM&nbsp;get_pir&nbsp;TABLES&nbsp;et_comp&nbsp;gt_pir<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;USING&nbsp;prsdt.<br />
+<br />
+   </div>
+   <div class="codeComment">
+**取得泰國運費相關資料: ztqt0031 & pir V001 added<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;PERFORM&nbsp;get_th_data&nbsp;TABLES&nbsp;et_data&nbsp;et_comp<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;USING&nbsp;prsdt.<br />
+<br />
+   </div>
+   <div class="codeComment">
+**取得鐵管加工相關資料: ztqt0032  V002 added<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;PERFORM&nbsp;get_new_formula&nbsp;TABLES&nbsp;et_data&nbsp;et_comp<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;USING&nbsp;prsdt.<br />
+<br />
+   </div>
+   <div class="codeComment">
+**取得工塑件相關資料: V003 added<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;PERFORM&nbsp;get_a04_formula&nbsp;TABLES&nbsp;et_data&nbsp;et_comp<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;USING&nbsp;prsdt.<br />
+<br />
+   </div>
+   <div class="codeComment">
+**取得顏色&印花布資訊<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;PERFORM&nbsp;get_color&nbsp;TABLES&nbsp;gt_color&nbsp;et_comp.<br />
+<br />
+   </div>
+   <div class="codeComment">
+**抓ztmara<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;PERFORM&nbsp;get_ztmara&nbsp;TABLES&nbsp;et_comp&nbsp;gt_ztmara.<br />
+<br />
+   </div>
+   <div class="codeComment">
+**抓ztmarc<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;PERFORM&nbsp;get_ztmarc&nbsp;TABLES&nbsp;et_comp&nbsp;gt_ztmarc.<br />
+<br />
+&nbsp;&nbsp;DATA:&nbsp;fix_source(1),<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;l_source&nbsp;LIKE&nbsp;ztqt0201comp-source_c.<br />
+&nbsp;&nbsp;LOOP&nbsp;AT&nbsp;et_comp&nbsp;ASSIGNING&nbsp;FIELD-SYMBOL(&lt;fs&gt;)&nbsp;WHERE&nbsp;idnrk&nbsp;IS&nbsp;NOT&nbsp;INITIAL.<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;process_stage&nbsp;=&nbsp;'項次'&nbsp;&&&nbsp;&lt;fs&gt;-coseq&nbsp;&&&nbsp;'，取得元件單價中:'&nbsp;&&&nbsp;&lt;fs&gt;-idnrk.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;CALL&nbsp;FUNCTION&nbsp;'SAPGUI_PROGRESS_INDICATOR'<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;EXPORTING<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;text&nbsp;=&nbsp;process_stage.<br />
+<br />
+   </div>
+   <div class="codeComment">
+*若元件類別有值，則以傳入值為準<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;source_c&nbsp;=&nbsp;''.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;l_source&nbsp;=&nbsp;&lt;fs&gt;-source_c.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ELSE.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;l_source&nbsp;=&nbsp;source_c.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;PERFORM&nbsp;init_comp&nbsp;USING&nbsp;l_source<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CHANGING&nbsp;&lt;fs&gt;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fix_source.<br />
+<br />
+   </div>
+   <div class="codeComment">
+*採購成本估算單取價邏輯<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;CASE&nbsp;&lt;fs&gt;-source_c.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;WHEN&nbsp;'1'.&nbsp;"自製<br />
+   </div>
+   <div class="codeComment">
+**自製件取得的單價放在加工費欄位<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PERFORM&nbsp;get_production_price&nbsp;TABLES&nbsp;et_log&nbsp;et_log2&nbsp;et_log4&nbsp;et_log5<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;USING&nbsp;prsdt&nbsp;''<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CHANGING&nbsp;&lt;fs&gt;.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;WHEN&nbsp;'2'&nbsp;&nbsp;"市購<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;OR&nbsp;'3'.&nbsp;"外包<br />
+   </div>
+   <div class="codeComment">
+*外購/外包件單價<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PERFORM&nbsp;get_purchase_price&nbsp;USING&nbsp;fix_source&nbsp;''<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CHANGING&nbsp;&lt;fs&gt;.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;&lt;fs&gt;-source_c&nbsp;=&nbsp;'1'.&nbsp;&nbsp;"自製.<br />
+   </div>
+   <div class="codeComment">
+**為友廠自製的市購/外包件，取自製件價格<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PERFORM&nbsp;get_production_price&nbsp;TABLES&nbsp;et_log&nbsp;et_log2&nbsp;et_log4&nbsp;et_log5<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;USING&nbsp;prsdt&nbsp;'X'<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CHANGING&nbsp;&lt;fs&gt;.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ELSE.<br />
+   </div>
+   <div class="codeComment">
+*取得關稅/增值稅率資料<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PERFORM&nbsp;get_tax_data&nbsp;CHANGING&nbsp;&lt;fs&gt;.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;WHEN&nbsp;OTHERS.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ENDCASE.<br />
+<br />
+   </div>
+   <div class="codeComment">
+*V001 added: 計算泰國運費: 運往泰國的元件都要計算(自製&市購&外包)<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;PERFORM&nbsp;cal_th_data&nbsp;TABLES&nbsp;et_data&nbsp;et_log3<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;USING&nbsp;prsdt<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CHANGING&nbsp;&lt;fs&gt;.<br />
+   </div>
+   <div class="codeComment">
+*V001 end off<br />
+*取得元件其他欄位值&計算估算金額欄位<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;PERFORM&nbsp;assign_comp_fields&nbsp;USING&nbsp;prsdt&nbsp;CHANGING&nbsp;&lt;fs&gt;&nbsp;pre_comp.<br />
+<br />
+&nbsp;&nbsp;ENDLOOP.<br />
+<br />
+   </div>
+   <div class="codeComment">
+*元件是否報價邏輯處理<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;call&nbsp;function&nbsp;<a&nbsp;href&nbsp;="../z_qt_itemamt_zero/z_qt_itemamt_zero.html">'Z_QT_ITEMAMT_ZERO'</a><br />
+&nbsp;&nbsp;&nbsp;&nbsp;EXPORTING<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;prsdt&nbsp;&nbsp;&nbsp;=&nbsp;prsdt<br />
+&nbsp;&nbsp;&nbsp;&nbsp;TABLES<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;et_comp&nbsp;=&nbsp;et_comp<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;et_data&nbsp;=&nbsp;et_data.<br />
+<br />
+   </div>
+   <div class="codeComment">
+*2025/12/15 marked : 以FUNCTION 'Z_QT_ITEMAMT_ZERO'取代<br />
+*  PERFORM assign_zero_comp TABLES et_comp.<br />
+*<br />
+**上下階是否報價邏輯處理<br />
+*  PERFORM assign_zero_bom TABLES et_comp.<br />
+*<br />
+*  LOOP AT et_comp ASSIGNING &lt;fs&gt;.<br />
+**取得元件其他欄位值&計算估算金額欄位<br />
+*    PERFORM assign_comp_fields USING prsdt CHANGING &lt;fs&gt; pre_comp.<br />
+*  ENDLOOP.<br />
+*2025/12/15 end off<br />
+   </div>
+   <div class="code">
+ENDFUNCTION.<br />
+            </div>
+          </td>
+        </tr>
+      </table>
+      </td>
+      </tr>
+   <tr>
+<td class="footer">Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2026. Sap Release 757</td>
+   </tr>
+</table>
+</body>
+</html>

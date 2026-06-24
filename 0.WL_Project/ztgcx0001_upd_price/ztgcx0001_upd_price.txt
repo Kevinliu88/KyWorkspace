@@ -1,0 +1,514 @@
+*&---------------------------------------------------------------------*
+*& Report ZTGCX0001_UPD_PRICE
+*&---------------------------------------------------------------------*
+* 2026/05/30 V002 JosephLo 寫回 ZTCX0001 改 MODIFY 整列→UPDATE SET 單欄, 消除 race condition 洗欄位(詳見 FORM save_data 內註解)
+* 2026/05/30 V003 JosephLo 結構重構(拆 collect/process/save/display 分層) + race 樂觀鎖加嚴(E段鎖 netpr/waers 防不一致折算; sales_* 拆獨立 UPDATE 防洗業務價) — 詳見 FORM save_data
+* 2026/06/06 V004 JosephLo 加隱藏旗標 p_nodisp(NO-DISPLAY): 供 ZTGCX0032 SUBMIT 時跳過自身 ALV(前景不多跳子視窗); 手動執行畫面與行為完全不變
+*&---------------------------------------------------------------------*
+REPORT ztgcx0001_upd_price.
+TABLES: ztcx0001.
+*PARAMETERS:p_001 TYPE xfeld,
+*           p_003 TYPE xfeld.
+SELECT-OPTIONS: s_werks FOR ztcx0001-werks,
+                s_vtweg FOR ztcx0001-vtweg,
+                s_idnrk FOR ztcx0001-idnrk.
+"隱藏旗標:呼叫端(ZTGCX0032)SUBMIT 帶 'X' 時跳過 END-OF-SELECTION 的 ALV 顯示;
+"         NO-DISPLAY → 不顯示於選擇畫面,手動執行時畫面/行為不變。
+"         # NO-DISPLAY 不可配 AS CHECKBOX(語法衝突),隱藏旗標用 TYPE c LENGTH 1 即可。
+PARAMETERS p_nodisp TYPE c LENGTH 1 NO-DISPLAY.
+
+* V003 兩條補價路徑各用一個內表(兩 SELECT 條件 netpr 空/非空 互斥, 不會重複):
+DATA: gt_001_f TYPE TABLE OF ztcx0001,   "市購F件、原幣價(netpr)待取 → 走報價系統(default_netpr_001)
+      gt_001_e TYPE TABLE OF ztcx0001.   "已有原幣價、缺 CNY    → 走匯率折算(process_e_items)
+
+*&---------------------------------------------------------------------*
+* V003 重構後主流程: 取 → 算 → 寫 → 顯示 各自收斂為一個 FORM,
+*                    event block 內只放 PERFORM, 不再有邏輯。
+*&---------------------------------------------------------------------*
+START-OF-SELECTION.
+  PERFORM collect_data.     "一次抓出兩類要補價的列
+  PERFORM process_price.    "算價(內部依路徑分流: F 報價 / E 折算)
+  PERFORM save_data.        "UPDATE SET 寫回(只動本程式算的欄, 樂觀鎖)
+
+END-OF-SELECTION.
+  IF p_nodisp IS INITIAL.   "呼叫端帶 p_nodisp='X' 時跳過(前景不多跳子 ALV;背景本就進 spool)
+    PERFORM display_alv.     "兩內表合併 ALV 顯示
+  ENDIF.
+
+*&---------------------------------------------------------------------*
+*& Form collect_data
+*&---------------------------------------------------------------------*
+*& 取資料: 把「要補價」的列一次抓進兩個內表。
+*&   gt_001_f = 市購F件且原幣價還沒取(netpr 空)
+*&   gt_001_e = 已有原幣價但缺 CNY 折算(netpr 非空、netpr_cny 空)
+*&   兩條件互斥(netpr 空 vs 非空), 同一筆不會同時落入兩表。
+*&---------------------------------------------------------------------*
+FORM collect_data.
+  SELECT * FROM ztcx0001
+    WHERE werks IN @s_werks
+      AND vtweg IN @s_vtweg
+      AND idnrk IN @s_idnrk
+      AND netpr IS INITIAL
+      AND beskz = 'F'
+  INTO TABLE @gt_001_f.
+
+  SELECT * FROM ztcx0001
+    WHERE werks IN @s_werks
+      AND vtweg IN @s_vtweg
+      AND idnrk IN @s_idnrk
+      AND netpr IS NOT INITIAL
+      AND netpr_cny IS INITIAL
+      "AND ( beskz = 'E' OR ( beskz = 'F' AND sobsl = '30' ) )  "原條件已註解, 現抓所有 beskz(範圍待業務確認)
+  INTO TABLE @gt_001_e.
+ENDFORM.
+
+*&---------------------------------------------------------------------*
+*& Form process_price
+*&---------------------------------------------------------------------*
+*& 算價 dispatcher: 依兩條路徑分流。
+*&   F 路徑: 連原幣價都沒有 → 走報價系統 Z_QT_COMP_PRICE_GET 整套取
+*&   E 路徑: 原幣價已有、只缺 CNY → 走匯率 BAPI 折算
+*&   兩者算法不同是「刻意」(有報價走報價、無原幣才折算), 故分成兩支表達。
+*&---------------------------------------------------------------------*
+FORM process_price.
+  PERFORM process_f_items.
+  PERFORM process_e_items.
+ENDFORM.
+
+*&---------------------------------------------------------------------*
+*& Form process_f_items
+*&---------------------------------------------------------------------*
+*& F 路徑: 市購F件、原幣價待取。
+*&   default_netpr_001 帶出原幣價 + CNY/TWD + 預設供應商,
+*&   業務單價若仍空再呼叫 get_sales_price。
+*&---------------------------------------------------------------------*
+FORM process_f_items.
+  LOOP AT gt_001_f ASSIGNING FIELD-SYMBOL(<ls_f>).
+    "帶出淨價
+    PERFORM default_netpr_001 CHANGING <ls_f>.
+    IF <ls_f>-sales_netpr_6 IS INITIAL.
+      PERFORM get_sales_price USING <ls_f>.
+    ENDIF.
+  ENDLOOP.
+ENDFORM.
+
+*&---------------------------------------------------------------------*
+*& Form process_e_items
+*&---------------------------------------------------------------------*
+*& E 路徑: 已有原幣價、缺 CNY。
+*&   用即期匯率(rate_type 'M')把原幣 netpr 折算成 CNY/TWD,
+*&   業務單價若仍空再呼叫 get_sales_price。原幣 netpr/waers 不動。
+*&---------------------------------------------------------------------*
+FORM process_e_items.
+  DATA: ls_exch_rate TYPE bapi1093_0,
+        ls_return    TYPE bapiret1.
+
+  LOOP AT gt_001_e ASSIGNING FIELD-SYMBOL(<ls_e>).
+    "CNY
+    CLEAR ls_exch_rate.
+    CALL FUNCTION 'BAPI_EXCHANGERATE_GETDETAIL'
+      EXPORTING
+        rate_type  = 'M'
+        from_curr  = <ls_e>-waers
+        to_currncy = 'CNY'
+        date       = sy-datum
+      IMPORTING
+        exch_rate  = ls_exch_rate
+        return     = ls_return.
+    <ls_e>-netpr_cny = <ls_e>-netpr * ls_exch_rate-exch_rate.
+    <ls_e>-waers_cny = 'CNY'.
+    "TWD
+    CALL FUNCTION 'BAPI_EXCHANGERATE_GETDETAIL'
+      EXPORTING
+        rate_type  = 'M'
+        from_curr  = <ls_e>-waers
+        to_currncy = 'TWD'
+        date       = sy-datum
+      IMPORTING
+        exch_rate  = ls_exch_rate
+        return     = ls_return.
+    <ls_e>-netpr_twd = <ls_e>-netpr * ls_exch_rate-exch_rate.
+    <ls_e>-waers_twd = 'TWD'.
+    IF <ls_e>-sales_netpr_6 IS INITIAL.
+      PERFORM get_sales_price USING <ls_e>.
+    ENDIF.
+  ENDLOOP.
+ENDFORM.
+
+*&---------------------------------------------------------------------*
+*& Form save_data
+*&---------------------------------------------------------------------*
+* 寫回 ZTCX0001 — 料價與業務價分開 UPDATE, 各自 SET 對應欄並帶樂觀鎖。
+* ====================================================================== *
+* 2026/05/30 V002 JosephLo  MODIFY 整列 → UPDATE SET 單欄(消 race 洗欄位)  *
+* 2026/05/30 V003 JosephLo  樂觀鎖加嚴(code review 兩個高風險發現)         *
+* ---------------------------------------------------------------------- *
+* 背景(V002):                                                            *
+*   原 `MODIFY ztcx0001 FROM TABLE` 整列回寫, 會用 collect_data 的         *
+*   `SELECT *` T0 快照整列覆蓋, 洗掉 race 期間別人寫的 qq/qq_seq/moq_*/    *
+*   zxqno...。改成 `UPDATE ... SET 指定欄 WHERE 主鍵 + 樂觀鎖`, 只動本程式  *
+*   算的欄。process 內呼叫 Z_QT_COMP_PRICE_GET ×2 + ZSD_ODM_XQ_PRICE(重FM),*
+*   race window 長達數秒~數十秒, 撞車機率高。                              *
+* 加嚴(V003): 上述 V002 樂觀鎖仍有兩個漏洞(review 指出):                   *
+*  〔發現1〕E段折算來源未鎖。SET 的 netpr_cny/twd 是用 T0 的 netpr×waers   *
+*    匯率算的, 但原 WHERE 只看 netpr_cny IS INITIAL。若 race 期間採購經主   *
+*    程式上傳改了 netpr/waers(主程式 ZTGCX0001 上傳, 採購角色 C 會手 key    *
+*    議定料價)而 cny 仍空, 會把「舊 netpr 算的 cny」貼到「新 netpr」那筆 →  *
+*    不自洽且不自癒(cny 寫入後再跑 E段 SELECT 抓不到)。                    *
+*    對策: E段料價 WHERE 加 `netpr=T0 AND waers=T0`, 來源被改就跳過, 該筆   *
+*    下一輪 batch(cny 仍空)會用新值重新折算, 反而正確。                    *
+*  〔發現2〕sales_* 無條件覆蓋。process 只在 sales_netpr_6 空才重算, 但     *
+*    save 無條件 SET sales_*, 會用 T0 快照洗掉別人更新的業務價(且          *
+*    sales_amt=sales_netpr_6×moq_remain, moq_remain 被主程式 CONFIRM 改時  *
+*    更不一致)。對策: sales_* 抽成獨立 UPDATE, WHERE 加 sales_netpr_6 IS   *
+*    INITIAL(對應 process「空才算」語意), DB 已有業務價就不洗。            *
+*    ∵料價 guard 與 sales guard 條件不同、UPDATE 又是 all-or-nothing,      *
+*     故每段都拆成「料價 UPDATE + 業務價 UPDATE」兩道。                    *
+* 主鍵(SE11 ZTCX0001): WERKS / VTWEG / ZSEQ / ZPORTALNO / IDNRK            *
+* chdat/chtim/chnam 兩道 UPDATE 都寫, 任一動作都留追查痕跡(chnam=本程式)。  *
+* 殘留(本版未處理): sales_amt 仍用 T0 的 moq_remain 算, 若 race 期間       *
+*   moq_remain 被改, sales_amt 與 DB 現值會有落差。要強一致需 save 時以     *
+*   DB 現存 moq_remain 重算 sales_amt, 改動較大, 留待後續評估。            *
+* ====================================================================== *
+FORM save_data.
+  DATA: lv_f_cnt TYPE i,      "F 段料價成功寫回筆數(訊息/追查用)
+        lv_e_cnt TYPE i.      "E 段料價成功寫回筆數
+
+* --- 第#段: F 件且原幣價(netpr)原為空 → (1)料價 + (2)業務價 兩道 UPDATE --- *
+  IF gt_001_f IS NOT INITIAL.
+    LOOP AT gt_001_f ASSIGNING FIELD-SYMBOL(<fs_upd>).
+      "(1) 料價: 補原幣價 + CNY/TWD + 預設供應商。netpr 原為空才寫。
+      "    F段天然免疫〔發現1〕: 若 race 期間採購上傳了 netpr(非空),
+      "    `netpr IS INITIAL` 即不成立而跳過, 不會覆蓋採購手議價。
+      UPDATE ztcx0001
+         SET netpr           = @<fs_upd>-netpr,            "原幣料價
+             waers           = @<fs_upd>-waers,            "原幣幣別
+             netpr_cny       = @<fs_upd>-netpr_cny,        "CNY 料價
+             waers_cny       = @<fs_upd>-waers_cny,        "CNY 幣別
+             netpr_twd       = @<fs_upd>-netpr_twd,        "TWD 料價
+             waers_twd       = @<fs_upd>-waers_twd,        "TWD 幣別
+             zdefault_vendor = @<fs_upd>-zdefault_vendor,  "預設供應商
+             chdat           = @sy-datum,                  "更改痕跡
+             chtim           = @sy-uzeit,
+             chnam           = @sy-uname
+       WHERE werks     = @<fs_upd>-werks                   "↓ 5 個主鍵欄定位本筆
+         AND vtweg     = @<fs_upd>-vtweg
+         AND zseq      = @<fs_upd>-zseq
+         AND zportalno = @<fs_upd>-zportalno
+         AND idnrk     = @<fs_upd>-idnrk
+         AND netpr IS INITIAL                              "樂觀鎖: race 期間別人已補價就跳過
+         AND beskz = 'F'.                                  "與當初 SELECT 條件一致(防 beskz 被改)
+      IF sy-subrc = 0.
+        lv_f_cnt = lv_f_cnt + 1.
+      ENDIF.
+
+      "(2) 業務價〔發現2〕: 抽成獨立 UPDATE, 只在 DB sales 仍空才寫,
+      "    不洗別人更新的業務價(對應 process「sales 空才算」語意)。
+      UPDATE ztcx0001
+         SET sales_netpr_6 = @<fs_upd>-sales_netpr_6,      "業務單價
+             sales_waers   = @<fs_upd>-sales_waers,        "業務幣別
+             sales_amt     = @<fs_upd>-sales_amt,          "業務金額
+             chdat         = @sy-datum,
+             chtim         = @sy-uzeit,
+             chnam         = @sy-uname
+       WHERE werks     = @<fs_upd>-werks
+         AND vtweg     = @<fs_upd>-vtweg
+         AND zseq      = @<fs_upd>-zseq
+         AND zportalno = @<fs_upd>-zportalno
+         AND idnrk     = @<fs_upd>-idnrk
+         AND sales_netpr_6 IS INITIAL.                     "樂觀鎖: DB 已有業務價就不覆蓋
+    ENDLOOP.
+    COMMIT WORK.
+    MESSAGE s001(00) WITH |補價(F件)完成 { lv_f_cnt } 筆|.
+  ENDIF.
+
+* --- 第#段: 已有原幣價但缺 CNY → (1)折算 + (2)業務價 兩道 UPDATE(原幣 netpr/waers 不動) --- *
+  IF gt_001_e IS NOT INITIAL.
+    LOOP AT gt_001_e ASSIGNING <fs_upd>.
+      "(1) 折算〔發現1〕: WHERE 鎖住折算來源 netpr/waers(= T0 SELECT 讀到的值),
+      "    race 期間被採購上傳改掉就跳過, 避免把舊來源算的 cny 貼到新來源。
+      "    跳過的筆(cny 仍空)下一輪 batch 會用新 netpr/waers 重新折算。
+      UPDATE ztcx0001
+         SET netpr_cny = @<fs_upd>-netpr_cny,              "CNY 料價(匯率折算)
+             waers_cny = @<fs_upd>-waers_cny,              "CNY 幣別
+             netpr_twd = @<fs_upd>-netpr_twd,              "TWD 料價(匯率折算)
+             waers_twd = @<fs_upd>-waers_twd,              "TWD 幣別
+             chdat     = @sy-datum,
+             chtim     = @sy-uzeit,
+             chnam     = @sy-uname
+       WHERE werks     = @<fs_upd>-werks                   "↓ 5 個主鍵欄定位本筆
+         AND vtweg     = @<fs_upd>-vtweg
+         AND zseq      = @<fs_upd>-zseq
+         AND zportalno = @<fs_upd>-zportalno
+         AND idnrk     = @<fs_upd>-idnrk
+         AND netpr     = @<fs_upd>-netpr                   "〔發現1〕折算來源(原幣價)須仍是 T0 值
+         AND waers     = @<fs_upd>-waers                   "〔發現1〕折算來源(幣別)須仍是 T0 值
+         AND netpr_cny IS INITIAL.                         "樂觀鎖: race 期間別人已補 CNY 就跳過
+      IF sy-subrc = 0.
+        lv_e_cnt = lv_e_cnt + 1.
+      ENDIF.
+
+      "(2) 業務價〔發現2〕: 同 F 段(2), 只在 DB sales 仍空才寫。
+      UPDATE ztcx0001
+         SET sales_netpr_6 = @<fs_upd>-sales_netpr_6,
+             sales_waers   = @<fs_upd>-sales_waers,
+             sales_amt     = @<fs_upd>-sales_amt,
+             chdat         = @sy-datum,
+             chtim         = @sy-uzeit,
+             chnam         = @sy-uname
+       WHERE werks     = @<fs_upd>-werks
+         AND vtweg     = @<fs_upd>-vtweg
+         AND zseq      = @<fs_upd>-zseq
+         AND zportalno = @<fs_upd>-zportalno
+         AND idnrk     = @<fs_upd>-idnrk
+         AND sales_netpr_6 IS INITIAL.                     "樂觀鎖: DB 已有業務價就不覆蓋
+    ENDLOOP.
+    COMMIT WORK.
+    MESSAGE s001(00) WITH |補匯率(E件)完成 { lv_e_cnt } 筆|.
+  ENDIF.
+ENDFORM.
+
+*&---------------------------------------------------------------------*
+*& Form display_alv
+*&---------------------------------------------------------------------*
+*& 顯示: 兩內表合併, REUSE_ALV 以 ZTCX0001 結構顯示。
+*&   注意顯示的是記憶體計算結果, 樂觀鎖跳過未寫 DB 的列仍會列出。
+*&---------------------------------------------------------------------*
+FORM display_alv.
+  DATA: lt_data   TYPE TABLE OF ztcx0001,
+        ls_layout TYPE slis_layout_alv.
+
+  IF gt_001_f IS INITIAL AND gt_001_e IS INITIAL.
+    MESSAGE s001(00) WITH 'No data exist'.
+    RETURN.
+  ENDIF.
+
+  APPEND LINES OF gt_001_f TO lt_data.
+  APPEND LINES OF gt_001_e TO lt_data.
+  ls_layout-colwidth_optimize = 'X'.
+  CALL FUNCTION 'REUSE_ALV_GRID_DISPLAY'
+    EXPORTING
+      i_structure_name = 'ZTCX0001'
+      is_layout        = ls_layout
+    TABLES
+      t_outtab         = lt_data
+    EXCEPTIONS
+      program_error    = 1
+      OTHERS           = 2.
+  IF sy-subrc <> 0.
+* Implement suitable error handling here
+  ENDIF.
+ENDFORM.
+
+*&---------------------------------------------------------------------*
+*& Form default_netpr_001
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      <-- <LS_1F>
+*&---------------------------------------------------------------------*
+FORM default_netpr_001  CHANGING p_data TYPE ztcx0001.
+
+  "20250410改抓取Z_QT_COMP_PRICE_GET取價
+  DATA:lt_comp TYPE TABLE OF zsqt0201comp.
+  DATA:lv_msg TYPE string.
+  APPEND INITIAL LINE TO lt_comp ASSIGNING FIELD-SYMBOL(<ls_comp>).
+  <ls_comp>-idnrk = p_data-idnrk.
+  <ls_comp>-werks_c = p_data-werks.
+  <ls_comp>-menge_c  = p_data-menge.
+  <ls_comp>-waers_d = 'CNY'.
+
+  CALL FUNCTION 'Z_QT_COMP_PRICE_GET'
+    EXPORTING
+      prsdt     = sy-datum
+      source_c  = '2'
+      priceflag = 'X'
+    IMPORTING
+      e_msg     = lv_msg
+    TABLES
+      et_comp   = lt_comp.
+  READ TABLE lt_comp ASSIGNING <ls_comp> WITH KEY idnrk = p_data-idnrk.
+  IF sy-subrc = 0.
+    p_data-waers = <ls_comp>-waers_c. "原始幣別
+    p_data-netpr = <ls_comp>-up_m.  "原始幣別 料價
+    p_data-waers_cny = <ls_comp>-waers_d.
+    p_data-netpr_cny = <ls_comp>-amt_d / <ls_comp>-menge_c."CNY料價
+    "有原幣/單價，但無CNY/ TWD 單價者 (不報價)，由FM 回傳的匯率計算 CNY/TWD 單價。
+    IF p_data-netpr_cny IS INITIAL.
+      p_data-netpr_cny = <ls_comp>-up_m * <ls_comp>-kurrf_c.
+      p_data-waers_cny = 'CNY'.
+    ELSE.
+      SELECT SINGLE ztmarc~zdefault_vendor
+        FROM ztmarc INNER JOIN lfa1 ON ztmarc~zdefault_vendor = lfa1~lifnr
+      WHERE ztmarc~werks = @p_data-werks
+        AND ztmarc~matnr = @p_data-idnrk
+      INTO ( @p_data-zdefault_vendor ).
+    ENDIF.
+    IF <ls_comp>-up_m IS NOT INITIAL.
+      p_data-zdefault_vendor = <ls_comp>-zdefault_vendor.
+    ENDIF.
+  ENDIF.
+  lt_comp[ 1 ]-waers_d = 'TWD'.
+  CALL FUNCTION 'Z_QT_COMP_PRICE_GET'
+    EXPORTING
+      prsdt     = sy-datum
+      source_c  = '2'
+      priceflag = 'X'
+    IMPORTING
+      e_msg     = lv_msg
+    TABLES
+      et_comp   = lt_comp.
+  READ TABLE lt_comp ASSIGNING <ls_comp> WITH KEY idnrk = p_data-idnrk.
+  IF sy-subrc = 0.
+    p_data-waers_twd = <ls_comp>-waers_d.
+    p_data-netpr_twd = <ls_comp>-amt_d / <ls_comp>-menge_c."TWD料價
+  ENDIF.
+  IF p_data-netpr_twd IS INITIAL.
+    p_data-netpr_twd = <ls_comp>-up_m * <ls_comp>-kurrf_c.
+    p_data-waers_twd = 'TWD'.
+  ENDIF.
+  IF p_data-netpr IS INITIAL.
+    "有效的INFO RECORD
+    DATA:lv_factor TYPE isoc_factor.
+
+    SELECT SINGLE eine~effpr,eine~waers,eine~peinh FROM eine
+      INNER JOIN eina ON eine~infnr = eina~infnr
+      WHERE eina~matnr = @p_data-idnrk
+        AND eine~werks = @p_data-werks
+        AND eina~lifnr = @p_data-zdefault_vendor
+        AND eine~esokz = '0'
+        AND eina~loekz IS INITIAL
+    INTO @DATA(ls_info).
+    IF sy-subrc = 0.
+      CALL FUNCTION 'CURRENCY_CONVERTING_FACTOR'
+        EXPORTING
+          currency          = ls_info-waers
+        IMPORTING
+          factor            = lv_factor
+        EXCEPTIONS
+          too_many_decimals = 1
+          OTHERS            = 2.
+      IF sy-subrc <> 0.
+* Implement suitable error handling here
+      ENDIF.
+      p_data-netpr = ls_info-effpr / ls_info-peinh * lv_factor.
+      p_data-waers = ls_info-waers.
+
+    ENDIF.
+    "CNY
+    DATA:ls_exch_rate TYPE bapi1093_0,
+         ls_return    TYPE bapiret1.
+    CALL FUNCTION 'BAPI_EXCHANGERATE_GETDETAIL'
+      EXPORTING
+        rate_type  = 'M'
+        from_curr  = 'USD'
+        to_currncy = 'CNY'
+        date       = sy-datum
+      IMPORTING
+        exch_rate  = ls_exch_rate
+        return     = ls_return.
+    p_data-netpr_cny = p_data-netpr * ls_exch_rate-exch_rate.
+    p_data-waers_cny = 'CNY'.
+    "TWD
+    CALL FUNCTION 'BAPI_EXCHANGERATE_GETDETAIL'
+      EXPORTING
+        rate_type  = 'M'
+        from_curr  = 'USD'
+        to_currncy = 'TWD'
+        date       = sy-datum
+      IMPORTING
+        exch_rate  = ls_exch_rate
+        return     = ls_return.
+    p_data-netpr_twd = p_data-netpr * ls_exch_rate-exch_rate.
+    p_data-waers_twd = 'TWD'.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form get_sales_price
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      --> <LS_1F>
+*&---------------------------------------------------------------------*
+FORM get_sales_price  USING   p_data TYPE ztcx0001.
+  DATA:i_vtweg     TYPE vtweg,
+       i_matkl     TYPE matkl,
+       i_zpno      TYPE zpno,
+       i_zpnocode  TYPE zpnocode,
+       i_meins     TYPE meins,
+       i_zmoqline  TYPE zmoqline,
+       i_prsdt     TYPE prsdt,
+       i_zpcur     TYPE zpcur,
+       i_zpup      TYPE zpup,
+       i_zpup_per  TYPE zpup_per,
+       i_zpcnyup   TYPE zpcnyup,
+       i_zpcny_per TYPE zpcny_per,
+       i_zptwdup   TYPE zptwdup,
+       i_zptwd_per TYPE zptwd_per.
+  DATA: e_zup_cur TYPE zusdcur,
+        e_zup     TYPE zup9,
+        e_zup_per TYPE zup_per.
+  i_vtweg = p_data-vtweg.
+  i_zpno = p_data-idnrk.
+  i_zpnocode = 'M'.
+  i_meins = p_data-meins.
+  i_prsdt = sy-datum.
+  i_zpcur = p_data-waers.
+  i_zpup = 100 * p_data-netpr.
+  i_zpup_per = 100.
+  i_zpcnyup = 100 * p_data-netpr_cny.
+  i_zpcny_per = 100.
+  i_zptwdup = p_data-netpr_twd.
+  i_zptwd_per = 100.
+
+  CALL FUNCTION 'ZSD_ODM_XQ_PRICE'
+    EXPORTING
+      i_vtweg     = i_vtweg
+      i_matkl     = i_matkl
+      i_zpno      = i_zpno
+      i_zpnocode  = i_zpnocode
+      i_meins     = i_meins
+      i_zmoqline  = i_zmoqline
+      i_prsdt     = i_prsdt
+      i_zpcur     = i_zpcur
+      i_zpup      = i_zpup
+      i_zpup_per  = i_zpup_per
+      i_zpcnyup   = i_zpcnyup
+      i_zpcny_per = i_zpcny_per
+      i_zptwdup   = i_zptwdup
+      i_zptwd_per = i_zptwd_per
+*     I_ZTSD0107  =
+    IMPORTING
+*     E_ZCALCUR   =
+*     E_ZFORMULATYPE       =
+      e_zup_cur   = e_zup_cur
+      e_zup       = e_zup
+      e_zup_per   = e_zup_per
+*     E_ZUPFORMULA         =
+*     E_ZTSD0107  =
+    .
+  TRY.
+      "業務幣別
+      p_data-sales_waers = e_zup_cur.
+
+
+      "業務單價
+      p_data-sales_netpr_6 = e_zup / e_zup_per.
+
+      "業務金額 = 業務單價 x 該張單報 MOQ or XJ 的數量
+      p_data-sales_amt = p_data-sales_netpr_6 * p_data-moq_remain.
+    CATCH  cx_sy_conversion_overflow INTO DATA(lr_cx).
+
+  ENDTRY.
+ENDFORM.
+
+
+*Messages
+*----------------------------------------------------------
+*
+* Message class: 00
+*001   &1&2&3&4&5&6&7&8
+
+----------------------------------------------------------------------------------
+Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2026. Sap Release 757
