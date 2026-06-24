@@ -1,0 +1,1665 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="application/xhtml+xml; charset=UTF-8" />
+<title>Dictionary object- ZTSD0028</title>
+<style type="text/css">
+  th{text-align:left}
+  .cell{
+     font-family:"Courier New", Courier, monospace;
+     color:#000;
+     font-size:12px;
+     background-color:#F2F4F7;
+  }
+  .cell td { border: thin solid #ccc; }
+</style>
+<style type="text/css">
+  .normal{ font-family:Arial, Helvetica, sans-serif; color:#000; font-size:12px }
+  .footer{ font-family:Arial, Helvetica, sans-serif; color:#000; font-size:12px; text-align: center }
+  h2{ font-family:Arial, Helvetica, sans-serif; color:#000; font-size:16px; font-weight:800 }
+  h3{ font-family:Arial, Helvetica, sans-serif; color:#000; font-size:14px; font-weight:800 }
+  .outerTable{
+   background-color:#E0E7ED;
+   width:100%;
+   border-top-width: thin;
+   border-right-width: thin;
+   border-right-width: thin;
+   border-left-width: thin;
+   border-top-style: solid;
+   border-right-style: solid;
+   border-bottom-style: solid;
+   border-left-style: solid;
+  }
+  .innerTable{
+   background-color:#F2F4F7;
+   width:100%;
+   border-top-width: thin;
+   border-right-width: thin;
+   border-bottom-width: thin;
+   border-left-width: thin;
+   border-top-style: solid;
+   border-right-style: solid;
+   border-bottom-style: solid;
+   border-left-style: solid;
+  }
+</style>
+</head>
+<body>
+  <table class="outerTable">
+    <tr>
+      <td><h2>Table: ZTSD0028</h2>
+  <h3>Description: Sales Order Header Data</h3></td>
+    </tr>
+    <tr>
+      <td><!--This is where our main table begins  -->
+<table class="innerTable">
+<tr>
+  <th>Row</th>
+  <th>Field name</th>
+  <th>Position</th>
+  <th>Key</th>
+  <th>Data element</th>
+  <th>Domain</th>
+  <th>Datatype</th>
+  <th>Length</th>
+  <th>Lowercase</th>
+  <th>Domain text</th>
+</tr>
+<tr class="cell">
+  <td> 1</td>
+  <td>MANDT</td>
+  <td>1</td>
+  <td>X</td>
+  <td>MANDT</td>
+  <td>MANDT</td>
+  <td>CLNT</td>
+  <td>3</td>
+  <td>&nbsp;</td>
+  <td>用戶端</td>
+</tr>
+<tr class="cell">
+  <td> 2</td>
+  <td>VBELN</td>
+  <td>2</td>
+  <td>X</td>
+  <td>ZVBELN_MT</td>
+  <td>VBELN</td>
+  <td>CHAR</td>
+  <td>10</td>
+  <td>&nbsp;</td>
+  <td>銷售文件</td>
+</tr>
+<tr class="cell">
+  <td> 3</td>
+  <td>ZVSNMR_V</td>
+  <td>3</td>
+  <td>X</td>
+  <td>ZVSNMR_V</td>
+  <td>ZVSNMR_V</td>
+  <td>CHAR</td>
+  <td>3</td>
+  <td>&nbsp;</td>
+  <td>銷售文件版本號碼</td>
+</tr>
+<tr class="cell">
+  <td> 4</td>
+  <td>ZDSTAT</td>
+  <td>4</td>
+  <td>&nbsp;</td>
+  <td>ZDSTAT</td>
+  <td>ZDSTAT</td>
+  <td>CHAR</td>
+  <td>1</td>
+  <td>&nbsp;</td>
+  <td>簽核狀態</td>
+</tr>
+<tr class="cell">
+  <td> 5</td>
+  <td>VKORG</td>
+  <td>5</td>
+  <td>&nbsp;</td>
+  <td>VKORG</td>
+  <td>VKORG</td>
+  <td>CHAR</td>
+  <td>4</td>
+  <td>&nbsp;</td>
+  <td>銷售組織</td>
+</tr>
+<tr class="cell">
+  <td> 6</td>
+  <td>VTWEG</td>
+  <td>6</td>
+  <td>&nbsp;</td>
+  <td>VTWEG</td>
+  <td>VTWEG</td>
+  <td>CHAR</td>
+  <td>2</td>
+  <td>&nbsp;</td>
+  <td>配銷通路</td>
+</tr>
+<tr class="cell">
+  <td> 7</td>
+  <td>SPART</td>
+  <td>7</td>
+  <td>&nbsp;</td>
+  <td>SPART</td>
+  <td>SPART</td>
+  <td>CHAR</td>
+  <td>2</td>
+  <td>&nbsp;</td>
+  <td>部門</td>
+</tr>
+<tr class="cell">
+  <td> 8</td>
+  <td>KUNNR</td>
+  <td>8</td>
+  <td>&nbsp;</td>
+  <td>KUNAG</td>
+  <td>KUNNR</td>
+  <td>CHAR</td>
+  <td>10</td>
+  <td>&nbsp;</td>
+  <td>買方</td>
+</tr>
+<tr class="cell">
+  <td> 9</td>
+  <td>NETWR</td>
+  <td>9</td>
+  <td>&nbsp;</td>
+  <td>NETWR</td>
+  <td>WERTV8</td>
+  <td>CURR</td>
+  <td>15</td>
+  <td>&nbsp;</td>
+  <td>淨值〈文件幣別〉</td>
+</tr>
+<tr class="cell">
+  <td>10</td>
+  <td>AUDAT</td>
+  <td>10</td>
+  <td>&nbsp;</td>
+  <td>AUDAT</td>
+  <td>DATUM</td>
+  <td>DATS</td>
+  <td>8</td>
+  <td>&nbsp;</td>
+  <td>文件日期〈接收/傳送日期〉</td>
+</tr>
+<tr class="cell">
+  <td>11</td>
+  <td>KETDAT</td>
+  <td>11</td>
+  <td>&nbsp;</td>
+  <td>KEDATU</td>
+  <td>DATUM</td>
+  <td>DATS</td>
+  <td>8</td>
+  <td>&nbsp;</td>
+  <td>請求交貨日期</td>
+</tr>
+<tr class="cell">
+  <td>12</td>
+  <td>BSTNK</td>
+  <td>12</td>
+  <td>&nbsp;</td>
+  <td>ZBSTNK</td>
+  <td>BSTKD</td>
+  <td>CHAR</td>
+  <td>35</td>
+  <td>X</td>
+  <td>客戶採購單號碼</td>
+</tr>
+<tr class="cell">
+  <td>13</td>
+  <td>OLDBSTNK</td>
+  <td>13</td>
+  <td>&nbsp;</td>
+  <td>ZOLDBSTNK</td>
+  <td>BSTKD</td>
+  <td>CHAR</td>
+  <td>35</td>
+  <td>X</td>
+  <td>原始客戶採購單號碼</td>
+</tr>
+<tr class="cell">
+  <td>14</td>
+  <td>ZSHMARK</td>
+  <td>14</td>
+  <td>&nbsp;</td>
+  <td>ZSHMARK</td>
+  <td>TEXT60</td>
+  <td>CHAR</td>
+  <td>60</td>
+  <td>X</td>
+  <td>Shipping Mark (SM)</td>
+</tr>
+<tr class="cell">
+  <td>15</td>
+  <td>OLDZSHMARK</td>
+  <td>15</td>
+  <td>&nbsp;</td>
+  <td>ZOLDSHMARK</td>
+  <td>TEXT60</td>
+  <td>CHAR</td>
+  <td>60</td>
+  <td>X</td>
+  <td>原 Shipping Mark(SM)</td>
+</tr>
+<tr class="cell">
+  <td>16</td>
+  <td>AUART</td>
+  <td>16</td>
+  <td>&nbsp;</td>
+  <td>AUART</td>
+  <td>AUART</td>
+  <td>CHAR</td>
+  <td>4</td>
+  <td>&nbsp;</td>
+  <td>銷售文件類型</td>
+</tr>
+<tr class="cell">
+  <td>17</td>
+  <td>BEZEI</td>
+  <td>17</td>
+  <td>&nbsp;</td>
+  <td>BEZEI20</td>
+  <td>TEXT20</td>
+  <td>CHAR</td>
+  <td>20</td>
+  <td>X</td>
+  <td>說明</td>
+</tr>
+<tr class="cell">
+  <td>18</td>
+  <td>ZSAPPO</td>
+  <td>18</td>
+  <td>&nbsp;</td>
+  <td>ZSAPPO</td>
+  <td>ZSAPPO</td>
+  <td>CHAR</td>
+  <td>20</td>
+  <td>&nbsp;</td>
+  <td>客人SAP PO (SP)</td>
+</tr>
+<tr class="cell">
+  <td>19</td>
+  <td>OLDZSAPPO</td>
+  <td>19</td>
+  <td>&nbsp;</td>
+  <td>ZOLDSAPPO</td>
+  <td>ZSAPPO</td>
+  <td>CHAR</td>
+  <td>20</td>
+  <td>&nbsp;</td>
+  <td>客人SAP PO (原)</td>
+</tr>
+<tr class="cell">
+  <td>20</td>
+  <td>WAERK</td>
+  <td>20</td>
+  <td>&nbsp;</td>
+  <td>WAERK</td>
+  <td>WAERS</td>
+  <td>CUKY</td>
+  <td>5</td>
+  <td>&nbsp;</td>
+  <td>SD 文件幣別</td>
+</tr>
+<tr class="cell">
+  <td>21</td>
+  <td>KURSK</td>
+  <td>21</td>
+  <td>&nbsp;</td>
+  <td>KURSK</td>
+  <td>KURRF</td>
+  <td>DEC</td>
+  <td>9</td>
+  <td>&nbsp;</td>
+  <td>價格決定的匯率</td>
+</tr>
+<tr class="cell">
+  <td>22</td>
+  <td>ZCSO</td>
+  <td>22</td>
+  <td>&nbsp;</td>
+  <td>ZCSO</td>
+  <td>ZCSO</td>
+  <td>CHAR</td>
+  <td>10</td>
+  <td>&nbsp;</td>
+  <td>SO#</td>
+</tr>
+<tr class="cell">
+  <td>23</td>
+  <td>OLDZCSO</td>
+  <td>23</td>
+  <td>&nbsp;</td>
+  <td>ZOLDCSO</td>
+  <td>ZCSO</td>
+  <td>CHAR</td>
+  <td>10</td>
+  <td>&nbsp;</td>
+  <td>原 SO#</td>
+</tr>
+<tr class="cell">
+  <td>24</td>
+  <td>ZLLT</td>
+  <td>24</td>
+  <td>&nbsp;</td>
+  <td>ZLLT</td>
+  <td>ZLLT</td>
+  <td>CHAR</td>
+  <td>2</td>
+  <td>&nbsp;</td>
+  <td>瓶頸原因</td>
+</tr>
+<tr class="cell">
+  <td>25</td>
+  <td>ZLLTX</td>
+  <td>25</td>
+  <td>&nbsp;</td>
+  <td>ZLLTX</td>
+  <td>TEXT60</td>
+  <td>CHAR</td>
+  <td>60</td>
+  <td>X</td>
+  <td>瓶頸原因說明</td>
+</tr>
+<tr class="cell">
+  <td>26</td>
+  <td>OLDZLLT</td>
+  <td>26</td>
+  <td>&nbsp;</td>
+  <td>ZOLDLLT</td>
+  <td>ZLLT</td>
+  <td>CHAR</td>
+  <td>2</td>
+  <td>&nbsp;</td>
+  <td>原瓶頸原因</td>
+</tr>
+<tr class="cell">
+  <td>27</td>
+  <td>OLDZLLTX</td>
+  <td>27</td>
+  <td>&nbsp;</td>
+  <td>ZOLDLLTX</td>
+  <td>TEXT60</td>
+  <td>CHAR</td>
+  <td>60</td>
+  <td>X</td>
+  <td>原瓶頸原因說明</td>
+</tr>
+<tr class="cell">
+  <td>28</td>
+  <td>INCO1</td>
+  <td>28</td>
+  <td>&nbsp;</td>
+  <td>INCO1</td>
+  <td>INCO1</td>
+  <td>CHAR</td>
+  <td>3</td>
+  <td>&nbsp;</td>
+  <td>國貿條件〈第 1 部份〉</td>
+</tr>
+<tr class="cell">
+  <td>29</td>
+  <td>INCO2</td>
+  <td>29</td>
+  <td>&nbsp;</td>
+  <td>INCO2</td>
+  <td>INCO2</td>
+  <td>CHAR</td>
+  <td>28</td>
+  <td>X</td>
+  <td>國貿條件〈第 2 部份〉</td>
+</tr>
+<tr class="cell">
+  <td>30</td>
+  <td>ZZSHIP</td>
+  <td>30</td>
+  <td>&nbsp;</td>
+  <td>ZZSHIP</td>
+  <td>ZSHIP</td>
+  <td>CHAR</td>
+  <td>40</td>
+  <td>&nbsp;</td>
+  <td>交運地點 (卸貨港/目的地)</td>
+</tr>
+<tr class="cell">
+  <td>31</td>
+  <td>ZTERM</td>
+  <td>31</td>
+  <td>&nbsp;</td>
+  <td>DZTERM</td>
+  <td>ZTERM</td>
+  <td>CHAR</td>
+  <td>4</td>
+  <td>&nbsp;</td>
+  <td>付款條件碼</td>
+</tr>
+<tr class="cell">
+  <td>32</td>
+  <td>ZTERMX</td>
+  <td>32</td>
+  <td>&nbsp;</td>
+  <td>ZTERMT</td>
+  <td>TEXT20</td>
+  <td>CHAR</td>
+  <td>20</td>
+  <td>X</td>
+  <td>付款條件說明</td>
+</tr>
+<tr class="cell">
+  <td>33</td>
+  <td>PTYP</td>
+  <td>33</td>
+  <td>&nbsp;</td>
+  <td>ZPTYP</td>
+  <td>ZPTYP</td>
+  <td>CHAR</td>
+  <td>2</td>
+  <td>&nbsp;</td>
+  <td>訂價類別</td>
+</tr>
+<tr class="cell">
+  <td>34</td>
+  <td>SORT2</td>
+  <td>34</td>
+  <td>&nbsp;</td>
+  <td>ZSORT2</td>
+  <td>CHAR8</td>
+  <td>CHAR</td>
+  <td>8</td>
+  <td>&nbsp;</td>
+  <td>營業部門</td>
+</tr>
+<tr class="cell">
+  <td>35</td>
+  <td>KUNNR_WE</td>
+  <td>35</td>
+  <td>&nbsp;</td>
+  <td>ZKUNWE</td>
+  <td>KUNNR</td>
+  <td>CHAR</td>
+  <td>10</td>
+  <td>&nbsp;</td>
+  <td>收貨方</td>
+</tr>
+<tr class="cell">
+  <td>36</td>
+  <td>ZPERNR</td>
+  <td>36</td>
+  <td>&nbsp;</td>
+  <td>ZPERNR_LIF</td>
+  <td>LIFNR</td>
+  <td>CHAR</td>
+  <td>10</td>
+  <td>&nbsp;</td>
+  <td>營業人員</td>
+</tr>
+<tr class="cell">
+  <td>37</td>
+  <td>ATTN</td>
+  <td>37</td>
+  <td>&nbsp;</td>
+  <td>ZATTN50</td>
+  <td>TEXT50</td>
+  <td>CHAR</td>
+  <td>50</td>
+  <td>X</td>
+  <td>收貨抬頭</td>
+</tr>
+<tr class="cell">
+  <td>38</td>
+  <td>KUNNR_FA</td>
+  <td>38</td>
+  <td>&nbsp;</td>
+  <td>ZKUNRG</td>
+  <td>KUNNR</td>
+  <td>CHAR</td>
+  <td>10</td>
+  <td>&nbsp;</td>
+  <td>付款方</td>
+</tr>
+<tr class="cell">
+  <td>39</td>
+  <td>KUNNR_RE</td>
+  <td>39</td>
+  <td>&nbsp;</td>
+  <td>KUNRE</td>
+  <td>KUNNR</td>
+  <td>CHAR</td>
+  <td>10</td>
+  <td>&nbsp;</td>
+  <td>發票收受人</td>
+</tr>
+<tr class="cell">
+  <td>40</td>
+  <td>KUNNR_Z5</td>
+  <td>40</td>
+  <td>&nbsp;</td>
+  <td>ZKUNZ5</td>
+  <td>KUNNR</td>
+  <td>CHAR</td>
+  <td>10</td>
+  <td>&nbsp;</td>
+  <td>收貨人 (Consignee)</td>
+</tr>
+<tr class="cell">
+  <td>41</td>
+  <td>KUNNR_Z6</td>
+  <td>41</td>
+  <td>&nbsp;</td>
+  <td>ZKUNZ6</td>
+  <td>KUNNR</td>
+  <td>CHAR</td>
+  <td>10</td>
+  <td>&nbsp;</td>
+  <td>通知方 (Notify Party)</td>
+</tr>
+<tr class="cell">
+  <td>42</td>
+  <td>ZCOMBNO</td>
+  <td>42</td>
+  <td>&nbsp;</td>
+  <td>ZCOMBNO</td>
+  <td>VBELN</td>
+  <td>CHAR</td>
+  <td>10</td>
+  <td>&nbsp;</td>
+  <td>併櫃單號</td>
+</tr>
+<tr class="cell">
+  <td>43</td>
+  <td>OLDZCOMBNO</td>
+  <td>43</td>
+  <td>&nbsp;</td>
+  <td>ZOLDCOMBNO</td>
+  <td>VBELN</td>
+  <td>CHAR</td>
+  <td>10</td>
+  <td>&nbsp;</td>
+  <td>原併櫃單號</td>
+</tr>
+<tr class="cell">
+  <td>44</td>
+  <td>ZTBA</td>
+  <td>44</td>
+  <td>&nbsp;</td>
+  <td>ZTBA</td>
+  <td>YESNO</td>
+  <td>CHAR</td>
+  <td>1</td>
+  <td>&nbsp;</td>
+  <td>TBA併櫃待通知</td>
+</tr>
+<tr class="cell">
+  <td>45</td>
+  <td>ZCANO</td>
+  <td>45</td>
+  <td>&nbsp;</td>
+  <td>ZCANO</td>
+  <td>TEXT40</td>
+  <td>CHAR</td>
+  <td>40</td>
+  <td>X</td>
+  <td>交運地址</td>
+</tr>
+<tr class="cell">
+  <td>46</td>
+  <td>ZOPR</td>
+  <td>46</td>
+  <td>&nbsp;</td>
+  <td>ZMNAME</td>
+  <td>UNAME</td>
+  <td>CHAR</td>
+  <td>12</td>
+  <td>&nbsp;</td>
+  <td>維護人員</td>
+</tr>
+<tr class="cell">
+  <td>47</td>
+  <td>ZOPD</td>
+  <td>47</td>
+  <td>&nbsp;</td>
+  <td>ZMDATE</td>
+  <td>DATUM</td>
+  <td>DATS</td>
+  <td>8</td>
+  <td>&nbsp;</td>
+  <td>維護日期</td>
+</tr>
+<tr class="cell">
+  <td>48</td>
+  <td>ZOPT</td>
+  <td>48</td>
+  <td>&nbsp;</td>
+  <td>ZMTIME</td>
+  <td>UZEIT</td>
+  <td>TIMS</td>
+  <td>6</td>
+  <td>&nbsp;</td>
+  <td>維護時間</td>
+</tr>
+<tr class="cell">
+  <td>49</td>
+  <td>ZLCDLI</td>
+  <td>49</td>
+  <td>&nbsp;</td>
+  <td>ZLCDLI</td>
+  <td>DATUM</td>
+  <td>DATS</td>
+  <td>8</td>
+  <td>&nbsp;</td>
+  <td>信用狀截止日</td>
+</tr>
+<tr class="cell">
+  <td>50</td>
+  <td>ZLCNO</td>
+  <td>50</td>
+  <td>&nbsp;</td>
+  <td>ZLCNO</td>
+  <td>CHAR20</td>
+  <td>CHAR</td>
+  <td>20</td>
+  <td>&nbsp;</td>
+  <td>信用狀號碼</td>
+</tr>
+<tr class="cell">
+  <td>51</td>
+  <td>ZLCYN</td>
+  <td>51</td>
+  <td>&nbsp;</td>
+  <td>ZLCYN</td>
+  <td>YESNO</td>
+  <td>CHAR</td>
+  <td>1</td>
+  <td>&nbsp;</td>
+  <td>需要信用狀否</td>
+</tr>
+<tr class="cell">
+  <td>52</td>
+  <td>ZLDDATE</td>
+  <td>52</td>
+  <td>&nbsp;</td>
+  <td>ZLDDATE</td>
+  <td>DATUM</td>
+  <td>DATS</td>
+  <td>8</td>
+  <td>&nbsp;</td>
+  <td>信用狀收到日</td>
+</tr>
+<tr class="cell">
+  <td>53</td>
+  <td>ZAPROPD</td>
+  <td>53</td>
+  <td>&nbsp;</td>
+  <td>ZAPROPD2</td>
+  <td>DATUM</td>
+  <td>DATS</td>
+  <td>8</td>
+  <td>&nbsp;</td>
+  <td>簽核日期</td>
+</tr>
+<tr class="cell">
+  <td>54</td>
+  <td>ZAPROPR</td>
+  <td>54</td>
+  <td>&nbsp;</td>
+  <td>ZAPROPR2</td>
+  <td>UNAME</td>
+  <td>CHAR</td>
+  <td>12</td>
+  <td>&nbsp;</td>
+  <td>簽核者</td>
+</tr>
+<tr class="cell">
+  <td>55</td>
+  <td>ZAPRTIM</td>
+  <td>55</td>
+  <td>&nbsp;</td>
+  <td>ZAPRTIM2</td>
+  <td>UZEIT</td>
+  <td>TIMS</td>
+  <td>6</td>
+  <td>&nbsp;</td>
+  <td>簽核時間</td>
+</tr>
+<tr class="cell">
+  <td>56</td>
+  <td>REASON</td>
+  <td>56</td>
+  <td>&nbsp;</td>
+  <td>ZMOD_REASON</td>
+  <td>TEXT60</td>
+  <td>CHAR</td>
+  <td>60</td>
+  <td>X</td>
+  <td>異動說明</td>
+</tr>
+<tr class="cell">
+  <td>57</td>
+  <td>CBM</td>
+  <td>57</td>
+  <td>&nbsp;</td>
+  <td>ZCBM_T</td>
+  <td>MENGE</td>
+  <td>QUAN</td>
+  <td>13</td>
+  <td>&nbsp;</td>
+  <td>CBM 總材積</td>
+</tr>
+<tr class="cell">
+  <td>58</td>
+  <td>CUFT</td>
+  <td>58</td>
+  <td>&nbsp;</td>
+  <td>ZCUFT_T</td>
+  <td>MENGE</td>
+  <td>QUAN</td>
+  <td>13</td>
+  <td>&nbsp;</td>
+  <td>CUFT 總材積</td>
+</tr>
+<tr class="cell">
+  <td>59</td>
+  <td>ERDAT</td>
+  <td>59</td>
+  <td>&nbsp;</td>
+  <td>ERSDA</td>
+  <td>DATUM</td>
+  <td>DATS</td>
+  <td>8</td>
+  <td>&nbsp;</td>
+  <td>建立日期</td>
+</tr>
+<tr class="cell">
+  <td>60</td>
+  <td>ERTIM</td>
+  <td>60</td>
+  <td>&nbsp;</td>
+  <td>ERZET</td>
+  <td>UZEIT</td>
+  <td>TIMS</td>
+  <td>6</td>
+  <td>&nbsp;</td>
+  <td>輸入時間</td>
+</tr>
+<tr class="cell">
+  <td>61</td>
+  <td>ERNAM</td>
+  <td>61</td>
+  <td>&nbsp;</td>
+  <td>XUCREATED_BY</td>
+  <td>XUBNAME</td>
+  <td>CHAR</td>
+  <td>12</td>
+  <td>&nbsp;</td>
+  <td>建立者</td>
+</tr>
+<tr class="cell">
+  <td>62</td>
+  <td>ATTACHMENT_KEY</td>
+  <td>62</td>
+  <td>&nbsp;</td>
+  <td>ZATTACHMENT_KEY</td>
+  <td>CHAR32</td>
+  <td>CHAR</td>
+  <td>32</td>
+  <td>&nbsp;</td>
+  <td>附件上傳</td>
+</tr>
+<tr class="cell">
+  <td>63</td>
+  <td>ALTKN</td>
+  <td>63</td>
+  <td>&nbsp;</td>
+  <td>ZALTKN</td>
+  <td>CHAR10</td>
+  <td>CHAR</td>
+  <td>10</td>
+  <td>&nbsp;</td>
+  <td>買方舊供應商編號</td>
+</tr>
+<tr class="cell">
+  <td>64</td>
+  <td>ALTKN_WE</td>
+  <td>64</td>
+  <td>&nbsp;</td>
+  <td>ZALTKN_WE</td>
+  <td>CHAR10</td>
+  <td>CHAR</td>
+  <td>10</td>
+  <td>&nbsp;</td>
+  <td>收貨方舊供應商編號</td>
+</tr>
+<tr class="cell">
+  <td>65</td>
+  <td>ALTKN_FA</td>
+  <td>65</td>
+  <td>&nbsp;</td>
+  <td>ZALTKN_FA</td>
+  <td>CHAR10</td>
+  <td>CHAR</td>
+  <td>10</td>
+  <td>&nbsp;</td>
+  <td>付款方舊供應商編號</td>
+</tr>
+<tr class="cell">
+  <td>66</td>
+  <td>ALTKN_RE</td>
+  <td>66</td>
+  <td>&nbsp;</td>
+  <td>ZALTKN_RE</td>
+  <td>CHAR10</td>
+  <td>CHAR</td>
+  <td>10</td>
+  <td>&nbsp;</td>
+  <td>發票收受方舊供應商編號</td>
+</tr>
+<tr class="cell">
+  <td>67</td>
+  <td>NO_ITEM_VOLUME</td>
+  <td>67</td>
+  <td>&nbsp;</td>
+  <td>ZNO_ITEM_VOLUME</td>
+  <td>XFELD</td>
+  <td>CHAR</td>
+  <td>1</td>
+  <td>&nbsp;</td>
+  <td>項次材積資料不全</td>
+</tr>
+<tr class="cell">
+  <td>68</td>
+  <td>PROGRESS_SO</td>
+  <td>68</td>
+  <td>&nbsp;</td>
+  <td>ZPROGRESS_SO_IND</td>
+  <td>XFELD</td>
+  <td>CHAR</td>
+  <td>1</td>
+  <td>&nbsp;</td>
+  <td>Progress SO</td>
+</tr>
+<tr class="cell">
+  <td>69</td>
+  <td>OLDKUNNR_WE</td>
+  <td>69</td>
+  <td>&nbsp;</td>
+  <td>ZOLDKUNWE</td>
+  <td>KUNNR</td>
+  <td>CHAR</td>
+  <td>10</td>
+  <td>&nbsp;</td>
+  <td>收貨方(原)</td>
+</tr>
+<tr class="cell">
+  <td>70</td>
+  <td>ZMASTERPO</td>
+  <td>70</td>
+  <td>&nbsp;</td>
+  <td>ZMASTERPO</td>
+  <td>ZMASTERPO</td>
+  <td>CHAR</td>
+  <td>20</td>
+  <td>X</td>
+  <td>MASTER PO#</td>
+</tr>
+<tr class="cell">
+  <td>71</td>
+  <td>OLDZMASTERPO</td>
+  <td>71</td>
+  <td>&nbsp;</td>
+  <td>ZOLDMASTERPO</td>
+  <td>ZMASTERPO</td>
+  <td>CHAR</td>
+  <td>20</td>
+  <td>X</td>
+  <td>MASTER PO#(原)</td>
+</tr>
+<tr class="cell">
+  <td>72</td>
+  <td>ZCHGRN</td>
+  <td>72</td>
+  <td>&nbsp;</td>
+  <td>ZCHGRN</td>
+  <td>CHAR02</td>
+  <td>CHAR</td>
+  <td>2</td>
+  <td>&nbsp;</td>
+  <td>訂單異動原因</td>
+</tr>
+<tr class="cell">
+  <td>73</td>
+  <td>OLDZCHGRN</td>
+  <td>73</td>
+  <td>&nbsp;</td>
+  <td>ZOLDCHGRN</td>
+  <td>CHAR02</td>
+  <td>CHAR</td>
+  <td>2</td>
+  <td>&nbsp;</td>
+  <td>訂單異動原因(原)</td>
+</tr>
+<tr class="cell">
+  <td>74</td>
+  <td>ZFOZONE</td>
+  <td>74</td>
+  <td>&nbsp;</td>
+  <td>ZFOZONE</td>
+  <td>CHAR20</td>
+  <td>CHAR</td>
+  <td>20</td>
+  <td>&nbsp;</td>
+  <td>所屬區域</td>
+</tr>
+<tr class="cell">
+  <td>75</td>
+  <td>VBTYP</td>
+  <td>75</td>
+  <td>&nbsp;</td>
+  <td>VBTYPL</td>
+  <td>VBTYPL</td>
+  <td>CHAR</td>
+  <td>4</td>
+  <td>X</td>
+  <td>銷售與配銷文件種類</td>
+</tr>
+<tr class="cell">
+  <td>76</td>
+  <td>ZZNOMARK</td>
+  <td>76</td>
+  <td>&nbsp;</td>
+  <td>ZZNOMARK</td>
+  <td>CHAR1</td>
+  <td>CHAR</td>
+  <td>1</td>
+  <td>&nbsp;</td>
+  <td>不需印嘜</td>
+</tr>
+<tr class="cell">
+  <td>77</td>
+  <td>ZZREWORK</td>
+  <td>77</td>
+  <td>&nbsp;</td>
+  <td>ZZREWORK</td>
+  <td>CHAR1</td>
+  <td>CHAR</td>
+  <td>1</td>
+  <td>&nbsp;</td>
+  <td>需重工印嘜</td>
+</tr>
+<tr class="cell">
+  <td>78</td>
+  <td>ZOLDCONTRACTNO</td>
+  <td>78</td>
+  <td>&nbsp;</td>
+  <td>ZZOLDCONTRACTNO</td>
+  <td>VBELN</td>
+  <td>CHAR</td>
+  <td>10</td>
+  <td>&nbsp;</td>
+  <td>舊合約號碼</td>
+</tr>
+<tr class="cell">
+  <td>79</td>
+  <td>ZSFLAG</td>
+  <td>79</td>
+  <td>&nbsp;</td>
+  <td>ZSFLAG</td>
+  <td>ZSFLAG</td>
+  <td>CHAR</td>
+  <td>2</td>
+  <td>&nbsp;</td>
+  <td>影響銷售路徑的特殊狀況</td>
+</tr>
+      </table>
+     </td>
+   </tr>
+<br/>
+  <table class="outerTable">
+    <tr>
+      <td><h2>Fixed Domain Values </h2>
+    </tr>
+    <tr>
+      <td><!--This is where our main table begins  -->
+<table class="innerTable">
+<tr>
+  <th>Domain Name</th>
+  <th>Value Low</th>
+  <th>Value High</th>
+  <th>Text</th>
+</tr>
+<tr class="cell">
+  <td>ZDSTAT</td>
+  <td>0</td>
+  <td>&nbsp;</td>
+  <td>Created</td>
+</tr>
+<tr class="cell">
+  <td>ZDSTAT</td>
+  <td>1</td>
+  <td>&nbsp;</td>
+  <td>Confirmed</td>
+</tr>
+<tr class="cell">
+  <td>ZDSTAT</td>
+  <td>2</td>
+  <td>&nbsp;</td>
+  <td>Closed</td>
+</tr>
+<tr class="cell">
+  <td>ZPTYP</td>
+  <td>10</td>
+  <td>&nbsp;</td>
+  <td>GRACO</td>
+</tr>
+<tr class="cell">
+  <td>ZPTYP</td>
+  <td>30</td>
+  <td>&nbsp;</td>
+  <td>JOIE</td>
+</tr>
+<tr class="cell">
+  <td>ZPTYP</td>
+  <td>60</td>
+  <td>&nbsp;</td>
+  <td>NUNA</td>
+</tr>
+<tr class="cell">
+  <td>ZPTYP</td>
+  <td>WB</td>
+  <td>&nbsp;</td>
+  <td>WonderBrands</td>
+</tr>
+<tr class="cell">
+  <td>YESNO</td>
+  <td>X</td>
+  <td>&nbsp;</td>
+  <td>Yes</td>
+</tr>
+<tr class="cell">
+  <td>YESNO</td>
+  <td>&nbsp;</td>
+  <td>&nbsp;</td>
+  <td>No</td>
+</tr>
+<tr class="cell">
+  <td>YESNO</td>
+  <td>X</td>
+  <td>&nbsp;</td>
+  <td>Yes</td>
+</tr>
+<tr class="cell">
+  <td>YESNO</td>
+  <td>&nbsp;</td>
+  <td>&nbsp;</td>
+  <td>No</td>
+</tr>
+<tr class="cell">
+  <td>XFELD</td>
+  <td>X</td>
+  <td>&nbsp;</td>
+  <td>Yes</td>
+</tr>
+<tr class="cell">
+  <td>XFELD</td>
+  <td>&nbsp;</td>
+  <td>&nbsp;</td>
+  <td>No</td>
+</tr>
+<tr class="cell">
+  <td>XFELD</td>
+  <td>X</td>
+  <td>&nbsp;</td>
+  <td>Yes</td>
+</tr>
+<tr class="cell">
+  <td>XFELD</td>
+  <td>&nbsp;</td>
+  <td>&nbsp;</td>
+  <td>No</td>
+</tr>
+<tr class="cell">
+  <td>VBTYPL</td>
+  <td>A</td>
+  <td>&nbsp;</td>
+  <td>Inquiry</td>
+</tr>
+<tr class="cell">
+  <td>VBTYPL</td>
+  <td>B</td>
+  <td>&nbsp;</td>
+  <td>Quotation</td>
+</tr>
+<tr class="cell">
+  <td>VBTYPL</td>
+  <td>C</td>
+  <td>&nbsp;</td>
+  <td>Order</td>
+</tr>
+<tr class="cell">
+  <td>VBTYPL</td>
+  <td>D</td>
+  <td>&nbsp;</td>
+  <td>Item Proposal</td>
+</tr>
+<tr class="cell">
+  <td>VBTYPL</td>
+  <td>E</td>
+  <td>&nbsp;</td>
+  <td>Scheduling Agreement</td>
+</tr>
+<tr class="cell">
+  <td>VBTYPL</td>
+  <td>F</td>
+  <td>&nbsp;</td>
+  <td>Scheduling Agreement with External Service Agent</td>
+</tr>
+<tr class="cell">
+  <td>VBTYPL</td>
+  <td>G</td>
+  <td>&nbsp;</td>
+  <td>Contract</td>
+</tr>
+<tr class="cell">
+  <td>VBTYPL</td>
+  <td>H</td>
+  <td>&nbsp;</td>
+  <td>Returns</td>
+</tr>
+<tr class="cell">
+  <td>VBTYPL</td>
+  <td>I</td>
+  <td>&nbsp;</td>
+  <td>Order Without Charge</td>
+</tr>
+<tr class="cell">
+  <td>VBTYPL</td>
+  <td>J</td>
+  <td>&nbsp;</td>
+  <td>Delivery</td>
+</tr>
+<tr class="cell">
+  <td>VBTYPL</td>
+  <td>K</td>
+  <td>&nbsp;</td>
+  <td>Credit Memo Request</td>
+</tr>
+<tr class="cell">
+  <td>VBTYPL</td>
+  <td>L</td>
+  <td>&nbsp;</td>
+  <td>Debit Memo Request</td>
+</tr>
+<tr class="cell">
+  <td>VBTYPL</td>
+  <td>M</td>
+  <td>&nbsp;</td>
+  <td>Invoice</td>
+</tr>
+<tr class="cell">
+  <td>VBTYPL</td>
+  <td>N</td>
+  <td>&nbsp;</td>
+  <td>Invoice Cancellation</td>
+</tr>
+<tr class="cell">
+  <td>VBTYPL</td>
+  <td>O</td>
+  <td>&nbsp;</td>
+  <td>Credit Memo</td>
+</tr>
+<tr class="cell">
+  <td>VBTYPL</td>
+  <td>P</td>
+  <td>&nbsp;</td>
+  <td>Debit Memo</td>
+</tr>
+<tr class="cell">
+  <td>VBTYPL</td>
+  <td>Q</td>
+  <td>&nbsp;</td>
+  <td>WMS Transfer Order</td>
+</tr>
+<tr class="cell">
+  <td>VBTYPL</td>
+  <td>R</td>
+  <td>&nbsp;</td>
+  <td>Goods Movement</td>
+</tr>
+<tr class="cell">
+  <td>VBTYPL</td>
+  <td>S</td>
+  <td>&nbsp;</td>
+  <td>Credit Memo Cancellation</td>
+</tr>
+<tr class="cell">
+  <td>VBTYPL</td>
+  <td>T</td>
+  <td>&nbsp;</td>
+  <td>Returns Delivery for Order</td>
+</tr>
+<tr class="cell">
+  <td>VBTYPL</td>
+  <td>U</td>
+  <td>&nbsp;</td>
+  <td>Pro Forma Invoice</td>
+</tr>
+<tr class="cell">
+  <td>VBTYPL</td>
+  <td>V</td>
+  <td>&nbsp;</td>
+  <td>Purchase Order</td>
+</tr>
+<tr class="cell">
+  <td>VBTYPL</td>
+  <td>W</td>
+  <td>&nbsp;</td>
+  <td>Independent Reqts Plan</td>
+</tr>
+<tr class="cell">
+  <td>VBTYPL</td>
+  <td>X</td>
+  <td>&nbsp;</td>
+  <td>Handling Unit</td>
+</tr>
+<tr class="cell">
+  <td>VBTYPL</td>
+  <td>Y</td>
+  <td>&nbsp;</td>
+  <td>Rebate Agreement</td>
+</tr>
+<tr class="cell">
+  <td>VBTYPL</td>
+  <td>0</td>
+  <td>&nbsp;</td>
+  <td>Master Contract</td>
+</tr>
+<tr class="cell">
+  <td>VBTYPL</td>
+  <td>1</td>
+  <td>&nbsp;</td>
+  <td>Sales Activities (CAS)</td>
+</tr>
+<tr class="cell">
+  <td>VBTYPL</td>
+  <td>2</td>
+  <td>&nbsp;</td>
+  <td>External Transaction</td>
+</tr>
+<tr class="cell">
+  <td>VBTYPL</td>
+  <td>3</td>
+  <td>&nbsp;</td>
+  <td>Invoice List</td>
+</tr>
+<tr class="cell">
+  <td>VBTYPL</td>
+  <td>4</td>
+  <td>&nbsp;</td>
+  <td>Credit Memo List</td>
+</tr>
+<tr class="cell">
+  <td>VBTYPL</td>
+  <td>5</td>
+  <td>&nbsp;</td>
+  <td>Intercompany Invoice</td>
+</tr>
+<tr class="cell">
+  <td>VBTYPL</td>
+  <td>6</td>
+  <td>&nbsp;</td>
+  <td>Intercompany Credit Memo</td>
+</tr>
+<tr class="cell">
+  <td>VBTYPL</td>
+  <td>7</td>
+  <td>&nbsp;</td>
+  <td>Delivery/Shipping Notification</td>
+</tr>
+<tr class="cell">
+  <td>VBTYPL</td>
+  <td>8</td>
+  <td>&nbsp;</td>
+  <td>Shipment</td>
+</tr>
+<tr class="cell">
+  <td>VBTYPL</td>
+  <td>a</td>
+  <td>&nbsp;</td>
+  <td>Shipment Costs</td>
+</tr>
+<tr class="cell">
+  <td>VBTYPL</td>
+  <td>b</td>
+  <td>&nbsp;</td>
+  <td>CRM Opportunity</td>
+</tr>
+<tr class="cell">
+  <td>VBTYPL</td>
+  <td>c</td>
+  <td>&nbsp;</td>
+  <td>Unverified Delivery</td>
+</tr>
+<tr class="cell">
+  <td>VBTYPL</td>
+  <td>d</td>
+  <td>&nbsp;</td>
+  <td>Trading Contract</td>
+</tr>
+<tr class="cell">
+  <td>VBTYPL</td>
+  <td>e</td>
+  <td>&nbsp;</td>
+  <td>Allocation Table</td>
+</tr>
+<tr class="cell">
+  <td>VBTYPL</td>
+  <td>g</td>
+  <td>&nbsp;</td>
+  <td>Rough Goods Receipt (only IS-Retail)</td>
+</tr>
+<tr class="cell">
+  <td>VBTYPL</td>
+  <td>h</td>
+  <td>&nbsp;</td>
+  <td>Cancel Goods Issue</td>
+</tr>
+<tr class="cell">
+  <td>VBTYPL</td>
+  <td>i</td>
+  <td>&nbsp;</td>
+  <td>Goods Receipt</td>
+</tr>
+<tr class="cell">
+  <td>VBTYPL</td>
+  <td>j</td>
+  <td>&nbsp;</td>
+  <td>JIT Call</td>
+</tr>
+<tr class="cell">
+  <td>VBTYPL</td>
+  <td>k</td>
+  <td>&nbsp;</td>
+  <td>Settlement Management Document</td>
+</tr>
+<tr class="cell">
+  <td>VBTYPL</td>
+  <td>n</td>
+  <td>&nbsp;</td>
+  <td>Reserved</td>
+</tr>
+<tr class="cell">
+  <td>VBTYPL</td>
+  <td>o</td>
+  <td>&nbsp;</td>
+  <td>Reserved</td>
+</tr>
+<tr class="cell">
+  <td>VBTYPL</td>
+  <td>p</td>
+  <td>&nbsp;</td>
+  <td>Goods Movement (Documentation)</td>
+</tr>
+<tr class="cell">
+  <td>VBTYPL</td>
+  <td>q</td>
+  <td>&nbsp;</td>
+  <td>Reserved</td>
+</tr>
+<tr class="cell">
+  <td>VBTYPL</td>
+  <td>r</td>
+  <td>&nbsp;</td>
+  <td>TD Transport (Only IS-Oil)</td>
+</tr>
+<tr class="cell">
+  <td>VBTYPL</td>
+  <td>s</td>
+  <td>&nbsp;</td>
+  <td>Load Confirmation, Reposting (Only IS-Oil)</td>
+</tr>
+<tr class="cell">
+  <td>VBTYPL</td>
+  <td>t</td>
+  <td>&nbsp;</td>
+  <td>Gain / Loss    (Only IS-Oil)</td>
+</tr>
+<tr class="cell">
+  <td>VBTYPL</td>
+  <td>u</td>
+  <td>&nbsp;</td>
+  <td>Reentry into Storage (Only IS-Oil)</td>
+</tr>
+<tr class="cell">
+  <td>VBTYPL</td>
+  <td>v</td>
+  <td>&nbsp;</td>
+  <td>Data Collation (Only IS-Oil)</td>
+</tr>
+<tr class="cell">
+  <td>VBTYPL</td>
+  <td>w</td>
+  <td>&nbsp;</td>
+  <td>Reservation (Only IS-Oil)</td>
+</tr>
+<tr class="cell">
+  <td>VBTYPL</td>
+  <td>x</td>
+  <td>&nbsp;</td>
+  <td>Load Confirmation, Goods Receipt (Only IS-Oil)</td>
+</tr>
+<tr class="cell">
+  <td>VBTYPL</td>
+  <td>$</td>
+  <td>&nbsp;</td>
+  <td>(AFS)</td>
+</tr>
+<tr class="cell">
+  <td>VBTYPL</td>
+  <td>+</td>
+  <td>&nbsp;</td>
+  <td>Journal Entry (Temporary)</td>
+</tr>
+<tr class="cell">
+  <td>VBTYPL</td>
+  <td>-</td>
+  <td>&nbsp;</td>
+  <td>Journal Entry (Temporary)</td>
+</tr>
+<tr class="cell">
+  <td>VBTYPL</td>
+  <td>#</td>
+  <td>&nbsp;</td>
+  <td>Revenue Recognition (Temporary)</td>
+</tr>
+<tr class="cell">
+  <td>VBTYPL</td>
+  <td>~</td>
+  <td>&nbsp;</td>
+  <td>Revenue Cancellation (Temporary)</td>
+</tr>
+<tr class="cell">
+  <td>VBTYPL</td>
+  <td>§</td>
+  <td>&nbsp;</td>
+  <td>Revenue Recognition/New View (Temporary)</td>
+</tr>
+<tr class="cell">
+  <td>VBTYPL</td>
+  <td>:</td>
+  <td>&nbsp;</td>
+  <td>Service Order (CS)</td>
+</tr>
+<tr class="cell">
+  <td>VBTYPL</td>
+  <td>.</td>
+  <td>&nbsp;</td>
+  <td>Service Notification (CS)</td>
+</tr>
+<tr class="cell">
+  <td>VBTYPL</td>
+  <td>&</td>
+  <td>&nbsp;</td>
+  <td>Warehouse Document</td>
+</tr>
+<tr class="cell">
+  <td>VBTYPL</td>
+  <td>*</td>
+  <td>&nbsp;</td>
+  <td>Pick Order</td>
+</tr>
+<tr class="cell">
+  <td>VBTYPL</td>
+  <td>,</td>
+  <td>&nbsp;</td>
+  <td>Shipment Document</td>
+</tr>
+<tr class="cell">
+  <td>VBTYPL</td>
+  <td>^</td>
+  <td>&nbsp;</td>
+  <td>Reserved</td>
+</tr>
+<tr class="cell">
+  <td>VBTYPL</td>
+  <td>|</td>
+  <td>&nbsp;</td>
+  <td>Reserved</td>
+</tr>
+<tr class="cell">
+  <td>VBTYPL</td>
+  <td>f001</td>
+  <td>&nbsp;</td>
+  <td>Period-End Invoice</td>
+</tr>
+<tr class="cell">
+  <td>VBTYPL</td>
+  <td>f002</td>
+  <td>&nbsp;</td>
+  <td>Period-End Credit Memo</td>
+</tr>
+<tr class="cell">
+  <td>VBTYPL</td>
+  <td>f003</td>
+  <td>&nbsp;</td>
+  <td>Period-End Invoice (Intercompany Billing)</td>
+</tr>
+<tr class="cell">
+  <td>VBTYPL</td>
+  <td>f004</td>
+  <td>&nbsp;</td>
+  <td>Period-End Credit Memo (Intercompany Billing)</td>
+</tr>
+<tr class="cell">
+  <td>VBTYPL</td>
+  <td>CEM</td>
+  <td>&nbsp;</td>
+  <td>ETM Shipping Document</td>
+</tr>
+<tr class="cell">
+  <td>VBTYPL</td>
+  <td>BOS</td>
+  <td>&nbsp;</td>
+  <td>Service Entry Sheet</td>
+</tr>
+<tr class="cell">
+  <td>VBTYPL</td>
+  <td>EBDR</td>
+  <td>&nbsp;</td>
+  <td>Billing Document Request</td>
+</tr>
+<tr class="cell">
+  <td>VBTYPL</td>
+  <td>PBDR</td>
+  <td>&nbsp;</td>
+  <td>Billing Document Request for Prof. Serv.</td>
+</tr>
+<tr class="cell">
+  <td>VBTYPL</td>
+  <td>PBD</td>
+  <td>&nbsp;</td>
+  <td>Preliminary Billing Document</td>
+</tr>
+<tr class="cell">
+  <td>VBTYPL</td>
+  <td>CSVO</td>
+  <td>&nbsp;</td>
+  <td>Service Order</td>
+</tr>
+<tr class="cell">
+  <td>VBTYPL</td>
+  <td>CSCO</td>
+  <td>&nbsp;</td>
+  <td>Service Confirmation</td>
+</tr>
+<tr class="cell">
+  <td>VBTYPL</td>
+  <td>CSCT</td>
+  <td>&nbsp;</td>
+  <td>Service Contract</td>
+</tr>
+<tr class="cell">
+  <td>VBTYPL</td>
+  <td>TMFU</td>
+  <td>&nbsp;</td>
+  <td>Freight Unit</td>
+</tr>
+<tr class="cell">
+  <td>VBTYPL</td>
+  <td>TMFO</td>
+  <td>&nbsp;</td>
+  <td>Freight Order</td>
+</tr>
+<tr class="cell">
+  <td>VBTYPL</td>
+  <td>CMMA</td>
+  <td>&nbsp;</td>
+  <td>Customer Management Master Agreement</td>
+</tr>
+<tr class="cell">
+  <td>VBTYPL</td>
+  <td>PBRQ</td>
+  <td>&nbsp;</td>
+  <td>Project Billing Request</td>
+</tr>
+<tr class="cell">
+  <td>VBTYPL</td>
+  <td>SOLO</td>
+  <td>&nbsp;</td>
+  <td>Solution Order</td>
+</tr>
+<tr class="cell">
+  <td>VBTYPL</td>
+  <td>SBRQ</td>
+  <td>&nbsp;</td>
+  <td>Subscription Billing Request</td>
+</tr>
+<tr class="cell">
+  <td>VBTYPL</td>
+  <td>GBRQ</td>
+  <td>&nbsp;</td>
+  <td>Grants Management Billing Request</td>
+</tr>
+<tr class="cell">
+  <td>ZSFLAG</td>
+  <td>&nbsp;</td>
+  <td>&nbsp;</td>
+  <td>&nbsp;</td>
+</tr>
+<tr class="cell">
+  <td>ZSFLAG</td>
+  <td>1</td>
+  <td>&nbsp;</td>
+  <td>Nuna童裝/泰國物料</td>
+</tr>
+      </table>
+     </td>
+   </tr>
+   <tr>
+<td class="footer">Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2026. Sap Release 757</td>
+   </tr>
+</table>
+</body>
+</html>

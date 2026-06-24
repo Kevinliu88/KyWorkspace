@@ -1,0 +1,1025 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="application/xhtml+xml; charset=UTF-8" />
+<title>ZTGCX0019</title>
+<style type="text/css">
+.code{ font-family:"Courier New", Courier, monospace; color:#000; font-size:14px; background-color:#F2F4F7 }
+  .codeComment {font-family:"Courier New", Courier, monospace; color:#0000F0; font-size:14px; background-color:#F2F4F7 }
+  .normalBold{ font-family:Arial, Helvetica, sans-serif; color:#000; font-size:12px; font-weight:800 }
+  .normalBoldLarge{ font-family:Arial, Helvetica, sans-serif; color:#000; font-size:16px; font-weight:800 }
+</style>
+<style type="text/css">
+  .normal{ font-family:Arial, Helvetica, sans-serif; color:#000; font-size:12px }
+  .footer{ font-family:Arial, Helvetica, sans-serif; color:#000; font-size:12px; text-align: center }
+  h2{ font-family:Arial, Helvetica, sans-serif; color:#000; font-size:16px; font-weight:800 }
+  h3{ font-family:Arial, Helvetica, sans-serif; color:#000; font-size:14px; font-weight:800 }
+  .outerTable{
+   background-color:#E0E7ED;
+   width:100%;
+   border-top-width: thin;
+   border-right-width: thin;
+   border-right-width: thin;
+   border-left-width: thin;
+   border-top-style: solid;
+   border-right-style: solid;
+   border-bottom-style: solid;
+   border-left-style: solid;
+  }
+  .innerTable{
+   background-color:#F2F4F7;
+   width:100%;
+   border-top-width: thin;
+   border-right-width: thin;
+   border-bottom-width: thin;
+   border-left-width: thin;
+   border-top-style: solid;
+   border-right-style: solid;
+   border-bottom-style: solid;
+   border-left-style: solid;
+  }
+</style>
+</head>
+<body>
+<table class="outerTable">
+  <tr class="normalBoldLarge">
+     <td><h2>Code listing for: ZTGCX0019</h2>
+<h3> Description: QQ 單轉出至預採帳 XQ 單表頭及明細</h3></td>
+   </tr>
+  <tr>
+     <td>
+     <table class="innerTable">
+       <tr>
+          <td>
+   <div class="codeComment">
+*&---------------------------------------------------------------------*<br />
+*&&nbsp;Report&nbsp;&nbsp;ZTGCX0019&nbsp;-&nbsp;QQ&nbsp;單轉出至預採帳&nbsp;XQ&nbsp;單表頭及明細<br />
+*&&nbsp;目的&nbsp;&nbsp;:&nbsp;將&nbsp;ZTCX0001&nbsp;資料轉入&nbsp;ZTSD0098&nbsp;/&nbsp;ZTSD0099<br />
+*&---------------------------------------------------------------------*<br />
+   </div>
+   <div class="code">
+REPORT  ztgcx0019.<br />
+<br />
+TABLES: ztcx0001,ztsd0028.<br />
+<br />
+   </div>
+   <div class="codeComment">
+***********************************************************************<br />
+*&nbsp;一、常數與型別<br />
+***********************************************************************<br />
+   </div>
+   <div class="code">
+CONSTANTS: c_str_98 TYPE dd02l-tabname VALUE 'ZTSD0098', "ALV 用<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;c_str_99&nbsp;TYPE&nbsp;dd02l-tabname&nbsp;VALUE&nbsp;'ZTSD0099'.<br />
+<br />
+TYPE-POOLS: slis.<br />
+<br />
+   </div>
+   <div class="codeComment">
+***********************************************************************<br />
+*&nbsp;二、選擇畫面<br />
+***********************************************************************<br />
+   </div>
+   <div class="code">
+SELECTION-SCREEN BEGIN OF BLOCK blk1 WITH FRAME TITLE TEXT-t01.<br />
+&nbsp;&nbsp;SELECT-OPTIONS:<br />
+&nbsp;&nbsp;&nbsp;&nbsp;s_vtweg&nbsp;&nbsp;FOR&nbsp;ztcx0001-vtweg&nbsp;OBLIGATORY&nbsp;DEFAULT&nbsp;'C1',<br />
+&nbsp;&nbsp;&nbsp;&nbsp;s_qq&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FOR&nbsp;ztcx0001-qq,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;s_idnrk&nbsp;&nbsp;FOR&nbsp;ztcx0001-idnrk,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;s_audat&nbsp;FOR&nbsp;ztsd0028-audat&nbsp;OBLIGATORY,"第0版確認日期<br />
+   </div>
+   <div class="codeComment">
+*&nbsp;&nbsp;&nbsp;&nbsp;s_erdat&nbsp;&nbsp;FOR&nbsp;ztcx0001-erdat&nbsp;OBLIGATORY,<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;s_ernam&nbsp;&nbsp;FOR&nbsp;ztcx0001-ernam.<br />
+<br />
+   </div>
+   <div class="codeComment">
+*&nbsp;&nbsp;PARAMETERS:&nbsp;p_zym&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;TYPE&nbsp;ztunym&nbsp;&nbsp;OBLIGATORY.<br />
+*&nbsp;&nbsp;PARAMETERS:&nbsp;p_period&nbsp;&nbsp;TYPE&nbsp;zperiod&nbsp;OBLIGATORY&nbsp;DEFAULT&nbsp;1.<br />
+<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;PARAMETERS:&nbsp;p_prev&nbsp;&nbsp;AS&nbsp;CHECKBOX&nbsp;DEFAULT&nbsp;'X'&nbsp;USER-COMMAND&nbsp;uc.&nbsp;"&nbsp;打勾&nbsp;=&nbsp;預覽模式<br />
+SELECTION-SCREEN END   OF BLOCK blk1.<br />
+<br />
+   </div>
+   <div class="codeComment">
+***********************************************************************<br />
+*&nbsp;三、資料宣告<br />
+***********************************************************************<br />
+   </div>
+   <div class="code">
+"來源<br />
+   </div>
+   <div class="codeComment">
+*DATA:&nbsp;lt_src&nbsp;TYPE&nbsp;STANDARD&nbsp;TABLE&nbsp;OF&nbsp;ztcx0001,<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ls_src&nbsp;LIKE&nbsp;LINE&nbsp;OF&nbsp;lt_src.<br />
+<br />
+   </div>
+   <div class="code">
+"目的<br />
+DATA: lt_98 TYPE STANDARD TABLE OF ztsd0098,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ls_98&nbsp;TYPE&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ztsd0098,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;lt_99&nbsp;TYPE&nbsp;STANDARD&nbsp;TABLE&nbsp;OF&nbsp;ztsd0099,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ls_99&nbsp;TYPE&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ztsd0099.<br />
+<br />
+"ALV & LOG<br />
+DATA: gt_fieldcat TYPE slis_t_fieldcat_alv,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;gs_layout&nbsp;&nbsp;&nbsp;TYPE&nbsp;slis_layout_alv.<br />
+<br />
+DATA: gt_err_log  TYPE STANDARD TABLE OF string,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;gt_exec_log&nbsp;TYPE&nbsp;STANDARD&nbsp;TABLE&nbsp;OF&nbsp;string.<br />
+<br />
+"輔助<br />
+DATA: lv_zxqno   TYPE ztsd0098-zxqno,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;lv_prev_qq&nbsp;TYPE&nbsp;ztcx0001-qq,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;lv_seq_idx&nbsp;TYPE&nbsp;i&nbsp;VALUE&nbsp;0.<br />
+<br />
+DATA lv_perid TYPE zivdch_ym.   "CHAR6 (YYYYMM)<br />
+<br />
+DATA:lv_wl2_englishspecifications TYPE ztmara-wl2_englishspecifications,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;lv_string&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;TYPE&nbsp;string.<br />
+DATA:lv_mnglg TYPE ztcx0001-mnglg.<br />
+<br />
+   </div>
+   <div class="codeComment">
+*TYPES:BEGIN&nbsp;OF&nbsp;ty_qq,<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;qq&nbsp;TYPE&nbsp;ztcx0001-qq,<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;END&nbsp;OF&nbsp;ty_qq.<br />
+*DATA:lt_qq&nbsp;TYPE&nbsp;TABLE&nbsp;OF&nbsp;ty_qq.<br />
+***********************************************************************<br />
+*&nbsp;四、主流程<br />
+***********************************************************************<br />
+<br />
+   </div>
+   <div class="code">
+INITIALIZATION.<br />
+   </div>
+   <div class="codeComment">
+*&nbsp;&nbsp;p_zym&nbsp;=&nbsp;sy-datum(6).&nbsp;&nbsp;"&nbsp;自動填入今天的年月&nbsp;(YYYYMM)<br />
+<br />
+   </div>
+   <div class="code">
+START-OF-SELECTION.<br />
+<br />
+   </div>
+   <div class="codeComment">
+*---------------------------------------------------------------<br />
+*&nbsp;1.&nbsp;讀來源資料<br />
+*---------------------------------------------------------------<br />
+<br />
+*&nbsp;&nbsp;SELECT&nbsp;*&nbsp;INTO&nbsp;TABLE&nbsp;@lt_src<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;FROM&nbsp;ztcx0001&nbsp;AS&nbsp;a<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;WHERE&nbsp;a~vtweg&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IN&nbsp;@s_vtweg<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;a~qq&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IN&nbsp;@s_qq<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;a~idnrk&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IN&nbsp;@s_idnrk<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;a~erdat&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IN&nbsp;@s_erdat<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;a~ernam&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IN&nbsp;@s_ernam<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;a~qq&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;&gt;&nbsp;''<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;a~qq_status&nbsp;IN&nbsp;(&nbsp;'A',&nbsp;'B',&nbsp;'D'&nbsp;)"調整為&nbsp;狀態A、B、D都抓&nbsp;20251004<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;a~loekz&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;''<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;moq_remain&nbsp;&gt;&nbsp;0<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;vbeln&nbsp;&lt;&gt;&nbsp;''&nbsp;&nbsp;"若&nbsp;ZTCX0001-VBELN&nbsp;=&nbsp;''&nbsp;則排除不轉<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;a~qq&nbsp;NOT&nbsp;IN&nbsp;(<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SELECT&nbsp;DISTINCT&nbsp;qq&nbsp;FROM&nbsp;ztcx0001&nbsp;"排除20250901以前的QQ單<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;WHERE&nbsp;erdat&nbsp;&lt;&nbsp;'20250901'<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;qq&nbsp;&lt;&gt;&nbsp;''<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;loekz&nbsp;&lt;&gt;&nbsp;'X'<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;vtweg&nbsp;IN&nbsp;@s_vtweg<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;a~sales_netpr_6&nbsp;&gt;&nbsp;0<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;a~vtweg&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IN&nbsp;@s_vtweg<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;ORDER&nbsp;BY&nbsp;a~vtweg,&nbsp;a~qq,&nbsp;a~idnrk,<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a~moq_remain&nbsp;ASCENDING,<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a~erdat&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;DESCENDING,<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a~vbeln&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;DESCENDING,<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a~posnr&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;DESCENDING.&nbsp;"a~erdat,&nbsp;a~ertim,&nbsp;a~zportalno.<br />
+<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;SELECT<br />
+&nbsp;&nbsp;&nbsp;&nbsp;a~werks,a~vtweg,a~zseq,a~zportalno,a~idnrk,a~loekz,a~qq,a~qq_seq,a~matnr,a~req_date,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;a~zportalno_qty,a~mnglg,a~menge,a~meins,a~beskz,a~sobsl,a~mstae,a~stock_qty,a~extra_sup,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;a~bmeng,a~zmoq,a~moq_qty,a~moq_remain,a~moq_7day_req,a~moq_confirm,a~netpr,a~waers,a~sales_waers,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;a~sales_netpr,a~sales_netpr_6,a~sales_amt,a~out_qty,a~prod,a~ebeln,a~qq_ori,a~wl2_thenameoftheerp,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;a~wl2_erpspecification,a~zdefault_vendor,a~vendor_name1,a~plifz,a~wl2_englishspecifications,a~skuitem,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;a~fevor,a~txt_fevor,CASE&nbsp;WHEN&nbsp;a~erdat&nbsp;&gt;=&nbsp;b~zapropd&nbsp;THEN&nbsp;a~erdat&nbsp;ELSE&nbsp;b~zapropd&nbsp;END&nbsp;AS&nbsp;erdat,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;a~ertim,a~ernam,a~qq_status,a~chdat,a~chtim,a~chnam,a~moq_period,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;a~vbeln,a~posnr,a~remark_pur,a~remark_pp,a~remark_del,a~netpr_cny,a~waers_cny,a~netpr_twd,a~waers_twd,a~zind01<br />
+&nbsp;&nbsp;&nbsp;&nbsp;INTO&nbsp;TABLE&nbsp;@DATA(lt_src)<br />
+&nbsp;&nbsp;&nbsp;&nbsp;FROM&nbsp;ztcx0001&nbsp;AS&nbsp;a<br />
+&nbsp;&nbsp;&nbsp;&nbsp;JOIN&nbsp;ztsd0028&nbsp;AS&nbsp;b&nbsp;ON&nbsp;a~vbeln&nbsp;=&nbsp;b~vbeln&nbsp;AND&nbsp;b~zvsnmr_v&nbsp;=&nbsp;'000'<br />
+&nbsp;&nbsp;&nbsp;&nbsp;WHERE&nbsp;a~vtweg&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IN&nbsp;@s_vtweg<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;a~qq&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IN&nbsp;@s_qq<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;a~idnrk&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IN&nbsp;@s_idnrk<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;(&nbsp;CASE&nbsp;WHEN&nbsp;a~erdat&nbsp;&gt;=&nbsp;b~zapropd&nbsp;THEN&nbsp;a~erdat&nbsp;ELSE&nbsp;b~zapropd&nbsp;END&nbsp;)&nbsp;IN&nbsp;@s_audat<br />
+   </div>
+   <div class="codeComment">
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;b~audat&nbsp;&nbsp;IN&nbsp;@s_audat<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;a~erdat&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IN&nbsp;@s_erdat<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;a~ernam&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IN&nbsp;@s_ernam<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;a~qq&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;&gt;&nbsp;''<br />
+   </div>
+   <div class="codeComment">
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;a~qq_status&nbsp;IN&nbsp;(&nbsp;'A',&nbsp;'B',&nbsp;'D'&nbsp;)"調整為&nbsp;狀態A、B、D都抓&nbsp;20251004<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;a~qq_status&nbsp;&lt;&gt;&nbsp;'C'<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;a~loekz&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;''<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;a~moq_qty&nbsp;&gt;&nbsp;0&nbsp;&nbsp;"報&nbsp;MOQ<br />
+   </div>
+   <div class="codeComment">
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;a~moq_remain&nbsp;&gt;&nbsp;0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"MOQ結餘<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;a~vbeln&nbsp;&lt;&gt;&nbsp;''&nbsp;&nbsp;"若&nbsp;ZTCX0001-VBELN&nbsp;=&nbsp;''&nbsp;則排除不轉<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;(&nbsp;a~zind01&nbsp;=&nbsp;''&nbsp;OR&nbsp;a~zind01&nbsp;=&nbsp;'C'&nbsp;)<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;a~zxqno&nbsp;=&nbsp;''&nbsp;&nbsp;&nbsp;"只抓取未產生XQ單的數據<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;a~qq&nbsp;NOT&nbsp;IN&nbsp;(<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SELECT&nbsp;DISTINCT&nbsp;qq&nbsp;FROM&nbsp;ztcx0001&nbsp;"排除20250901以前的QQ單<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;WHERE&nbsp;erdat&nbsp;&lt;&nbsp;'20250501'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"放開日期&nbsp;2025/9/1&nbsp;限制<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;qq&nbsp;&lt;&gt;&nbsp;''<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;loekz&nbsp;&lt;&gt;&nbsp;'X'<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;vtweg&nbsp;IN&nbsp;@s_vtweg<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;a~sales_netpr_6&nbsp;&gt;&nbsp;0<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;a~vtweg&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IN&nbsp;@s_vtweg.<br />
+   </div>
+   <div class="codeComment">
+*&nbsp;&nbsp;&nbsp;&nbsp;ORDER&nbsp;BY&nbsp;a~vtweg,&nbsp;a~qq,&nbsp;a~idnrk,<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a~moq_remain&nbsp;ASCENDING,<br />
+**&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a~erdat&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;DESCENDING,<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;b~audat&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;DESCENDING,<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a~vbeln&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;DESCENDING,<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a~posnr&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;DESCENDING.&nbsp;"a~erdat,&nbsp;a~ertim,&nbsp;a~zportalno.<br />
+<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;IF&nbsp;lt_src&nbsp;IS&nbsp;INITIAL.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;MESSAGE&nbsp;TEXT-001&nbsp;TYPE&nbsp;'I'.&nbsp;&nbsp;"&nbsp;001&nbsp;查無符合條件的資料。<br />
+&nbsp;&nbsp;&nbsp;&nbsp;EXIT.<br />
+&nbsp;&nbsp;ENDIF.<br />
+<br />
+   </div>
+   <div class="codeComment">
+*&nbsp;&nbsp;"===========================================================<br />
+*&nbsp;&nbsp;"&nbsp;依&nbsp;QQ&nbsp;+&nbsp;IDNRK&nbsp;+&nbsp;ERDAT&nbsp;+&nbsp;ERTIM&nbsp;+&nbsp;ZPORTALNO&nbsp;取每組&nbsp;最後一筆<br />
+*&nbsp;&nbsp;"===========================================================<br />
+*&nbsp;&nbsp;"&nbsp;把最新(最大)的&nbsp;ERDAT/ERTIM/ZPORTALNO&nbsp;排在最前<br />
+**&nbsp;&nbsp;SORT&nbsp;lt_src&nbsp;BY&nbsp;qq&nbsp;idnrk<br />
+**&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;erdat&nbsp;&nbsp;&nbsp;&nbsp;DESCENDING<br />
+**&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ertim&nbsp;&nbsp;&nbsp;&nbsp;DESCENDING<br />
+**&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;zportalno&nbsp;DESCENDING.<br />
+*&nbsp;&nbsp;SORT&nbsp;lt_src&nbsp;BY&nbsp;vtweg&nbsp;qq&nbsp;idnrk<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;moq_remain&nbsp;ASCENDING<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;erdat&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;DESCENDING<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;vbeln&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;DESCENDING<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;posnr&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;DESCENDING.<br />
+*<br />
+*&nbsp;&nbsp;"&nbsp;每組&nbsp;(&nbsp;QQ,&nbsp;IDNRK&nbsp;)&nbsp;只留第一筆（最新那筆）<br />
+*&nbsp;&nbsp;"DELETE&nbsp;ADJACENT&nbsp;DUPLICATES&nbsp;FROM&nbsp;lt_src&nbsp;COMPARING&nbsp;qq&nbsp;idnrk.<br />
+*&nbsp;&nbsp;DELETE&nbsp;ADJACENT&nbsp;DUPLICATES&nbsp;FROM&nbsp;lt_src&nbsp;COMPARING&nbsp;vtweg&nbsp;qq&nbsp;idnrk.<br />
+<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;"&nbsp;&nbsp;"&nbsp;每組&nbsp;(&nbsp;VTWEG,&nbsp;QQ,&nbsp;IDNRK&nbsp;)&nbsp;只留&nbsp;IQ單確認日期最小的那筆IQ單生成XQ<br />
+&nbsp;&nbsp;SORT&nbsp;lt_src&nbsp;BY&nbsp;vtweg&nbsp;qq&nbsp;idnrk&nbsp;erdat&nbsp;ASCENDING&nbsp;zportalno&nbsp;DESCENDING.<br />
+&nbsp;&nbsp;DELETE&nbsp;ADJACENT&nbsp;DUPLICATES&nbsp;FROM&nbsp;lt_src&nbsp;COMPARING&nbsp;vtweg&nbsp;qq&nbsp;idnrk.<br />
+<br />
+&nbsp;&nbsp;IF&nbsp;lt_src&nbsp;IS&nbsp;NOT&nbsp;INITIAL.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;SELECT<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;werks,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;vtweg,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;zseq,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;zportalno,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;idnrk,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;qq,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;zxqno,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;zxqseq<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;INTO&nbsp;TABLE&nbsp;@DATA(lt_ztcx0001)<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FROM&nbsp;ztcx0001<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FOR&nbsp;ALL&nbsp;ENTRIES&nbsp;IN&nbsp;@lt_src<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;WHERE&nbsp;vtweg&nbsp;=&nbsp;@lt_src-vtweg<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;qq&nbsp;=&nbsp;@lt_src-qq<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;idnrk&nbsp;=&nbsp;@lt_src-idnrk<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;zxqno&nbsp;&lt;&gt;&nbsp;''.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;SORT&nbsp;lt_ztcx0001&nbsp;BY&nbsp;vtweg&nbsp;qq&nbsp;idnrk.<br />
+&nbsp;&nbsp;ENDIF.<br />
+<br />
+   </div>
+   <div class="codeComment">
+*---------------------------------------------------------------<br />
+*&nbsp;2.&nbsp;資料轉換<br />
+*---------------------------------------------------------------<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;"SORT&nbsp;lt_src&nbsp;BY&nbsp;zseq&nbsp;idnrk.<br />
+   </div>
+   <div class="codeComment">
+*&nbsp;&nbsp;CLEAR:lt_qq.<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;LOOP&nbsp;AT&nbsp;lt_src&nbsp;INTO&nbsp;DATA(ls_src).<br />
+&nbsp;&nbsp;&nbsp;&nbsp;"同一&nbsp;VTWEG&nbsp;+&nbsp;QQ&nbsp;+&nbsp;INDRK，有產生過XQ單就不能再產生<br />
+&nbsp;&nbsp;&nbsp;&nbsp;READ&nbsp;TABLE&nbsp;lt_ztcx0001&nbsp;INTO&nbsp;DATA(ls_ztcx0001)&nbsp;WITH&nbsp;KEY&nbsp;vtweg&nbsp;=&nbsp;ls_src-vtweg&nbsp;qq&nbsp;=&nbsp;ls_src-qq&nbsp;idnrk&nbsp;=&nbsp;ls_src-idnrk&nbsp;BINARY&nbsp;SEARCH.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;sy-subrc&nbsp;=&nbsp;0.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CLEAR:ls_ztcx0001,ls_src.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CONTINUE.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+   </div>
+   <div class="codeComment">
+*&nbsp;&nbsp;&nbsp;&nbsp;READ&nbsp;TABLE&nbsp;lt_qq&nbsp;INTO&nbsp;DATA(ls_qq)&nbsp;WITH&nbsp;KEY&nbsp;qq&nbsp;=&nbsp;ls_src-qq.<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;sy-subrc&nbsp;=&nbsp;0.<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CLEAR:ls_qq.<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;ELSE.<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SELECT&nbsp;SINGLE&nbsp;*&nbsp;INTO&nbsp;@DATA(ls_ztsd0098_xqlog)<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FROM&nbsp;ztsd0098_xqlog<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;WHERE&nbsp;ftype&nbsp;=&nbsp;'QQ'&nbsp;AND&nbsp;z_ori_num&nbsp;=&nbsp;@ls_src-qq.<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;ls_ztsd0098_xqlog&nbsp;IS&nbsp;NOT&nbsp;INITIAL.<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CLEAR:ls_ztsd0098_xqlog,ls_src.<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CONTINUE.<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ELSE.<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CLEAR:ls_qq.<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ls_qq-qq&nbsp;=&nbsp;ls_src-qq.<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;APPEND&nbsp;ls_qq&nbsp;TO&nbsp;lt_qq.<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;p_prev&nbsp;&lt;&gt;&nbsp;'X'.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"&nbsp;←&nbsp;只有正式模式才呼叫取號<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"=====&nbsp;1.&nbsp;遇到新的&nbsp;QQ&nbsp;單號：重新取&nbsp;XQ&nbsp;號&nbsp;&&nbsp;重設序號&nbsp;=====<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;ls_src-qq&nbsp;&lt;&gt;&nbsp;lv_prev_qq.<br />
+*<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;lv_prev_qq&nbsp;=&nbsp;ls_src-qq.<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;lv_seq_idx&nbsp;=&nbsp;1.<br />
+*<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SELECT&nbsp;SINGLE&nbsp;z_new_num&nbsp;INTO&nbsp;lv_zxqno<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FROM&nbsp;ztsd0098_xqlog<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;WHERE&nbsp;ftype&nbsp;=&nbsp;'QQ'<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;z_ori_num&nbsp;=&nbsp;ls_src-qq.<br />
+*<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;lv_perid&nbsp;=&nbsp;sy-datum(6).&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"等同&nbsp;sy-datum+0(6)<br />
+*<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;sy-subrc&nbsp;&lt;&gt;&nbsp;0.&nbsp;&nbsp;"&nbsp;如果查不到，取新號<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CALL&nbsp;FUNCTION&nbsp;'ZSD_ODM_XQ_NO_GET'<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;EXPORTING<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;iv_perid&nbsp;=&nbsp;lv_perid&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"改成今天的&nbsp;YYYYMM<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"iv_perid&nbsp;&nbsp;=&nbsp;ls_src-erdat+0(6)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"YYYYMM<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;iv_werks&nbsp;=&nbsp;ls_src-werks<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IMPORTING<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ev_zxqno&nbsp;=&nbsp;lv_zxqno<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;EXCEPTIONS<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;OTHERS&nbsp;&nbsp;&nbsp;=&nbsp;1.<br />
+*<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;sy-subrc&nbsp;&lt;&gt;&nbsp;0&nbsp;OR&nbsp;lv_zxqno&nbsp;IS&nbsp;INITIAL.<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"APPEND&nbsp;|#&nbsp;取號失敗&nbsp;QQ={&nbsp;ls_src-qq&nbsp;}|&nbsp;TO&nbsp;gt_err_log.<br />
+*<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;APPEND&nbsp;TEXT-003&nbsp;TO&nbsp;gt_err_log.&nbsp;"&nbsp;003&nbsp;取號失敗&nbsp;QQ=&1。<br />
+*<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CONTINUE.&nbsp;&nbsp;"&nbsp;這筆不要寫入<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ELSE.<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;DATA:&nbsp;ls_log&nbsp;LIKE&nbsp;ztsd0098_xqlog.<br />
+*<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ls_log-ftype&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;'QQ'.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"&nbsp;這支程式固定&nbsp;QQ<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ls_log-z_ori_num&nbsp;=&nbsp;ls_src-qq.<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ls_log-z_new_num&nbsp;=&nbsp;lv_zxqno.<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ls_log-ernam&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;sy-uname.<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ls_log-erdat&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;sy-datum.<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ls_log-erzet&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;sy-uzeit.<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ls_log-tcode&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;sy-tcode.<br />
+*<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;MODIFY&nbsp;ztsd0098_xqlog&nbsp;FROM&nbsp;ls_log.<br />
+*<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;sy-subrc&nbsp;&lt;&gt;&nbsp;0&nbsp;AND&nbsp;sy-subrc&nbsp;&lt;&gt;&nbsp;4.&nbsp;"4=duplicate&nbsp;key&nbsp;(已有人插入)<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"APPEND&nbsp;|##&nbsp;寫入&nbsp;XQLOG&nbsp;失敗&nbsp;QQ={&nbsp;ls_src-qq&nbsp;}|&nbsp;TO&nbsp;gt_err_log.<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;APPEND&nbsp;TEXT-004&nbsp;TO&nbsp;gt_err_log.&nbsp;&nbsp;"&nbsp;"&nbsp;004&nbsp;寫入&nbsp;XQLOG&nbsp;失敗&nbsp;QQ=&1。<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ELSE.<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"=====&nbsp;2.&nbsp;同一&nbsp;QQ，僅序號&nbsp;+1，XQ&nbsp;號沿用上一次&nbsp;=====<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;lv_seq_idx&nbsp;=&nbsp;lv_seq_idx&nbsp;+&nbsp;1.<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+*<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;ELSE.<br />
+*<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;lv_zxqno&nbsp;=&nbsp;ls_src-qq.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"&nbsp;預覽模式&nbsp;→&nbsp;先沿用&nbsp;QQ<br />
+*<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;p_prev&nbsp;&lt;&gt;&nbsp;'X'.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"正式模式<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"&nbsp;每筆都取號<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;lv_perid&nbsp;=&nbsp;sy-datum(6).<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;call&nbsp;function&nbsp;<a&nbsp;href&nbsp;="zsd_odm_xq_no_get/zsd_odm_xq_no_get.html">'ZSD_ODM_XQ_NO_GET'</a><br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;EXPORTING<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;iv_perid&nbsp;=&nbsp;lv_perid<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;iv_werks&nbsp;=&nbsp;ls_src-werks<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IMPORTING<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ev_zxqno&nbsp;=&nbsp;lv_zxqno<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;EXCEPTIONS<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;OTHERS&nbsp;&nbsp;&nbsp;=&nbsp;1.<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;sy-subrc&nbsp;&lt;&gt;&nbsp;0&nbsp;OR&nbsp;lv_zxqno&nbsp;IS&nbsp;INITIAL.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;APPEND&nbsp;|XQ單號產生失敗，QQ={&nbsp;ls_src-qq&nbsp;}&nbsp;工廠={&nbsp;ls_src-werks&nbsp;}|&nbsp;TO&nbsp;gt_err_log.<br />
+   </div>
+   <div class="codeComment">
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;APPEND&nbsp;TEXT-003&nbsp;TO&nbsp;gt_err_log.&nbsp;"取號失敗&nbsp;QQ=&1。<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CONTINUE.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;DATA:&nbsp;ls_log&nbsp;LIKE&nbsp;ztsd0098_xqlog.<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"&nbsp;每筆都記一筆&nbsp;LOG<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CLEAR&nbsp;ls_log.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ls_log-ftype&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;'QQ'.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ls_log-z_ori_num&nbsp;=&nbsp;ls_src-qq.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ls_log-z_new_num&nbsp;=&nbsp;lv_zxqno.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ls_log-ernam&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;sy-uname.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ls_log-erdat&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;sy-datum.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ls_log-erzet&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;sy-uzeit.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ls_log-tcode&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;sy-tcode.<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;MODIFY&nbsp;ztsd0098_xqlog&nbsp;FROM&nbsp;ls_log.<br />
+   </div>
+   <div class="codeComment">
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;sy-subrc&nbsp;&lt;&gt;&nbsp;0&nbsp;AND&nbsp;sy-subrc&nbsp;&lt;&gt;&nbsp;4.&nbsp;"4=duplicate&nbsp;key&nbsp;(已有人插入)<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;APPEND&nbsp;TEXT-004&nbsp;TO&nbsp;gt_err_log.&nbsp;&nbsp;"&nbsp;"&nbsp;004&nbsp;寫入&nbsp;XQLOG&nbsp;失敗&nbsp;QQ=&1。<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;ELSE.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;lv_zxqno&nbsp;=&nbsp;ls_src-qq.&nbsp;"預覽模式&nbsp;→&nbsp;沿用&nbsp;QQ<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;"=====&nbsp;3.&nbsp;建立&nbsp;ZTSD0098&nbsp;=====<br />
+&nbsp;&nbsp;&nbsp;&nbsp;CLEAR&nbsp;ls_98.<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;SELECT&nbsp;SINGLE&nbsp;zp_entity&nbsp;INTO&nbsp;@DATA(tmp_zp_enty)<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FROM&nbsp;ztsd0015<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;WHERE&nbsp;bukrs&nbsp;=&nbsp;@ls_src-werks.<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;sy-subrc&nbsp;=&nbsp;0.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ls_98-zp_entity&nbsp;=&nbsp;tmp_zp_enty.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;PERFORM&nbsp;get_zbcust&nbsp;USING&nbsp;ls_src-vtweg&nbsp;CHANGING&nbsp;ls_98-zbcust.<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ls_98-mandt&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;sy-mandt.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ls_98-werks&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;ls_src-werks.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ls_98-zxqno&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;lv_zxqno.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ls_98-zverno&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;'1'.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ls_98-zxqsta&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;''.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ls_98-zcpnocn&nbsp;&nbsp;&nbsp;=&nbsp;ls_src-skuitem.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ls_98-zrem1&nbsp;=&nbsp;&nbsp;ls_src-zportalno.<br />
+   </div>
+   <div class="codeComment">
+*&nbsp;&nbsp;&nbsp;&nbsp;ls_98-zxjno&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;ls_src-zportalno.<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;"ls_98-zxqdat&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;sy-datum.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ls_98-zxqdat&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;ls_src-erdat.&nbsp;"changed&nbsp;by&nbsp;Lauren&nbsp;20251023<br />
+<br />
+   </div>
+   <div class="codeComment">
+*&nbsp;&nbsp;&nbsp;&nbsp;"&nbsp;XJ&nbsp;單&nbsp;/&nbsp;QQ&nbsp;單轉&nbsp;XQ&nbsp;單時，XQ&nbsp;單的建立日期要抓&nbsp;SO&nbsp;的確認日<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;SELECT&nbsp;SINGLE&nbsp;audat&nbsp;FROM&nbsp;ztsd0028&nbsp;INTO&nbsp;@DATA(tmp_lv_audat)<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;WHERE&nbsp;vbeln&nbsp;=&nbsp;@ls_src-vbeln&nbsp;AND&nbsp;zvsnmr_v&nbsp;=&nbsp;'000'.<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;sy-subrc&nbsp;=&nbsp;0&nbsp;AND&nbsp;tmp_lv_audat&nbsp;IS&nbsp;NOT&nbsp;INITIAL.<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ls_98-zxqdat&nbsp;=&nbsp;tmp_lv_audat.<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;ls_98-zpno&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;ls_src-idnrk.<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;ls_98-zpno&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;ls_src-matnr.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ls_98-zpnouq&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;ls_src-meins.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ls_98-zxqqty&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;ls_src-moq_qty.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ls_98-zsono&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;ls_src-vbeln.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ls_98-zsoseq&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;ls_src-posnr.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ls_98-vtweg&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;ls_src-vtweg.<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;"&nbsp;這&nbsp;2&nbsp;個欄位由取得的&nbsp;ZSONO，對應&nbsp;ZTSD0028-VBELN&nbsp;最新版本的資料<br />
+&nbsp;&nbsp;&nbsp;&nbsp;"ls_98-bstnk&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;ztsd0028-bstnk.&nbsp;&nbsp;&nbsp;&nbsp;""<br />
+&nbsp;&nbsp;&nbsp;&nbsp;"ls_98-zsappo&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;ztsd0098-zsappo.&nbsp;&nbsp;&nbsp;""<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;ls_src-vbeln&nbsp;IS&nbsp;NOT&nbsp;INITIAL.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SELECT&nbsp;SINGLE&nbsp;bstnk,&nbsp;zsappo<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;INTO&nbsp;(@ls_98-zcord,&nbsp;@ls_98-zsappo)<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FROM&nbsp;ztsd0028<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;WHERE&nbsp;vbeln&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;@ls_src-vbeln<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;zvsnmr_v&nbsp;=&nbsp;(&nbsp;SELECT&nbsp;MAX(&nbsp;zvsnmr_v&nbsp;)<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FROM&nbsp;ztsd0028<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;WHERE&nbsp;vbeln&nbsp;=&nbsp;@ls_src-vbeln&nbsp;).<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;ls_98-zsappo&nbsp;IS&nbsp;INITIAL.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SELECT&nbsp;SINGLE&nbsp;zssppo<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;INTO&nbsp;@ls_98-zsappo<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FROM&nbsp;ztsd0029<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;WHERE&nbsp;vbeln&nbsp;=&nbsp;@ls_src-vbeln<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;posnr&nbsp;=&nbsp;@ls_src-posnr<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;zvsnmr_v&nbsp;=&nbsp;(&nbsp;SELECT&nbsp;MAX(&nbsp;zvsnmr_v&nbsp;)<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FROM&nbsp;ztsd0029<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;WHERE&nbsp;vbeln&nbsp;=&nbsp;@ls_src-vbeln<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;posnr&nbsp;=&nbsp;@ls_src-posnr&nbsp;).<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+<br />
+   </div>
+   <div class="codeComment">
+*&nbsp;&nbsp;&nbsp;&nbsp;ls_98-zym&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;p_zym.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"&nbsp;預採帳年月<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;ls_98-zym&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;ls_98-zxqdat(6).&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"&nbsp;預採帳年月<br />
+   </div>
+   <div class="codeComment">
+*&nbsp;&nbsp;&nbsp;&nbsp;ls_98-zperiod&nbsp;&nbsp;&nbsp;=&nbsp;p_period.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"&nbsp;期別&nbsp;(預設1)<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;ls_98-zperiod&nbsp;IS&nbsp;INITIAL.<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;ls_98-zperiod&nbsp;=&nbsp;'1'.&nbsp;&nbsp;&nbsp;&nbsp;"&nbsp;期別<br />
+   </div>
+   <div class="codeComment">
+*&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;ls_98-zxqtyp&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;'1'.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"&nbsp;大分類,&nbsp;預設帶入&nbsp;1，代表&nbsp;RAW-MATERIAL<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ls_98-zunptyp&nbsp;&nbsp;&nbsp;=&nbsp;'2'.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"&nbsp;UNPAY&nbsp;排序,&nbsp;代表&nbsp;(1)MOQ&nbsp;&&nbsp;(2)ORDER&nbsp;CANCEL&nbsp;"<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ls_98-zdesc&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;'MOQ'.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"&nbsp;敘述，固定寫入MOQ&nbsp;20251021<br />
+<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ls_98-zopr_new&nbsp;&nbsp;=&nbsp;sy-uname.&nbsp;"ls_src-ernam.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ls_98-zopd_new&nbsp;&nbsp;=&nbsp;sy-datum.&nbsp;"ls_src-erdat.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ls_98-zopt_new&nbsp;&nbsp;=&nbsp;sy-uzeit.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ls_98-zaction&nbsp;&nbsp;&nbsp;=&nbsp;'I'.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"Insert&nbsp;/&nbsp;Update&nbsp;標記<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;"=====&nbsp;3.x&nbsp;依規則帶入&nbsp;ZTSD0098-ZCPNO&nbsp;=====<br />
+&nbsp;&nbsp;&nbsp;&nbsp;"&nbsp;說明：<br />
+&nbsp;&nbsp;&nbsp;&nbsp;"&nbsp;&nbsp;1)&nbsp;以&nbsp;ls_src-vtweg&nbsp;+&nbsp;料號&nbsp;比對&nbsp;ZTSD0020<br />
+&nbsp;&nbsp;&nbsp;&nbsp;"&nbsp;&nbsp;2)&nbsp;DEL&nbsp;&lt;&gt;&nbsp;'X'<br />
+&nbsp;&nbsp;&nbsp;&nbsp;"&nbsp;&nbsp;3)&nbsp;若多筆，優先&nbsp;ZDEFAULT&nbsp;=&nbsp;'X'，否則取第一筆<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;"&nbsp;判斷要用的料號欄位（&nbsp;ZTCX0001&nbsp;同時可能有&nbsp;MATNR&nbsp;與&nbsp;IDNRK；若系統只用&nbsp;IDNRK，則改成固定用&nbsp;ls_src-idnrk）<br />
+&nbsp;&nbsp;&nbsp;&nbsp;DATA(lv_matnr_for_match)&nbsp;=&nbsp;COND&nbsp;matnr(<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;WHEN&nbsp;ls_src-matnr&nbsp;IS&nbsp;NOT&nbsp;INITIAL<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;THEN&nbsp;ls_src-matnr<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ELSE&nbsp;ls_src-idnrk&nbsp;).<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;SELECT&nbsp;zcpno,&nbsp;zdefault<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FROM&nbsp;ztsd0020<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;WHERE&nbsp;vtweg&nbsp;=&nbsp;@ls_src-vtweg<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;matnr&nbsp;=&nbsp;@lv_matnr_for_match<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;del&nbsp;&nbsp;&nbsp;&lt;&gt;&nbsp;'X'<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;INTO&nbsp;TABLE&nbsp;@DATA(lt_0020).<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;lt_0020&nbsp;IS&nbsp;NOT&nbsp;INITIAL.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"&nbsp;先把&nbsp;ZDEFAULT&nbsp;=&nbsp;'X'&nbsp;排最前<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SORT&nbsp;lt_0020&nbsp;BY&nbsp;zdefault&nbsp;DESCENDING.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;READ&nbsp;TABLE&nbsp;lt_0020&nbsp;INDEX&nbsp;1&nbsp;INTO&nbsp;DATA(ls_0020).<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;sy-subrc&nbsp;=&nbsp;0.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ls_98-zcpno&nbsp;=&nbsp;ls_0020-zcpno.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;"=====&nbsp;3.y&nbsp;依規則帶入&nbsp;ZTSD0098-ZXQLINE&nbsp;=====<br />
+&nbsp;&nbsp;&nbsp;&nbsp;"&nbsp;規則：<br />
+&nbsp;&nbsp;&nbsp;&nbsp;"&nbsp;(1)&nbsp;由&nbsp;ZTCX0001-VBELN&nbsp;→&nbsp;VBAK&nbsp;取&nbsp;KUNNR,&nbsp;VTWEG<br />
+&nbsp;&nbsp;&nbsp;&nbsp;"&nbsp;(2)&nbsp;用&nbsp;KUNNR&nbsp;+&nbsp;VTWEG&nbsp;比對&nbsp;KNVV，抓&nbsp;ZZMOQLINE<br />
+&nbsp;&nbsp;&nbsp;&nbsp;"&nbsp;(3)&nbsp;若多筆，取第一個不為空值的&nbsp;ZZMOQLINE；若全為空，則維持空值<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;ls_src-vbeln&nbsp;IS&nbsp;NOT&nbsp;INITIAL.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;DATA:&nbsp;lv_kunnr&nbsp;TYPE&nbsp;ztsd0028-kunnr_we,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;lv_vtweg&nbsp;TYPE&nbsp;ztsd0028-vtweg.<br />
+<br />
+   </div>
+   <div class="codeComment">
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SELECT&nbsp;SINGLE&nbsp;kunnr,&nbsp;vtweg<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;INTO&nbsp;(@lv_kunnr,&nbsp;@lv_vtweg)<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FROM&nbsp;vbak<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;WHERE&nbsp;vbeln&nbsp;=&nbsp;@ls_src-vbeln.<br />
+<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"調整線別邏輯&nbsp;ZTCX0001-VBELN&nbsp;→&nbsp;ZTSD0028&nbsp;取&nbsp;KUNNR_WE,&nbsp;VTWEG&nbsp;by&nbsp;Lauren&nbsp;20251004<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CLEAR:lv_kunnr,lv_vtweg.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SELECT&nbsp;SINGLE&nbsp;kunnr_we,&nbsp;vtweg<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;INTO&nbsp;(@lv_kunnr,&nbsp;@lv_vtweg)<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FROM&nbsp;ztsd0028<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;WHERE&nbsp;vbeln&nbsp;=&nbsp;@ls_src-vbeln&nbsp;AND&nbsp;zvsnmr_v&nbsp;=&nbsp;'000'&nbsp;.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ls_98-zscust&nbsp;=&nbsp;lv_kunnr.&nbsp;&nbsp;"收貨方<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;sy-subrc&nbsp;=&nbsp;0&nbsp;AND&nbsp;lv_kunnr&nbsp;IS&nbsp;NOT&nbsp;INITIAL&nbsp;AND&nbsp;lv_vtweg&nbsp;IS&nbsp;NOT&nbsp;INITIAL.<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SELECT&nbsp;zzmoqline<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FROM&nbsp;knvv<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;WHERE&nbsp;kunnr&nbsp;=&nbsp;@lv_kunnr<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;vtweg&nbsp;=&nbsp;@lv_vtweg<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;INTO&nbsp;TABLE&nbsp;@DATA(lt_knvv_line).<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;lt_knvv_line&nbsp;IS&nbsp;NOT&nbsp;INITIAL.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"&nbsp;先找第一個不為空的<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;LOOP&nbsp;AT&nbsp;lt_knvv_line&nbsp;ASSIGNING&nbsp;FIELD-SYMBOL(&lt;fs_knvv&gt;)<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;WHERE&nbsp;zzmoqline&nbsp;IS&nbsp;NOT&nbsp;INITIAL.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ls_98-zxqline&nbsp;=&nbsp;&lt;fs_knvv&gt;-zzmoqline.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;EXIT.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ENDLOOP.<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"&nbsp;如果沒有非空值，就保持初始值（依需求不強填）<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"&nbsp;若你想「取第一筆即使為空也帶」，可取消下段註解：<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"*IF&nbsp;ls_98-zxqline&nbsp;IS&nbsp;INITIAL.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"*&nbsp;&nbsp;READ&nbsp;TABLE&nbsp;lt_knvv_line&nbsp;INDEX&nbsp;1&nbsp;ASSIGNING&nbsp;&lt;fs_knvv&gt;.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"*&nbsp;&nbsp;IF&nbsp;sy-subrc&nbsp;=&nbsp;0.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"*&nbsp;&nbsp;&nbsp;&nbsp;ls_98-zxqline&nbsp;=&nbsp;&lt;fs_knvv&gt;-zzmoqline.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"*&nbsp;&nbsp;ENDIF.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"*ENDIF.<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;APPEND&nbsp;ls_98&nbsp;TO&nbsp;lt_98.<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;"=====&nbsp;4.&nbsp;建立&nbsp;ZTSD0099&nbsp;=====<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;CLEAR&nbsp;ls_99.<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ls_99-zp_entity&nbsp;=&nbsp;tmp_zp_enty.<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;PERFORM&nbsp;get_zbcust&nbsp;USING&nbsp;ls_src-vtweg&nbsp;CHANGING&nbsp;ls_99-zbcust.<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ls_99-mandt&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;sy-mandt.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ls_99-werks&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;ls_src-werks.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ls_99-zxqno&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;lv_zxqno.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;"&nbsp;&nbsp;&nbsp;&nbsp;ls_99-zxqseq&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;lv_seq_idx.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ls_99-zxqseq&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;1.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ls_99-zverno&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;'1'.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ls_99-zxqwrktyp&nbsp;&nbsp;=&nbsp;'1'.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;"ls_99-zdat&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;sy-datum.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ls_99-zdat&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;ls_src-erdat.&nbsp;"changed&nbsp;by&nbsp;Lauren&nbsp;20251023<br />
+<br />
+   </div>
+   <div class="codeComment">
+*&nbsp;&nbsp;&nbsp;&nbsp;"&nbsp;XJ&nbsp;單&nbsp;/&nbsp;QQ&nbsp;單轉&nbsp;XQ&nbsp;單時，XQ&nbsp;單的建立日期要抓&nbsp;SO&nbsp;的確認日<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;SELECT&nbsp;SINGLE&nbsp;audat&nbsp;FROM&nbsp;ztsd0028&nbsp;INTO&nbsp;@tmp_lv_audat<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;WHERE&nbsp;vbeln&nbsp;=&nbsp;@ls_src-vbeln&nbsp;AND&nbsp;zvsnmr_v&nbsp;=&nbsp;'000'.<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;sy-subrc&nbsp;=&nbsp;0.<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ls_99-zdat&nbsp;=&nbsp;tmp_lv_audat.<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;ls_99-zpno&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;ls_src-idnrk.<br />
+   </div>
+   <div class="codeComment">
+*&nbsp;&nbsp;&nbsp;&nbsp;ls_99-zdesc&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;ls_src-wl2_erpspecification.<br />
+<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;"&nbsp;這個欄位由取得的&nbsp;ZPNO，對應&nbsp;ZTMARA-WL2_ENGLISHSPECIFICATIONS<br />
+   </div>
+   <div class="codeComment">
+*&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;ls_99-zpno&nbsp;IS&nbsp;NOT&nbsp;INITIAL.<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SELECT&nbsp;SINGLE&nbsp;wl2_englishspecifications<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;INTO&nbsp;@ls_99-zdesc<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FROM&nbsp;ztmara<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;WHERE&nbsp;matnr&nbsp;=&nbsp;@ls_99-zpno.<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;ls_99-zpno&nbsp;IS&nbsp;NOT&nbsp;INITIAL.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CLEAR:lv_wl2_englishspecifications,lv_string.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SELECT&nbsp;SINGLE&nbsp;wl2_englishspecifications<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;INTO&nbsp;@lv_wl2_englishspecifications<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FROM&nbsp;ztmara<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;WHERE&nbsp;matnr&nbsp;=&nbsp;@ls_99-zpno.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;lv_string&nbsp;=&nbsp;lv_wl2_englishspecifications.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;REPLACE&nbsp;ALL&nbsp;OCCURRENCES&nbsp;OF&nbsp;REGEX&nbsp;'[一-#]'&nbsp;IN&nbsp;lv_string&nbsp;WITH&nbsp;''.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ls_99-zdesc&nbsp;=&nbsp;lv_string.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+<br />
+   </div>
+   <div class="codeComment">
+*&nbsp;&nbsp;&nbsp;&nbsp;ls_99-zqty&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;ls_src-stock_qty.<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;ls_99-zqty&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;&nbsp;ls_src-moq_remain.<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;ls_99-zqty&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;&nbsp;ls_src-moq_qty.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ls_99-zuq&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;ls_src-meins.<br />
+   </div>
+   <div class="codeComment">
+*&nbsp;&nbsp;&nbsp;&nbsp;ls_99-zunit&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;ls_src-out_qty.<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;CLEAR:lv_mnglg.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;ls_src-mnglg&nbsp;&lt;=&nbsp;0.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;lv_mnglg&nbsp;=&nbsp;1.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ELSE.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;lv_mnglg&nbsp;=&nbsp;ls_src-mnglg.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;ls_src-moq_qty&nbsp;/&nbsp;lv_mnglg&nbsp;&gt;=&nbsp;50.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ls_99-zunit&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;(&nbsp;ls_src-moq_qty&nbsp;/&nbsp;lv_mnglg&nbsp;)&nbsp;-&nbsp;50.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ELSE.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ls_99-zunit&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;0.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ls_99-zpcur&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;ls_src-waers.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ls_99-zpup&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;ls_src-netpr&nbsp;*&nbsp;100.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ls_99-zusdcur&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;ls_src-sales_waers.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;"&nbsp;&nbsp;&nbsp;ls_99-zup&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;ls_src-sales_netpr_6&nbsp;*&nbsp;100.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ls_99-zup&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;ls_src-sales_netpr_6&nbsp;*&nbsp;10000.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ls_99-zmoqty&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;ls_src-zmoq.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ls_99-zopr_new&nbsp;&nbsp;&nbsp;=&nbsp;sy-uname.&nbsp;"ls_src-ernam.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ls_99-zopd_new&nbsp;&nbsp;&nbsp;=&nbsp;sy-datum.&nbsp;"ls_src-erdat.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ls_99-zopt_new&nbsp;&nbsp;&nbsp;=&nbsp;sy-uzeit.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ls_99-zaction&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;'I'.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ls_99-vtweg&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;ls_src-vtweg.<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ls_99-zxqdtyp&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;'2'.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"&nbsp;表&nbsp;MOQ&nbsp;Cancel<br />
+<br />
+   </div>
+   <div class="codeComment">
+*&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;ls_98-zunptyp&nbsp;=&nbsp;'1'&nbsp;OR&nbsp;ls_98-zunptyp&nbsp;=&nbsp;'2'&nbsp;OR&nbsp;ls_98-zunptyp&nbsp;=&nbsp;'3'.&nbsp;"&nbsp;系統轉出否&nbsp;ZTSD0098-ZUNPTYP&nbsp;IN&nbsp;('1','2','3')&nbsp;-&gt;&nbsp;X<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ls_99-ztunyn&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;'X'.<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;"&nbsp;系統轉出否<br />
+&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;ls_src-zind01&nbsp;=&nbsp;'C'.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ls_99-ztunyn&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;'C'.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ELSE.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ls_99-ztunyn&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;'X'.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ls_99-zptwdcur&nbsp;&nbsp;&nbsp;=&nbsp;ls_src-waers_twd.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ls_99-zptwdup&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;ls_src-netpr_twd&nbsp;*&nbsp;100.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ls_99-zpcnycur&nbsp;&nbsp;&nbsp;=&nbsp;ls_src-waers_cny.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ls_99-zpcnyup&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;ls_src-netpr_cny&nbsp;*&nbsp;100.<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ls_99-zbqty&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;ls_src-mnglg.<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ls_99-zpup_per&nbsp;&nbsp;&nbsp;=&nbsp;'100'.&nbsp;""&nbsp;'1'.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ls_99-zptwd_per&nbsp;&nbsp;=&nbsp;'100'.&nbsp;""&nbsp;'1'.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ls_99-zpcny_per&nbsp;&nbsp;=&nbsp;'100'.&nbsp;""&nbsp;'1'.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;"&nbsp;&nbsp;&nbsp;&nbsp;ls_99-zup_per&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;'100'.&nbsp;""&nbsp;'1'.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ls_99-zup_per&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;'10000'.&nbsp;""&nbsp;'1'.<br />
+<br />
+   </div>
+   <div class="codeComment">
+*&nbsp;&nbsp;&nbsp;&nbsp;ls_99-zqtybalace&nbsp;=&nbsp;ls_src-moq_remain.<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;ls_99-zqtybalace&nbsp;=&nbsp;ls_src-moq_qty.<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ls_99-zrem&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;ls_src-qq.&nbsp;"備註：寫入QQ單號&nbsp;20251021<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;APPEND&nbsp;ls_99&nbsp;TO&nbsp;lt_99.<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;p_prev&nbsp;&lt;&gt;&nbsp;'X'.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"正式模式<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;UPDATE&nbsp;ztcx0001&nbsp;SET&nbsp;zxqno&nbsp;=&nbsp;ls_99-zxqno&nbsp;zxqseq&nbsp;=&nbsp;ls_99-zxqseq<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;WHERE&nbsp;werks&nbsp;=&nbsp;ls_src-werks&nbsp;AND&nbsp;vtweg&nbsp;=&nbsp;ls_src-vtweg&nbsp;AND&nbsp;zseq&nbsp;=&nbsp;ls_src-zseq&nbsp;AND&nbsp;zportalno&nbsp;=&nbsp;ls_src-zportalno&nbsp;AND&nbsp;idnrk&nbsp;=&nbsp;ls_src-idnrk.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;sy-subrc&nbsp;=&nbsp;0.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;COMMIT&nbsp;WORK&nbsp;AND&nbsp;WAIT.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;CLEAR:ls_src.<br />
+&nbsp;&nbsp;ENDLOOP.<br />
+<br />
+   </div>
+   <div class="codeComment">
+*---------------------------------------------------------------<br />
+*&nbsp;3.&nbsp;預覽或實際寫入<br />
+*---------------------------------------------------------------<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;IF&nbsp;p_prev&nbsp;=&nbsp;'X'.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;"PERFORM&nbsp;show_alv&nbsp;USING&nbsp;c_str_98&nbsp;lt_98.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;"PERFORM&nbsp;show_alv&nbsp;USING&nbsp;c_str_99&nbsp;lt_99.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;PERFORM&nbsp;show_alv_zt98.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;PERFORM&nbsp;show_alv_zt99.<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;DATA(lv_total)&nbsp;=&nbsp;lines(&nbsp;lt_98&nbsp;)&nbsp;+&nbsp;lines(&nbsp;lt_99&nbsp;).<br />
+&nbsp;&nbsp;&nbsp;&nbsp;MESSAGE&nbsp;TEXT-002&nbsp;TYPE&nbsp;'S'.&nbsp;&nbsp;&nbsp;"&nbsp;002&nbsp;預覽模式：未寫入資料庫，共&nbsp;&1&nbsp;筆資料。<br />
+&nbsp;&nbsp;ELSE.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;SORT&nbsp;lt_98&nbsp;BY&nbsp;werks&nbsp;zxqno.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;DELETE&nbsp;ADJACENT&nbsp;DUPLICATES&nbsp;FROM&nbsp;lt_98&nbsp;COMPARING&nbsp;werks&nbsp;zxqno.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;SORT&nbsp;lt_99&nbsp;BY&nbsp;werks&nbsp;zxqno&nbsp;zxqseq.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;DELETE&nbsp;ADJACENT&nbsp;DUPLICATES&nbsp;FROM&nbsp;lt_99&nbsp;COMPARING&nbsp;werks&nbsp;zxqno&nbsp;zxqseq.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;PERFORM&nbsp;write_db.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;PERFORM&nbsp;show_log.<br />
+&nbsp;&nbsp;ENDIF.<br />
+<br />
+   </div>
+   <div class="codeComment">
+***********************************************************************<br />
+*&nbsp;五、FORM：ALV&nbsp;顯示<br />
+***********************************************************************<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;""FORM&nbsp;show_alv&nbsp;USING&nbsp;iv_struct&nbsp;TYPE&nbsp;dd02l-tabname<br />
+&nbsp;&nbsp;""&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;it_table&nbsp;&nbsp;TYPE&nbsp;ANY&nbsp;TABLE.<br />
+&nbsp;&nbsp;""<br />
+&nbsp;&nbsp;""&nbsp;&nbsp;DATA:&nbsp;lt_cat&nbsp;TYPE&nbsp;slis_t_fieldcat_alv,<br />
+&nbsp;&nbsp;""&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ls_cat&nbsp;TYPE&nbsp;slis_fieldcat_alv.<br />
+&nbsp;&nbsp;""<br />
+&nbsp;&nbsp;""&nbsp;&nbsp;CLEAR&nbsp;lt_cat.<br />
+&nbsp;&nbsp;""<br />
+&nbsp;&nbsp;""&nbsp;&nbsp;CALL&nbsp;FUNCTION&nbsp;'REUSE_ALV_FIELDCATALOG_MERGE'<br />
+&nbsp;&nbsp;""&nbsp;&nbsp;&nbsp;&nbsp;EXPORTING<br />
+&nbsp;&nbsp;""&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;i_structure_name&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;iv_struct<br />
+&nbsp;&nbsp;""&nbsp;&nbsp;&nbsp;&nbsp;CHANGING<br />
+&nbsp;&nbsp;""&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ct_fieldcat&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;lt_cat<br />
+&nbsp;&nbsp;""&nbsp;&nbsp;&nbsp;&nbsp;EXCEPTIONS<br />
+&nbsp;&nbsp;""&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inconsistent_interface&nbsp;=&nbsp;1<br />
+&nbsp;&nbsp;""&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;program_error&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;2<br />
+&nbsp;&nbsp;""&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;OTHERS&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;3.<br />
+&nbsp;&nbsp;""<br />
+&nbsp;&nbsp;""&nbsp;&nbsp;gs_layout-colwidth_optimize&nbsp;=&nbsp;'X'.<br />
+&nbsp;&nbsp;""<br />
+&nbsp;&nbsp;""&nbsp;&nbsp;CALL&nbsp;FUNCTION&nbsp;'REUSE_ALV_GRID_DISPLAY'<br />
+&nbsp;&nbsp;""&nbsp;&nbsp;&nbsp;&nbsp;EXPORTING<br />
+&nbsp;&nbsp;""&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;i_callback_program&nbsp;=&nbsp;sy-repid<br />
+&nbsp;&nbsp;""&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;is_layout&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;gs_layout<br />
+&nbsp;&nbsp;""&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;it_fieldcat&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;lt_cat<br />
+&nbsp;&nbsp;""&nbsp;&nbsp;&nbsp;&nbsp;TABLES<br />
+&nbsp;&nbsp;""&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;t_outtab&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;it_table.<br />
+&nbsp;&nbsp;""<br />
+&nbsp;&nbsp;""ENDFORM.<br />
+<br />
+<br />
+FORM show_alv_zt98.<br />
+<br />
+&nbsp;&nbsp;DATA:&nbsp;lt_fieldcat&nbsp;TYPE&nbsp;slis_t_fieldcat_alv,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ls_layout&nbsp;&nbsp;&nbsp;TYPE&nbsp;slis_layout_alv.<br />
+<br />
+&nbsp;&nbsp;CALL&nbsp;FUNCTION&nbsp;'REUSE_ALV_FIELDCATALOG_MERGE'<br />
+&nbsp;&nbsp;&nbsp;&nbsp;EXPORTING<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;i_structure_name&nbsp;=&nbsp;'ZTSD0098'<br />
+&nbsp;&nbsp;&nbsp;&nbsp;CHANGING<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ct_fieldcat&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;lt_fieldcat.<br />
+<br />
+&nbsp;&nbsp;ls_layout-colwidth_optimize&nbsp;=&nbsp;'X'.<br />
+<br />
+&nbsp;&nbsp;CALL&nbsp;FUNCTION&nbsp;'REUSE_ALV_GRID_DISPLAY'<br />
+&nbsp;&nbsp;&nbsp;&nbsp;EXPORTING<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;i_callback_program&nbsp;=&nbsp;sy-repid<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;is_layout&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;ls_layout<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;it_fieldcat&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;lt_fieldcat<br />
+&nbsp;&nbsp;&nbsp;&nbsp;TABLES<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;t_outtab&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;lt_98.<br />
+<br />
+ENDFORM.<br />
+<br />
+FORM show_alv_zt99.<br />
+<br />
+&nbsp;&nbsp;DATA:&nbsp;lt_fieldcat&nbsp;TYPE&nbsp;slis_t_fieldcat_alv,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ls_layout&nbsp;&nbsp;&nbsp;TYPE&nbsp;slis_layout_alv.<br />
+<br />
+&nbsp;&nbsp;CALL&nbsp;FUNCTION&nbsp;'REUSE_ALV_FIELDCATALOG_MERGE'<br />
+&nbsp;&nbsp;&nbsp;&nbsp;EXPORTING<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;i_structure_name&nbsp;=&nbsp;'ZTSD0099'<br />
+&nbsp;&nbsp;&nbsp;&nbsp;CHANGING<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ct_fieldcat&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;lt_fieldcat.<br />
+<br />
+&nbsp;&nbsp;ls_layout-colwidth_optimize&nbsp;=&nbsp;'X'.<br />
+<br />
+&nbsp;&nbsp;CALL&nbsp;FUNCTION&nbsp;'REUSE_ALV_GRID_DISPLAY'<br />
+&nbsp;&nbsp;&nbsp;&nbsp;EXPORTING<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;i_callback_program&nbsp;=&nbsp;sy-repid<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;is_layout&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;ls_layout<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;it_fieldcat&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;lt_fieldcat<br />
+&nbsp;&nbsp;&nbsp;&nbsp;TABLES<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;t_outtab&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;lt_99.<br />
+<br />
+ENDFORM.<br />
+<br />
+   </div>
+   <div class="codeComment">
+***********************************************************************<br />
+*&nbsp;六、FORM：寫&nbsp;DB&nbsp;(含錯誤處理&nbsp;+&nbsp;日誌)<br />
+***********************************************************************<br />
+   </div>
+   <div class="code">
+FORM write_db.<br />
+<br />
+&nbsp;&nbsp;TRY.<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;lt_98&nbsp;IS&nbsp;NOT&nbsp;INITIAL.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;MODIFY&nbsp;ztsd0098&nbsp;FROM&nbsp;TABLE&nbsp;lt_98.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;APPEND&nbsp;|ZTSD0098&nbsp;更新成功，筆數：{&nbsp;lines(&nbsp;lt_98&nbsp;)&nbsp;}|&nbsp;TO&nbsp;gt_exec_log.<br />
+   </div>
+   <div class="codeComment">
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;APPEND&nbsp;TEXT-005&nbsp;TO&nbsp;gt_exec_log.<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;lt_99&nbsp;IS&nbsp;NOT&nbsp;INITIAL.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;MODIFY&nbsp;ztsd0099&nbsp;FROM&nbsp;TABLE&nbsp;lt_99.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;APPEND&nbsp;|ZTSD0099&nbsp;更新成功，筆數：{&nbsp;lines(&nbsp;lt_99&nbsp;)&nbsp;}|&nbsp;TO&nbsp;gt_exec_log.<br />
+   </div>
+   <div class="codeComment">
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;APPEND&nbsp;TEXT-006&nbsp;TO&nbsp;gt_exec_log.<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;COMMIT&nbsp;WORK.<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;CATCH&nbsp;cx_sy_open_sql_db&nbsp;INTO&nbsp;DATA(lx_db).<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ROLLBACK&nbsp;WORK.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;APPEND&nbsp;|#&nbsp;DB&nbsp;Error：{&nbsp;lx_db-&gt;get_text(&nbsp;)&nbsp;}|&nbsp;TO&nbsp;gt_err_log.<br />
+&nbsp;&nbsp;ENDTRY.<br />
+<br />
+ENDFORM.<br />
+<br />
+   </div>
+   <div class="codeComment">
+***********************************************************************<br />
+*&nbsp;七、FORM：顯示日誌<br />
+***********************************************************************<br />
+   </div>
+   <div class="code">
+FORM show_log.<br />
+&nbsp;&nbsp;SKIP.<br />
+&nbsp;&nbsp;ULINE.<br />
+&nbsp;&nbsp;IF&nbsp;gt_err_log&nbsp;IS&nbsp;NOT&nbsp;INITIAL.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;WRITE:&nbsp;/&nbsp;'===&nbsp;Error&nbsp;Log&nbsp;==='.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;LOOP&nbsp;AT&nbsp;gt_err_log&nbsp;INTO&nbsp;DATA(l_err).<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;WRITE:&nbsp;/&nbsp;l_err&nbsp;COLOR&nbsp;COL_NEGATIVE.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ENDLOOP.<br />
+&nbsp;&nbsp;ELSE.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;WRITE:&nbsp;/&nbsp;'===&nbsp;Execution&nbsp;Log&nbsp;==='.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;LOOP&nbsp;AT&nbsp;gt_exec_log&nbsp;INTO&nbsp;DATA(l_msg).<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;WRITE:&nbsp;/&nbsp;l_msg&nbsp;COLOR&nbsp;COL_POSITIVE.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ENDLOOP.<br />
+&nbsp;&nbsp;ENDIF.<br />
+ENDFORM.<br />
+<br />
+   </div>
+   <div class="codeComment">
+***********************************************************************<br />
+*&nbsp;八、文字元素<br />
+***********************************************************************<br />
+*&nbsp;TEXT-t01&nbsp;&nbsp;篩選條件<br />
+<br />
+<br />
+   </div>
+   <div class="code">
+" 根據 VTWEG 取得 ZBCUST<br />
+FORM get_zbcust USING    iv_vtweg TYPE vtweg<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CHANGING&nbsp;cv_zbcust&nbsp;TYPE&nbsp;ztsd0098-zbcust.<br />
+<br />
+&nbsp;&nbsp;cv_zbcust&nbsp;=&nbsp;SWITCH&nbsp;#(&nbsp;iv_vtweg<br />
+&nbsp;&nbsp;&nbsp;&nbsp;WHEN&nbsp;'T1'&nbsp;THEN&nbsp;'0000008110'<br />
+&nbsp;&nbsp;&nbsp;&nbsp;WHEN&nbsp;'C1'&nbsp;THEN&nbsp;'0006100007'<br />
+&nbsp;&nbsp;&nbsp;&nbsp;WHEN&nbsp;'B1'&nbsp;THEN&nbsp;'0000007110'<br />
+&nbsp;&nbsp;&nbsp;&nbsp;WHEN&nbsp;'G1'&nbsp;THEN&nbsp;'0006100006'<br />
+&nbsp;&nbsp;&nbsp;&nbsp;WHEN&nbsp;'Z1'&nbsp;THEN&nbsp;'0006100008'<br />
+&nbsp;&nbsp;&nbsp;&nbsp;WHEN&nbsp;'J1'&nbsp;THEN&nbsp;'0000004110'<br />
+&nbsp;&nbsp;&nbsp;&nbsp;WHEN&nbsp;'N1'&nbsp;THEN&nbsp;'0000003310'<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ELSE&nbsp;''&nbsp;).<br />
+<br />
+ENDFORM.<br />
+<br />
+   </div>
+   <div class="codeComment">
+*Text&nbsp;elements<br />
+*----------------------------------------------------------<br />
+*&nbsp;001&nbsp;查無符合條件的資料。<br />
+*&nbsp;002&nbsp;預覽模式：未寫入資料庫。<br />
+*&nbsp;003&nbsp;取號失敗&nbsp;QQ=。<br />
+*&nbsp;004&nbsp;寫入&nbsp;XQLOG&nbsp;失敗&nbsp;QQ=。<br />
+*&nbsp;005&nbsp;ZTSD0098&nbsp;更新成功，筆數：。<br />
+*&nbsp;006&nbsp;ZTSD0099&nbsp;更新成功，筆數：。<br />
+*&nbsp;007&nbsp;資料庫錯誤：<br />
+<br />
+<br />
+*Selection&nbsp;texts<br />
+*----------------------------------------------------------<br />
+*&nbsp;P_PERIOD&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;期別<br />
+*&nbsp;P_PREV&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;僅預覽資料<br />
+*&nbsp;P_ZYM&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;預採帳年月<br />
+*&nbsp;S_ERDAT&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;建立日期<br />
+*&nbsp;S_ERNAM&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;建立人員<br />
+*&nbsp;S_IDNRK&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;件號<br />
+*&nbsp;S_QQ&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;QQ&nbsp;單號<br />
+*&nbsp;S_VTWEG&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;預採帳客戶別<br />
+            </div>
+          </td>
+        </tr>
+      </table>
+      </td>
+      </tr>
+   <tr>
+<td class="footer">Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2026. Sap Release 757</td>
+   </tr>
+</table>
+</body>
+</html>
