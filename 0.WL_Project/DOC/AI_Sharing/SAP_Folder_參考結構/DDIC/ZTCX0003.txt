@@ -1,0 +1,5 @@
+[ZTCX0003]
+MANDT | MANDT | CLNT | 000003 | 000000 | Client
+UNAME | UNAME | CHAR | 000012 | 000000 | User Name
+VTWEG | VTWEG | CHAR | 000002 | 000000 | Distribution Channel
+ROLE | ZCX_ROLE | CHAR | 000001 | 000000 | Authorization Role

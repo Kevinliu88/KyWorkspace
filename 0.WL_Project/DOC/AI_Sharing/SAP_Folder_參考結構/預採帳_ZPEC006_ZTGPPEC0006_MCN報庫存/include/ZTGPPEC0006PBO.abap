@@ -1,0 +1,345 @@
+*&---------------------------------------------------------------------*
+*& Include          ZTGPPEC0006PBO
+*&---------------------------------------------------------------------*
+
+*&---------------------------------------------------------------------*
+*& Module STATUS_0100 OUTPUT
+*&---------------------------------------------------------------------*
+*&
+*&---------------------------------------------------------------------*
+MODULE STATUS_0100 OUTPUT.
+  SET PF-STATUS 'STANDARD'.
+
+  IF P_R1 = 'X'.
+    SET TITLEBAR 'TITLE' WITH '生管維護報庫存作業'.
+  ELSEIF P_R2 = 'X'.
+    SET TITLEBAR 'TITLE' WITH '生管維護庫存預採帳作業'.
+  ELSEIF P_R3 = 'X'.
+    SET TITLEBAR 'TITLE' WITH '業務回覆作業'.
+  ELSEIF P_R4 = 'X'.
+    SET TITLEBAR 'TITLE' WITH '採購單價維護作業'.
+  ELSEIF P_R5 = 'X'.
+    SET TITLEBAR 'TITLE' WITH '工程回復作業'.
+  ENDIF.
+
+  IF P_R1 <> 'X'.
+    LOOP AT SCREEN.
+      IF SCREEN-NAME = 'BTN_ADD100' OR SCREEN-NAME = 'BTN_DEL100'.
+        SCREEN-INPUT = 0.
+        MODIFY SCREEN.
+      ENDIF.
+      MODIFY SCREEN.
+    ENDLOOP.
+  ENDIF.
+
+*
+  IF P_R3 <> 'X' OR P_R5 <> 'X'. "不屬於業務，則不可修改
+    LOOP AT SCREEN.
+      IF SCREEN-NAME = 'GS_SCR0100-ZYWFZR'.
+        SCREEN-INPUT = 0.
+        MODIFY SCREEN.
+      ENDIF.
+      MODIFY SCREEN.
+    ENDLOOP.
+  ENDIF.
+
+*  添加默认值*        業務負責人字段填寫
+  IF GS_ZTPPEC0005 IS INITIAL.
+    SELECT SINGLE * INTO CORRESPONDING FIELDS OF GS_ZTPPEC0005
+      FROM ZTPPEC0005
+      WHERE ZMCRID = GS_SCR0100-ZID.
+  ENDIF.
+  IF GS_SCR0100-ZYWFZR IS INITIAL.
+    IF GS_ZTPPEC0005-OWN_GROUP CS '業務部'.
+      GS_SCR0100-ZYWFZR = GS_ZTPPEC0005-OWN_USER.
+    ELSE.
+      IF GS_ZTPPEC0005-WL2_PM IS NOT INITIAL.
+        GS_SCR0100-ZYWFZR = GS_ZTPPEC0005-WL2_PM.
+      ENDIF.
+    ENDIF.
+  ENDIF.
+
+  IF P_SHOW = 'X'.
+    LOOP AT SCREEN.
+      IF SCREEN-NAME(4) = 'BTN_' OR SCREEN-NAME(11) = 'GS_SCR0100-'.
+        SCREEN-INPUT = 0.
+      ENDIF.
+      MODIFY SCREEN.
+    ENDLOOP.
+  ENDIF.
+
+
+  IF GS_SCR0100-ZSGZT = '2'. "生管狀態2，則不可新增或刪除
+    LOOP AT SCREEN.
+      IF SCREEN-NAME = 'BTN_ADD100' OR SCREEN-NAME = 'BTN_DEL100'.
+        SCREEN-INPUT = 0.
+      ENDIF.
+      MODIFY SCREEN.
+    ENDLOOP.
+  ENDIF.
+
+  DATA:
+    LT_VALUES TYPE VRM_VALUES,
+    LS_VALUE  TYPE VRM_VALUE.
+  CLEAR: LT_VALUES,LS_VALUE.
+
+  LOOP AT GT_ZTPPEC0025 WHERE Z_USAGE = 1.
+    LS_VALUE-KEY = GT_ZTPPEC0025-Z_STAT.
+    LS_VALUE-TEXT = GT_ZTPPEC0025-Z_STAT_DEC.
+    APPEND LS_VALUE TO LT_VALUES.
+  ENDLOOP.
+
+  CALL FUNCTION 'VRM_SET_VALUES'
+    EXPORTING
+      ID     = 'GS_TABKUC0100-ZSTOCK_STAT'
+      VALUES = LT_VALUES.
+
+
+  DATA:
+    LT_VALUES2 TYPE VRM_VALUES,
+    LS_VALUE2  TYPE VRM_VALUE.
+  CLEAR: LT_VALUES2,LS_VALUE2.
+
+  LOOP AT GT_ZTPPEC0025 WHERE Z_USAGE = 2.
+    LS_VALUE2-KEY = GT_ZTPPEC0025-Z_STAT.
+    LS_VALUE2-TEXT = GT_ZTPPEC0025-Z_STAT_DEC.
+    APPEND LS_VALUE2 TO LT_VALUES2.
+  ENDLOOP.
+
+  CALL FUNCTION 'VRM_SET_VALUES'
+    EXPORTING
+      ID     = 'GS_TABKUC0100-ZSTOCK_STAT2'
+      VALUES = LT_VALUES2.
+
+ENDMODULE.
+
+*&SPWIZARD: OUTPUT MODULE FOR TC 'GTB_TABKUC0100'. DO NOT CHANGE THIS LI
+*&SPWIZARD: UPDATE LINES FOR EQUIVALENT SCROLLBAR
+MODULE GTB_TABKUC0100_CHANGE_TC_ATTR OUTPUT.
+  DESCRIBE TABLE GT_TABKUC0100 LINES GTB_TABKUC0100-LINES.
+ENDMODULE.
+
+*&---------------------------------------------------------------------*
+*& Module TABKUC0100_STATUS OUTPUT
+*&---------------------------------------------------------------------*
+*&
+*&---------------------------------------------------------------------*
+MODULE TABKUC0100_STATUS OUTPUT.
+  DATA: LS_COL LIKE LINE OF GTB_TABKUC0100-COLS.
+  DATA LV_INPUT TYPE CHAR1.
+
+
+
+  IF P_R1 = 'X'. "生管
+    IF GS_TABKUC0100-ZSEQ <> ''.
+      LOOP AT SCREEN.
+        IF SCREEN-NAME = 'GS_TABKUC0100-MATNR' OR
+          SCREEN-NAME = 'GS_TABKUC0100-ZDECL_QTY' OR
+*          SCREEN-NAME = 'GS_TABKUC0100-ZTOT_STOCK'
+          SCREEN-NAME = 'GS_TABKUC0100-ZZCN' OR
+          SCREEN-NAME = 'GS_TABKUC0100-ZUNIT_CONS' OR
+          SCREEN-NAME = 'GS_TABKUC0100-ZSTOCK_STAT' OR
+          SCREEN-NAME = 'GS_TABKUC0100-ZPMREMARK' OR
+          SCREEN-NAME = 'GS_TABKUC0100-ISOK' OR
+          SCREEN-NAME = 'GS_TABKUC0100-ZREPL_INV'
+          .
+          SCREEN-INPUT = 1.
+        ELSEIF SCREEN-NAME = 'GS_TABKUC0100-ZDNNO'
+          .
+          SCREEN-INPUT = 0.
+        ENDIF.
+        MODIFY SCREEN.
+      ENDLOOP.
+    ENDIF.
+*    隱藏單價
+    LOOP AT GTB_TABKUC0100-COLS INTO LS_COL WHERE SCREEN-NAME = 'GS_TABKUC0100-ZUPRICE2'
+                                               OR SCREEN-NAME = 'GS_TABKUC0100-WAERS'.
+      LS_COL-VISLENGTH = 0.
+      MODIFY GTB_TABKUC0100-COLS FROM LS_COL.
+    ENDLOOP.
+
+*    已經復核了，則全部都設置成灰色的
+    IF GS_TABKUC0100-MCRSTAT = '2'. "生管已經復核了，除了庫存處理方式和生管備注和處理OK，其他欄位都設置成灰色，
+      LOOP AT SCREEN.
+        IF SCREEN-NAME = 'GS_TABKUC0100-ZSTOCK_STAT' OR  "庫存處理方式
+          SCREEN-NAME = 'GS_TABKUC0100-ZPMREMARK' OR     "生管備注
+          SCREEN-NAME = 'GS_TABKUC0100-ISOK'.            "處理OK
+        ELSE.
+          SCREEN-INPUT = 0.
+        ENDIF.
+        MODIFY SCREEN.
+      ENDLOOP.
+    ENDIF.
+
+  ELSEIF P_R2 = 'X'. "生管維護庫存預採帳
+    LV_INPUT = '0'.
+    LOOP AT SCREEN.
+      IF SCREEN-NAME = 'GS_TABKUC0100-MATNR' OR
+        SCREEN-NAME = 'GS_TABKUC0100-ZDECL_QTY' OR
+*        SCREEN-NAME = 'GS_TABKUC0100-ZTOT_STOCK' OR
+*        SCREEN-NAME = 'GS_TABKUC0100-ZSTOCK_STAT' OR
+        SCREEN-NAME = 'GS_TABKUC0100-ZPMREMARK' OR
+        SCREEN-NAME = 'GS_TABKUC0100-ISOK' OR
+        SCREEN-NAME = 'GS_TABKUC0100-ZREPL_INV' OR
+        SCREEN-NAME = 'GS_TABKUC0100-ZUPRICE2' OR
+        SCREEN-NAME = 'GS_TABKUC0100-WAERS' OR
+        SCREEN-NAME = 'GS_TABKUC0100-ZDNNO'
+        .
+        SCREEN-INPUT = 0.
+      ELSEIF SCREEN-NAME = 'GS_TABKUC0100-ZZCN' OR
+        SCREEN-NAME = 'GS_TABKUC0100-ZUNIT_CONS' OR
+        SCREEN-NAME = 'GS_TABKUC0100-ZSTOCK_STAT'
+        .
+        SCREEN-INPUT = 1.
+      ENDIF.
+      MODIFY SCREEN.
+    ENDLOOP.
+*    隱藏單價
+    LOOP AT GTB_TABKUC0100-COLS INTO LS_COL WHERE SCREEN-NAME = 'GS_TABKUC0100-ZUPRICE2'
+                                               OR SCREEN-NAME = 'GS_TABKUC0100-WAERS'.
+      LS_COL-VISLENGTH = 0.
+      MODIFY GTB_TABKUC0100-COLS FROM LS_COL.
+    ENDLOOP.
+  ELSEIF P_R3 = 'X' OR P_R5 = 'X'. "業務回覆作業畫面
+    LOOP AT SCREEN.
+      IF SCREEN-NAME = 'GS_TABKUC0100-MATNR' OR
+        SCREEN-NAME = 'GS_TABKUC0100-ZDECL_QTY' OR
+*        SCREEN-NAME = 'GS_TABKUC0100-ZTOT_STOCK' OR
+        SCREEN-NAME = 'GS_TABKUC0100-ZSTOCK_STAT' OR
+        SCREEN-NAME = 'GS_TABKUC0100-ZPMREMARK' OR
+        SCREEN-NAME = 'GS_TABKUC0100-ISOK' OR
+        SCREEN-NAME = 'GS_TABKUC0100-ZREPL_INV' OR
+        SCREEN-NAME = 'GS_TABKUC0100-ZUPRICE2' OR
+        SCREEN-NAME = 'GS_TABKUC0100-WAERS' OR
+        SCREEN-NAME = 'GS_TABKUC0100-ZZCN' OR
+        SCREEN-NAME = 'GS_TABKUC0100-ZUNIT_CONS'
+        .
+        SCREEN-INPUT = 0.
+      ELSEIF SCREEN-NAME = 'GS_TABKUC0100-ZSA_REP' OR
+        SCREEN-NAME = 'GS_TABKUC0100-ZSTOCK_STAT2'
+        .
+        SCREEN-INPUT = 1.
+      ELSEIF SCREEN-NAME = 'GS_TABKUC0100-ZDNNO'. "業務回復處理方式=D時，可輸入
+        IF GS_TABKUC0100-ZSTOCK_STAT2 = 'D'.
+          SCREEN-INPUT = 1.
+        ELSE.
+          SCREEN-INPUT = 0.
+        ENDIF.
+      ENDIF.
+
+      MODIFY SCREEN.
+    ENDLOOP.
+  ELSEIF P_R4 = 'X'. "採購單價回覆
+    LOOP AT SCREEN.
+      IF SCREEN-NAME = 'GS_TABKUC0100-MATNR' OR
+        SCREEN-NAME = 'GS_TABKUC0100-ZDECL_QTY' OR
+*        SCREEN-NAME = 'GS_TABKUC0100-ZTOT_STOCK' OR
+        SCREEN-NAME = 'GS_TABKUC0100-ZSTOCK_STAT' OR
+        SCREEN-NAME = 'GS_TABKUC0100-ZPMREMARK' OR
+        SCREEN-NAME = 'GS_TABKUC0100-ISOK' OR
+        SCREEN-NAME = 'GS_TABKUC0100-ZREPL_INV' OR
+        SCREEN-NAME = 'GS_TABKUC0100-ZZCN' OR
+        SCREEN-NAME = 'GS_TABKUC0100-ZUNIT_CONS' OR
+        SCREEN-NAME = 'GS_TABKUC0100-ZDNNO'
+        .
+        SCREEN-INPUT = 0.
+*      ELSEIF SCREEN-NAME = 'GS_TABKUC0100-ZUPRICE2' OR
+*        SCREEN-NAME = 'GS_TABKUC0100-WAERS'
+*        .
+*        SCREEN-INPUT = 1.
+      ENDIF.
+      MODIFY SCREEN.
+    ENDLOOP.
+    IF GS_TABKUC0100-BESKZ = 'F' AND GS_TABKUC0100-SOBSL = ''.
+      LOOP AT SCREEN.
+        IF SCREEN-NAME = 'GS_TABKUC0100-ZUPRICE2' OR
+          SCREEN-NAME = 'GS_TABKUC0100-WAERS'.
+          SCREEN-INPUT = 0.
+        ENDIF.
+        MODIFY SCREEN.
+      ENDLOOP.
+    ELSE.
+      LOOP AT SCREEN.
+        IF SCREEN-NAME = 'GS_TABKUC0100-ZUPRICE2' OR
+          SCREEN-NAME = 'GS_TABKUC0100-WAERS'.
+          SCREEN-INPUT = 1.
+        ENDIF.
+        MODIFY SCREEN.
+      ENDLOOP.
+    ENDIF.
+  ENDIF.
+
+  IF P_SHOW = 'X'.
+    LOOP AT SCREEN.
+      SCREEN-INPUT = 0.
+      MODIFY SCREEN.
+    ENDLOOP.
+  ENDIF.
+
+  IF GS_SCR0100-ZSGZT = '2'. "生管狀態2，則不可修改料號和報庫存數量
+    LOOP AT SCREEN.
+      IF SCREEN-NAME = 'GS_TABKUC0100-MATNR' OR
+        SCREEN-NAME = 'GS_TABKUC0100-ZDECL_QTY'.
+        SCREEN-INPUT = 0.
+      ENDIF.
+      MODIFY SCREEN.
+    ENDLOOP.
+  ENDIF.
+
+  IF P_R2 = 'X'. "生管維護庫存預採賬作業
+  ELSEIF P_R1 = 'X'.
+    LOOP AT GTB_TABKUC0100-COLS INTO LS_COL WHERE SCREEN-NAME = 'GS_TABKUC0100-ISDJCZ'
+*                                               OR SCREEN-NAME = 'GS_TABKUC0100-ZZCN'
+*                                               OR SCREEN-NAME = 'GS_TABKUC0100-ZUNIT_CONS'
+                                               OR SCREEN-NAME = 'GS_TABKUC0100-ZTF_PREPO'
+                                               OR SCREEN-NAME = 'GS_TABKUC0100-KHB'.
+      LS_COL-VISLENGTH = 0.
+      MODIFY GTB_TABKUC0100-COLS FROM LS_COL.
+    ENDLOOP.
+  ELSE.
+*    隱藏單價是否存在
+    LOOP AT GTB_TABKUC0100-COLS INTO LS_COL WHERE SCREEN-NAME = 'GS_TABKUC0100-ISDJCZ'
+                                               OR SCREEN-NAME = 'GS_TABKUC0100-ZZCN'
+                                               OR SCREEN-NAME = 'GS_TABKUC0100-ZUNIT_CONS'
+                                               OR SCREEN-NAME = 'GS_TABKUC0100-ZTF_PREPO'
+                                               OR SCREEN-NAME = 'GS_TABKUC0100-KHB'.
+      LS_COL-VISLENGTH = 0.
+      MODIFY GTB_TABKUC0100-COLS FROM LS_COL.
+    ENDLOOP.
+  ENDIF.
+
+  IF P_SHOW = 'X'. "隱藏單價是否存在
+    LOOP AT GTB_TABKUC0100-COLS INTO LS_COL WHERE SCREEN-NAME = 'GS_TABKUC0100-ISDJCZ'
+                                               OR SCREEN-NAME = 'GS_TABKUC0100-ZZCN'
+                                               OR SCREEN-NAME = 'GS_TABKUC0100-ZUNIT_CONS'
+                                               OR SCREEN-NAME = 'GS_TABKUC0100-ZTF_PREPO'
+                                               OR SCREEN-NAME = 'GS_TABKUC0100-KHB'.
+      LS_COL-VISLENGTH = 0.
+      MODIFY GTB_TABKUC0100-COLS FROM LS_COL.
+    ENDLOOP.
+  ENDIF.
+  IF P_R3 <> 'X' OR P_R5 <> 'X' OR P_SHOW = 'X'.
+    LOOP AT GTB_TABKUC0100-COLS INTO LS_COL WHERE SCREEN-NAME = 'GS_TABKUC0100-ZSA_REP'.
+      LS_COL-VISLENGTH = 0.
+      MODIFY GTB_TABKUC0100-COLS FROM LS_COL.
+    ENDLOOP.
+  ENDIF.
+
+
+ENDMODULE.
+
+*&---------------------------------------------------------------------*
+*& Module STATUS_0200 OUTPUT
+*&---------------------------------------------------------------------*
+*&
+*&---------------------------------------------------------------------*
+MODULE STATUS_0200 OUTPUT.
+  SET PF-STATUS 'STANDARD'.
+  SET TITLEBAR 'TITLE' WITH '生管維護庫存預採帳作業'.
+ENDMODULE.
+
+*&SPWIZARD: OUTPUT MODULE FOR TC 'GTB_TABKUC0200'. DO NOT CHANGE THIS LI
+*&SPWIZARD: UPDATE LINES FOR EQUIVALENT SCROLLBAR
+MODULE GTB_TABKUC0200_CHANGE_TC_ATTR OUTPUT.
+  DESCRIBE TABLE GT_TABKUC0200 LINES GTB_TABKUC0200-LINES.
+ENDMODULE.
