@@ -1,0 +1,1497 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="application/xhtml+xml; charset=ISO-8859-1" />
+<title>Dictionary object- ZSQT0201COMP</title>
+<style type="text/css">
+  th{text-align:left}
+  .cell{
+     font-family:"Courier New", Courier, monospace;
+     color:#000;
+     font-size:12px;
+     background-color:#F2F4F7;
+  }
+  .cell td { border: thin solid #ccc; }
+</style>
+<style type="text/css">
+  .normal{ font-family:Arial, Helvetica, sans-serif; color:#000; font-size:12px }
+  .footer{ font-family:Arial, Helvetica, sans-serif; color:#000; font-size:12px; text-align: center }
+  h2{ font-family:Arial, Helvetica, sans-serif; color:#000; font-size:16px; font-weight:800 }
+  h3{ font-family:Arial, Helvetica, sans-serif; color:#000; font-size:14px; font-weight:800 }
+  .outerTable{
+   background-color:#E0E7ED;
+   width:100%;
+   border-top-width: thin;
+   border-right-width: thin;
+   border-right-width: thin;
+   border-left-width: thin;
+   border-top-style: solid;
+   border-right-style: solid;
+   border-bottom-style: solid;
+   border-left-style: solid;
+  }
+  .innerTable{
+   background-color:#F2F4F7;
+   width:100%;
+   border-top-width: thin;
+   border-right-width: thin;
+   border-bottom-width: thin;
+   border-left-width: thin;
+   border-top-style: solid;
+   border-right-style: solid;
+   border-bottom-style: solid;
+   border-left-style: solid;
+  }
+</style>
+</head>
+<body>
+  <table class="outerTable">
+    <tr>
+      <td><h2>Table: ZSQT0201COMP</h2>
+  <h3>Description: 採購成本估算單/每月成本推估單-元件畫面結構</h3></td>
+    </tr>
+    <tr>
+      <td><!--This is where our main table begins  -->
+<table class="innerTable">
+<tr>
+  <th>Row</th>
+  <th>Field name</th>
+  <th>Position</th>
+  <th>Key</th>
+  <th>Data element</th>
+  <th>Domain</th>
+  <th>Datatype</th>
+  <th>Length</th>
+  <th>Lowercase</th>
+  <th>Domain text</th>
+</tr>
+<tr class="cell">
+  <td> 1</td>
+  <td>.INCLUDE</td>
+  <td>1</td>
+  <td>&nbsp;</td>
+  <td>ZTQT0201COMP</td>
+  <td>&nbsp;</td>
+  <td>&nbsp;</td>
+  <td>0</td>
+  <td>&nbsp;</td>
+  <td>採購成本估算單-元件</td>
+</tr>
+<tr class="cell">
+  <td> 2</td>
+  <td>MANDT</td>
+  <td>2</td>
+  <td>&nbsp;</td>
+  <td>MANDT</td>
+  <td>MANDT</td>
+  <td>CLNT</td>
+  <td>3</td>
+  <td>&nbsp;</td>
+  <td>用戶端</td>
+</tr>
+<tr class="cell">
+  <td> 3</td>
+  <td>CONO</td>
+  <td>3</td>
+  <td>&nbsp;</td>
+  <td>ZCONO</td>
+  <td>VBELN</td>
+  <td>CHAR</td>
+  <td>10</td>
+  <td>&nbsp;</td>
+  <td>採購成本估算單號</td>
+</tr>
+<tr class="cell">
+  <td> 4</td>
+  <td>COSEQ</td>
+  <td>4</td>
+  <td>&nbsp;</td>
+  <td>ZQT_SEQ</td>
+  <td>POSNR</td>
+  <td>NUMC</td>
+  <td>6</td>
+  <td>&nbsp;</td>
+  <td>項次</td>
+</tr>
+<tr class="cell">
+  <td> 5</td>
+  <td>COMPSEQ</td>
+  <td>5</td>
+  <td>&nbsp;</td>
+  <td>ZCOMPSEQ</td>
+  <td>POSNR</td>
+  <td>NUMC</td>
+  <td>6</td>
+  <td>&nbsp;</td>
+  <td>元件項次</td>
+</tr>
+<tr class="cell">
+  <td> 6</td>
+  <td>.INCLUDE</td>
+  <td>6</td>
+  <td>&nbsp;</td>
+  <td>ZSQT0201COMP_FIELDS</td>
+  <td>&nbsp;</td>
+  <td>&nbsp;</td>
+  <td>0</td>
+  <td>&nbsp;</td>
+  <td>採購成本估算單/每月成本推估單-共用欄位</td>
+</tr>
+<tr class="cell">
+  <td> 7</td>
+  <td>IDNRK</td>
+  <td>7</td>
+  <td>&nbsp;</td>
+  <td>IDNRK</td>
+  <td>MATNR</td>
+  <td>CHAR</td>
+  <td>40</td>
+  <td>&nbsp;</td>
+  <td>BOM 元件</td>
+</tr>
+<tr class="cell">
+  <td> 8</td>
+  <td>OJTXP</td>
+  <td>8</td>
+  <td>&nbsp;</td>
+  <td>OJTXP</td>
+  <td>TEXT40</td>
+  <td>CHAR</td>
+  <td>40</td>
+  <td>X</td>
+  <td>物件說明（項目）</td>
+</tr>
+<tr class="cell">
+  <td> 9</td>
+  <td>STUFE</td>
+  <td>9</td>
+  <td>&nbsp;</td>
+  <td>HISTU</td>
+  <td>DEC2</td>
+  <td>DEC</td>
+  <td>2</td>
+  <td>&nbsp;</td>
+  <td>層次〈於多層次 BOM 展開〉</td>
+</tr>
+<tr class="cell">
+  <td>10</td>
+  <td>DGLVL</td>
+  <td>10</td>
+  <td>&nbsp;</td>
+  <td>DGLVL</td>
+  <td>CHAR10</td>
+  <td>CHAR</td>
+  <td>10</td>
+  <td>&nbsp;</td>
+  <td>展開層次（格式化的）</td>
+</tr>
+<tr class="cell">
+  <td>11</td>
+  <td>WERKS_C</td>
+  <td>11</td>
+  <td>&nbsp;</td>
+  <td>WERKS_D</td>
+  <td>WERKS</td>
+  <td>CHAR</td>
+  <td>4</td>
+  <td>&nbsp;</td>
+  <td>工廠</td>
+</tr>
+<tr class="cell">
+  <td>12</td>
+  <td>DATUV_C</td>
+  <td>12</td>
+  <td>&nbsp;</td>
+  <td>DATUV</td>
+  <td>DATUM</td>
+  <td>DATS</td>
+  <td>8</td>
+  <td>&nbsp;</td>
+  <td>生效日期</td>
+</tr>
+<tr class="cell">
+  <td>13</td>
+  <td>MENGE_C</td>
+  <td>13</td>
+  <td>&nbsp;</td>
+  <td>CS_E_MNGLG</td>
+  <td>MENGV13</td>
+  <td>QUAN</td>
+  <td>13</td>
+  <td>&nbsp;</td>
+  <td>基礎計量單位的已計算元件數量</td>
+</tr>
+<tr class="cell">
+  <td>14</td>
+  <td>MEINS</td>
+  <td>14</td>
+  <td>&nbsp;</td>
+  <td>MEINS</td>
+  <td>MEINS</td>
+  <td>UNIT</td>
+  <td>3</td>
+  <td>X</td>
+  <td>基礎計量單位</td>
+</tr>
+<tr class="cell">
+  <td>15</td>
+  <td>MSCHG</td>
+  <td>15</td>
+  <td>&nbsp;</td>
+  <td>CS_E_MSCHG</td>
+  <td>XFELD</td>
+  <td>CHAR</td>
+  <td>1</td>
+  <td>&nbsp;</td>
+  <td>指示碼︰散裝物料〈元件物料〉</td>
+</tr>
+<tr class="cell">
+  <td>16</td>
+  <td>ZDEFAULT_VENDOR</td>
+  <td>16</td>
+  <td>&nbsp;</td>
+  <td>ZDEFAULT_VENDOR</td>
+  <td>LIFNR</td>
+  <td>CHAR</td>
+  <td>10</td>
+  <td>&nbsp;</td>
+  <td>預設供應商</td>
+</tr>
+<tr class="cell">
+  <td>17</td>
+  <td>SOURCE_C</td>
+  <td>17</td>
+  <td>&nbsp;</td>
+  <td>ZSOURCE_COMP</td>
+  <td>ZSOURCE_COMP</td>
+  <td>CHAR</td>
+  <td>1</td>
+  <td>&nbsp;</td>
+  <td>報價元件來源別</td>
+</tr>
+<tr class="cell">
+  <td>18</td>
+  <td>SOURCE_P</td>
+  <td>18</td>
+  <td>&nbsp;</td>
+  <td>ZSOURCE_P</td>
+  <td>ZSOURCE_P</td>
+  <td>CHAR</td>
+  <td>2</td>
+  <td>&nbsp;</td>
+  <td>單價來源別</td>
+</tr>
+<tr class="cell">
+  <td>19</td>
+  <td>ZMAINDRAWINGNO</td>
+  <td>19</td>
+  <td>&nbsp;</td>
+  <td>ZMAINDRAWINGNO</td>
+  <td>ZWL2_DRAWINGNUMBER</td>
+  <td>CHAR</td>
+  <td>20</td>
+  <td>&nbsp;</td>
+  <td>主要圖號</td>
+</tr>
+<tr class="cell">
+  <td>20</td>
+  <td>PRINTING</td>
+  <td>20</td>
+  <td>&nbsp;</td>
+  <td>ZPRINTING</td>
+  <td>XFELD</td>
+  <td>CHAR</td>
+  <td>1</td>
+  <td>&nbsp;</td>
+  <td>印花布?</td>
+</tr>
+<tr class="cell">
+  <td>21</td>
+  <td>ZERO</td>
+  <td>21</td>
+  <td>&nbsp;</td>
+  <td>ZZERO</td>
+  <td>XFELD</td>
+  <td>CHAR</td>
+  <td>1</td>
+  <td>&nbsp;</td>
+  <td>不報價</td>
+</tr>
+<tr class="cell">
+  <td>22</td>
+  <td>WAERS_C</td>
+  <td>22</td>
+  <td>&nbsp;</td>
+  <td>WAERS</td>
+  <td>WAERS</td>
+  <td>CUKY</td>
+  <td>5</td>
+  <td>&nbsp;</td>
+  <td>幣別碼</td>
+</tr>
+<tr class="cell">
+  <td>23</td>
+  <td>UP_M</td>
+  <td>23</td>
+  <td>&nbsp;</td>
+  <td>ZUP_M</td>
+  <td>&nbsp;</td>
+  <td>DEC</td>
+  <td>10</td>
+  <td>&nbsp;</td>
+  <td>料價(外顯值)</td>
+</tr>
+<tr class="cell">
+  <td>24</td>
+  <td>UP_P</td>
+  <td>24</td>
+  <td>&nbsp;</td>
+  <td>ZUP_P</td>
+  <td>&nbsp;</td>
+  <td>DEC</td>
+  <td>10</td>
+  <td>&nbsp;</td>
+  <td>工費(外顯值)</td>
+</tr>
+<tr class="cell">
+  <td>25</td>
+  <td>UP_E</td>
+  <td>25</td>
+  <td>&nbsp;</td>
+  <td>ZUP_E</td>
+  <td>&nbsp;</td>
+  <td>DEC</td>
+  <td>10</td>
+  <td>&nbsp;</td>
+  <td>額外加價(外顯值)</td>
+</tr>
+<tr class="cell">
+  <td>26</td>
+  <td>AMT_C</td>
+  <td>26</td>
+  <td>&nbsp;</td>
+  <td>ZQT_AMT_C</td>
+  <td>ZQT_AMT_C</td>
+  <td>DEC</td>
+  <td>15</td>
+  <td>&nbsp;</td>
+  <td>元件金額(原始幣別)</td>
+</tr>
+<tr class="cell">
+  <td>27</td>
+  <td>KURRF_C</td>
+  <td>27</td>
+  <td>&nbsp;</td>
+  <td>KURSK</td>
+  <td>KURRF</td>
+  <td>DEC</td>
+  <td>9</td>
+  <td>&nbsp;</td>
+  <td>價格決定的匯率</td>
+</tr>
+<tr class="cell">
+  <td>28</td>
+  <td>AMT_D</td>
+  <td>28</td>
+  <td>&nbsp;</td>
+  <td>ZQT_AMT</td>
+  <td>ZQT_AMT</td>
+  <td>DEC</td>
+  <td>15</td>
+  <td>&nbsp;</td>
+  <td>元件金額(估算幣別)</td>
+</tr>
+<tr class="cell">
+  <td>29</td>
+  <td>CUSTOMS_RATE</td>
+  <td>29</td>
+  <td>&nbsp;</td>
+  <td>ZQT_CUSTOMS_RATE</td>
+  <td>&nbsp;</td>
+  <td>DEC</td>
+  <td>10</td>
+  <td>&nbsp;</td>
+  <td>關稅稅率</td>
+</tr>
+<tr class="cell">
+  <td>30</td>
+  <td>CUSTOMS_AMT_C</td>
+  <td>30</td>
+  <td>&nbsp;</td>
+  <td>ZQT_CUSTOMS_AMT_C</td>
+  <td>ZQT_AMT_C</td>
+  <td>DEC</td>
+  <td>15</td>
+  <td>&nbsp;</td>
+  <td>關稅(原始幣別)</td>
+</tr>
+<tr class="cell">
+  <td>31</td>
+  <td>CUSTOMS_AMT_D</td>
+  <td>31</td>
+  <td>&nbsp;</td>
+  <td>ZQT_CUSTOMS_AMT</td>
+  <td>ZQT_AMT</td>
+  <td>DEC</td>
+  <td>15</td>
+  <td>&nbsp;</td>
+  <td>關稅(估算幣別)</td>
+</tr>
+<tr class="cell">
+  <td>32</td>
+  <td>TAXRATE</td>
+  <td>32</td>
+  <td>&nbsp;</td>
+  <td>ZQT_TAXRATE</td>
+  <td>&nbsp;</td>
+  <td>DEC</td>
+  <td>10</td>
+  <td>&nbsp;</td>
+  <td>增值稅率</td>
+</tr>
+<tr class="cell">
+  <td>33</td>
+  <td>TAX_AMT_C</td>
+  <td>33</td>
+  <td>&nbsp;</td>
+  <td>ZQT_TAX_AMT_C</td>
+  <td>ZQT_AMT_C</td>
+  <td>DEC</td>
+  <td>15</td>
+  <td>&nbsp;</td>
+  <td>增值稅(原始幣別)</td>
+</tr>
+<tr class="cell">
+  <td>34</td>
+  <td>TAX_AMT_D</td>
+  <td>34</td>
+  <td>&nbsp;</td>
+  <td>ZQT_TAX_AMT</td>
+  <td>ZQT_AMT</td>
+  <td>DEC</td>
+  <td>15</td>
+  <td>&nbsp;</td>
+  <td>增值稅(估算幣別)</td>
+</tr>
+<tr class="cell">
+  <td>35</td>
+  <td>REMARK_C</td>
+  <td>35</td>
+  <td>&nbsp;</td>
+  <td>CHAR100</td>
+  <td>CHAR100</td>
+  <td>CHAR</td>
+  <td>100</td>
+  <td>&nbsp;</td>
+  <td>字元 100</td>
+</tr>
+<tr class="cell">
+  <td>36</td>
+  <td>MATKL</td>
+  <td>36</td>
+  <td>&nbsp;</td>
+  <td>MATKL</td>
+  <td>MATKL</td>
+  <td>CHAR</td>
+  <td>9</td>
+  <td>&nbsp;</td>
+  <td>物料群組</td>
+</tr>
+<tr class="cell">
+  <td>37</td>
+  <td>BESKZ</td>
+  <td>37</td>
+  <td>&nbsp;</td>
+  <td>BESKZ</td>
+  <td>BESKZ</td>
+  <td>CHAR</td>
+  <td>1</td>
+  <td>&nbsp;</td>
+  <td>採購類型</td>
+</tr>
+<tr class="cell">
+  <td>38</td>
+  <td>SOBSL</td>
+  <td>38</td>
+  <td>&nbsp;</td>
+  <td>SOBSL</td>
+  <td>SOBSL</td>
+  <td>CHAR</td>
+  <td>2</td>
+  <td>&nbsp;</td>
+  <td>特殊採購類型</td>
+</tr>
+<tr class="cell">
+  <td>39</td>
+  <td>ZDEFAULT_VENDOR_DB</td>
+  <td>39</td>
+  <td>&nbsp;</td>
+  <td>ZDEFAULT_VENDOR</td>
+  <td>LIFNR</td>
+  <td>CHAR</td>
+  <td>10</td>
+  <td>&nbsp;</td>
+  <td>預設供應商</td>
+</tr>
+<tr class="cell">
+  <td>40</td>
+  <td>WAERS_C_DB</td>
+  <td>40</td>
+  <td>&nbsp;</td>
+  <td>WAERS</td>
+  <td>WAERS</td>
+  <td>CUKY</td>
+  <td>5</td>
+  <td>&nbsp;</td>
+  <td>幣別碼</td>
+</tr>
+<tr class="cell">
+  <td>41</td>
+  <td>UP_M_DB</td>
+  <td>41</td>
+  <td>&nbsp;</td>
+  <td>ZUP_M</td>
+  <td>&nbsp;</td>
+  <td>DEC</td>
+  <td>10</td>
+  <td>&nbsp;</td>
+  <td>料價(外顯值)</td>
+</tr>
+<tr class="cell">
+  <td>42</td>
+  <td>UP_P_DB</td>
+  <td>42</td>
+  <td>&nbsp;</td>
+  <td>ZUP_P</td>
+  <td>&nbsp;</td>
+  <td>DEC</td>
+  <td>10</td>
+  <td>&nbsp;</td>
+  <td>工費(外顯值)</td>
+</tr>
+<tr class="cell">
+  <td>43</td>
+  <td>UP_E_DB</td>
+  <td>43</td>
+  <td>&nbsp;</td>
+  <td>ZUP_E</td>
+  <td>&nbsp;</td>
+  <td>DEC</td>
+  <td>10</td>
+  <td>&nbsp;</td>
+  <td>額外加價(外顯值)</td>
+</tr>
+<tr class="cell">
+  <td>44</td>
+  <td>SOURCE_P_DB</td>
+  <td>44</td>
+  <td>&nbsp;</td>
+  <td>ZSOURCE_P</td>
+  <td>ZSOURCE_P</td>
+  <td>CHAR</td>
+  <td>2</td>
+  <td>&nbsp;</td>
+  <td>單價來源別</td>
+</tr>
+<tr class="cell">
+  <td>45</td>
+  <td>ZMAINDRAWINGNO_DB</td>
+  <td>45</td>
+  <td>&nbsp;</td>
+  <td>ZMAINDRAWINGNO</td>
+  <td>ZWL2_DRAWINGNUMBER</td>
+  <td>CHAR</td>
+  <td>20</td>
+  <td>&nbsp;</td>
+  <td>主要圖號</td>
+</tr>
+<tr class="cell">
+  <td>46</td>
+  <td>CRED_CODE_DB</td>
+  <td>46</td>
+  <td>&nbsp;</td>
+  <td>ZCRED_CODE</td>
+  <td>CHAR20</td>
+  <td>CHAR</td>
+  <td>20</td>
+  <td>&nbsp;</td>
+  <td>關務商品編碼</td>
+</tr>
+<tr class="cell">
+  <td>47</td>
+  <td>AUTO</td>
+  <td>47</td>
+  <td>&nbsp;</td>
+  <td>AUTO</td>
+  <td>XFELD</td>
+  <td>CHAR</td>
+  <td>1</td>
+  <td>&nbsp;</td>
+  <td>指示碼：自動產生輸入項</td>
+</tr>
+<tr class="cell">
+  <td>48</td>
+  <td>ACTION_MCN</td>
+  <td>48</td>
+  <td>&nbsp;</td>
+  <td>Z_REQUEST</td>
+  <td>Z_REQUEST</td>
+  <td>CHAR</td>
+  <td>1</td>
+  <td>&nbsp;</td>
+  <td>變更行為</td>
+</tr>
+<tr class="cell">
+  <td>49</td>
+  <td>PLMIN_MCN</td>
+  <td>49</td>
+  <td>&nbsp;</td>
+  <td>PLMIN</td>
+  <td>PLMIN</td>
+  <td>CHAR</td>
+  <td>1</td>
+  <td>&nbsp;</td>
+  <td>數量計算為正、負或不作計算</td>
+</tr>
+<tr class="cell">
+  <td>50</td>
+  <td>AUTO_MCN</td>
+  <td>50</td>
+  <td>&nbsp;</td>
+  <td>AUTO</td>
+  <td>XFELD</td>
+  <td>CHAR</td>
+  <td>1</td>
+  <td>&nbsp;</td>
+  <td>指示碼：自動產生輸入項</td>
+</tr>
+<tr class="cell">
+  <td>51</td>
+  <td>PPEC04_POSNR</td>
+  <td>51</td>
+  <td>&nbsp;</td>
+  <td>SPOSN</td>
+  <td>SPOSN</td>
+  <td>CHAR</td>
+  <td>4</td>
+  <td>&nbsp;</td>
+  <td>BOM 項目號碼</td>
+</tr>
+<tr class="cell">
+  <td>52</td>
+  <td>AS_LEVEL</td>
+  <td>52</td>
+  <td>&nbsp;</td>
+  <td>TEXT_DESCRIPTION</td>
+  <td>&nbsp;</td>
+  <td>CHAR</td>
+  <td>1333</td>
+  <td>&nbsp;</td>
+  <td>說明</td>
+</tr>
+<tr class="cell">
+  <td>53</td>
+  <td>GRP_F</td>
+  <td>53</td>
+  <td>&nbsp;</td>
+  <td>ZQT_GRP_F</td>
+  <td>TEXT100</td>
+  <td>CHAR</td>
+  <td>100</td>
+  <td>X</td>
+  <td>功能性分組</td>
+</tr>
+<tr class="cell">
+  <td>54</td>
+  <td>GRP_M</td>
+  <td>54</td>
+  <td>&nbsp;</td>
+  <td>ZQT_GRP_M</td>
+  <td>TEXT100</td>
+  <td>CHAR</td>
+  <td>100</td>
+  <td>X</td>
+  <td>材料性分組</td>
+</tr>
+<tr class="cell">
+  <td>55</td>
+  <td>ISMATERIAL</td>
+  <td>55</td>
+  <td>&nbsp;</td>
+  <td>ZISMATERIAL</td>
+  <td>ZISMATERIAL</td>
+  <td>CHAR</td>
+  <td>8</td>
+  <td>&nbsp;</td>
+  <td>暫鍵料</td>
+</tr>
+<tr class="cell">
+  <td>56</td>
+  <td>FEVOR</td>
+  <td>56</td>
+  <td>&nbsp;</td>
+  <td>FEVOR</td>
+  <td>FEVOR</td>
+  <td>CHAR</td>
+  <td>3</td>
+  <td>&nbsp;</td>
+  <td>生產主管</td>
+</tr>
+<tr class="cell">
+  <td>57</td>
+  <td>EVADEFECTRATE</td>
+  <td>57</td>
+  <td>&nbsp;</td>
+  <td>ZDFCTRTE</td>
+  <td>ZDFCTRTE</td>
+  <td>DEC</td>
+  <td>13</td>
+  <td>&nbsp;</td>
+  <td>發泡不良率</td>
+</tr>
+<tr class="cell">
+  <td>58</td>
+  <td>ERDAT_C</td>
+  <td>58</td>
+  <td>&nbsp;</td>
+  <td>ERDAT</td>
+  <td>DATUM</td>
+  <td>DATS</td>
+  <td>8</td>
+  <td>&nbsp;</td>
+  <td>記錄建立日期</td>
+</tr>
+<tr class="cell">
+  <td>59</td>
+  <td>ERZET_C</td>
+  <td>59</td>
+  <td>&nbsp;</td>
+  <td>ERZET</td>
+  <td>UZEIT</td>
+  <td>TIMS</td>
+  <td>6</td>
+  <td>&nbsp;</td>
+  <td>輸入時間</td>
+</tr>
+<tr class="cell">
+  <td>60</td>
+  <td>ERNAM_C</td>
+  <td>60</td>
+  <td>&nbsp;</td>
+  <td>ERNAM</td>
+  <td>USNAM</td>
+  <td>CHAR</td>
+  <td>12</td>
+  <td>&nbsp;</td>
+  <td>建立物件的負責人名稱</td>
+</tr>
+<tr class="cell">
+  <td>61</td>
+  <td>AEDAT_C</td>
+  <td>61</td>
+  <td>&nbsp;</td>
+  <td>AEDAT</td>
+  <td>DATUM</td>
+  <td>DATS</td>
+  <td>8</td>
+  <td>&nbsp;</td>
+  <td>最後更改日期</td>
+</tr>
+<tr class="cell">
+  <td>62</td>
+  <td>AETIM_C</td>
+  <td>62</td>
+  <td>&nbsp;</td>
+  <td>AEZEIT</td>
+  <td>UHRZT</td>
+  <td>TIMS</td>
+  <td>6</td>
+  <td>&nbsp;</td>
+  <td>更改時間</td>
+</tr>
+<tr class="cell">
+  <td>63</td>
+  <td>AENAM_C</td>
+  <td>63</td>
+  <td>&nbsp;</td>
+  <td>AENAM</td>
+  <td>USNAM</td>
+  <td>CHAR</td>
+  <td>12</td>
+  <td>&nbsp;</td>
+  <td>更改物件者名稱</td>
+</tr>
+<tr class="cell">
+  <td>64</td>
+  <td>CHK302</td>
+  <td>64</td>
+  <td>&nbsp;</td>
+  <td>MARK</td>
+  <td>XFELD</td>
+  <td>CHAR</td>
+  <td>1</td>
+  <td>&nbsp;</td>
+  <td>指示碼：已選的過帳行？</td>
+</tr>
+<tr class="cell">
+  <td>65</td>
+  <td>WAERS_D</td>
+  <td>65</td>
+  <td>&nbsp;</td>
+  <td>ZQT_WAERS</td>
+  <td>WAERS</td>
+  <td>CUKY</td>
+  <td>5</td>
+  <td>&nbsp;</td>
+  <td>估算幣別</td>
+</tr>
+<tr class="cell">
+  <td>66</td>
+  <td>STUFN</td>
+  <td>66</td>
+  <td>&nbsp;</td>
+  <td>HISTU</td>
+  <td>DEC2</td>
+  <td>DEC</td>
+  <td>2</td>
+  <td>&nbsp;</td>
+  <td>層次〈於多層次 BOM 展開〉</td>
+</tr>
+<tr class="cell">
+  <td>67</td>
+  <td>NEW</td>
+  <td>67</td>
+  <td>&nbsp;</td>
+  <td>CHAR1</td>
+  <td>CHAR1</td>
+  <td>CHAR</td>
+  <td>1</td>
+  <td>&nbsp;</td>
+  <td>單一字元旗標</td>
+</tr>
+<tr class="cell">
+  <td>68</td>
+  <td>SORT1</td>
+  <td>68</td>
+  <td>&nbsp;</td>
+  <td>SORTL</td>
+  <td>CHAR10</td>
+  <td>CHAR</td>
+  <td>10</td>
+  <td>&nbsp;</td>
+  <td>排序欄位</td>
+</tr>
+<tr class="cell">
+  <td>69</td>
+  <td>CNT</td>
+  <td>69</td>
+  <td>&nbsp;</td>
+  <td>SYST_INDEX</td>
+  <td>SYST_LONG</td>
+  <td>INT4</td>
+  <td>10</td>
+  <td>&nbsp;</td>
+  <td>ABAP System Field: Loop Index</td>
+</tr>
+<tr class="cell">
+  <td>70</td>
+  <td>WL2_THENAMEOFTHEERP</td>
+  <td>70</td>
+  <td>&nbsp;</td>
+  <td>ZMAKTXTG</td>
+  <td>TEXT40</td>
+  <td>CHAR</td>
+  <td>40</td>
+  <td>X</td>
+  <td>完整名稱</td>
+</tr>
+<tr class="cell">
+  <td>71</td>
+  <td>WL2_ERPSPECIFICATION</td>
+  <td>71</td>
+  <td>&nbsp;</td>
+  <td>ZWL2_ERPSPECIFICATION</td>
+  <td>TEXT128</td>
+  <td>CHAR</td>
+  <td>128</td>
+  <td>X</td>
+  <td>完整規格說明</td>
+</tr>
+<tr class="cell">
+  <td>72</td>
+  <td>ZOBJECT_NAME</td>
+  <td>72</td>
+  <td>&nbsp;</td>
+  <td>ZOBJECT_NAME</td>
+  <td>ZOBJECT_NAME</td>
+  <td>CHAR</td>
+  <td>128</td>
+  <td>X</td>
+  <td>廠內色號</td>
+</tr>
+<tr class="cell">
+  <td>73</td>
+  <td>TEAM</td>
+  <td>73</td>
+  <td>&nbsp;</td>
+  <td>ZTEAM_CO</td>
+  <td>ZTEAM_CO</td>
+  <td>CHAR</td>
+  <td>1</td>
+  <td>&nbsp;</td>
+  <td>成本估算組別</td>
+</tr>
+<tr class="cell">
+  <td>74</td>
+  <td>ZBISMT</td>
+  <td>74</td>
+  <td>&nbsp;</td>
+  <td>ZBISMT</td>
+  <td>BISMT</td>
+  <td>CHAR</td>
+  <td>40</td>
+  <td>&nbsp;</td>
+  <td>舊物料號碼(Plant)</td>
+</tr>
+<tr class="cell">
+  <td>75</td>
+  <td>TAXFLAG_D</td>
+  <td>75</td>
+  <td>&nbsp;</td>
+  <td>ZZTAX_INCLUSIVE</td>
+  <td>&nbsp;</td>
+  <td>CHAR</td>
+  <td>1</td>
+  <td>&nbsp;</td>
+  <td>含稅</td>
+</tr>
+<tr class="cell">
+  <td>76</td>
+  <td>MATNR</td>
+  <td>76</td>
+  <td>&nbsp;</td>
+  <td>MATNR</td>
+  <td>MATNR</td>
+  <td>CHAR</td>
+  <td>40</td>
+  <td>&nbsp;</td>
+  <td>物料號碼</td>
+</tr>
+<tr class="cell">
+  <td>77</td>
+  <td>LAND1</td>
+  <td>77</td>
+  <td>&nbsp;</td>
+  <td>LAND1</td>
+  <td>LAND1</td>
+  <td>CHAR</td>
+  <td>3</td>
+  <td>&nbsp;</td>
+  <td>國家/地區碼</td>
+</tr>
+<tr class="cell">
+  <td>78</td>
+  <td>CHG</td>
+  <td>78</td>
+  <td>&nbsp;</td>
+  <td>CHAR1</td>
+  <td>CHAR1</td>
+  <td>CHAR</td>
+  <td>1</td>
+  <td>&nbsp;</td>
+  <td>單一字元旗標</td>
+</tr>
+      </table>
+     </td>
+   </tr>
+<br/>
+  <table class="outerTable">
+    <tr>
+      <td><h2>Fixed Domain Values </h2>
+    </tr>
+    <tr>
+      <td><!--This is where our main table begins  -->
+<table class="innerTable">
+<tr>
+  <th>Domain Name</th>
+  <th>Value Low</th>
+  <th>Value High</th>
+  <th>Text</th>
+</tr>
+<tr class="cell">
+  <td>XFELD</td>
+  <td>X</td>
+  <td>&nbsp;</td>
+  <td>Yes</td>
+</tr>
+<tr class="cell">
+  <td>XFELD</td>
+  <td>&nbsp;</td>
+  <td>&nbsp;</td>
+  <td>No</td>
+</tr>
+<tr class="cell">
+  <td>ZSOURCE_COMP</td>
+  <td>1</td>
+  <td>&nbsp;</td>
+  <td>&nbsp;</td>
+</tr>
+<tr class="cell">
+  <td>ZSOURCE_COMP</td>
+  <td>2</td>
+  <td>&nbsp;</td>
+  <td>&nbsp;</td>
+</tr>
+<tr class="cell">
+  <td>ZSOURCE_COMP</td>
+  <td>3</td>
+  <td>&nbsp;</td>
+  <td>&nbsp;</td>
+</tr>
+<tr class="cell">
+  <td>ZSOURCE_P</td>
+  <td>&nbsp;</td>
+  <td>&nbsp;</td>
+  <td>自行輸入</td>
+</tr>
+<tr class="cell">
+  <td>ZSOURCE_P</td>
+  <td>0A</td>
+  <td>&nbsp;</td>
+  <td>熱處理公式</td>
+</tr>
+<tr class="cell">
+  <td>ZSOURCE_P</td>
+  <td>0B</td>
+  <td>&nbsp;</td>
+  <td>焊接件公式</td>
+</tr>
+<tr class="cell">
+  <td>ZSOURCE_P</td>
+  <td>0C</td>
+  <td>&nbsp;</td>
+  <td>管件(鐵鋁管)加工公式</td>
+</tr>
+<tr class="cell">
+  <td>ZSOURCE_P</td>
+  <td>0D</td>
+  <td>&nbsp;</td>
+  <td>車縫件公式</td>
+</tr>
+<tr class="cell">
+  <td>ZSOURCE_P</td>
+  <td>0E</td>
+  <td>&nbsp;</td>
+  <td>鐵管加工件公式</td>
+</tr>
+<tr class="cell">
+  <td>ZSOURCE_P</td>
+  <td>0F</td>
+  <td>&nbsp;</td>
+  <td>工塑件公式</td>
+</tr>
+<tr class="cell">
+  <td>ZSOURCE_P</td>
+  <td>1</td>
+  <td>&nbsp;</td>
+  <td>自製成本系統</td>
+</tr>
+<tr class="cell">
+  <td>ZSOURCE_P</td>
+  <td>11</td>
+  <td>&nbsp;</td>
+  <td>自製成本系統-友廠自製</td>
+</tr>
+<tr class="cell">
+  <td>ZSOURCE_P</td>
+  <td>21</td>
+  <td>&nbsp;</td>
+  <td>採購資訊紀錄-ZPT1</td>
+</tr>
+<tr class="cell">
+  <td>ZSOURCE_P</td>
+  <td>22</td>
+  <td>&nbsp;</td>
+  <td>採購資訊紀錄(PB00)</td>
+</tr>
+<tr class="cell">
+  <td>ZSOURCE_P</td>
+  <td>23</td>
+  <td>&nbsp;</td>
+  <td>採購資訊紀錄(ZPT1)-友廠</td>
+</tr>
+<tr class="cell">
+  <td>ZSOURCE_P</td>
+  <td>24</td>
+  <td>&nbsp;</td>
+  <td>採購資訊紀錄(PB00)-友廠</td>
+</tr>
+<tr class="cell">
+  <td>ZSOURCE_P</td>
+  <td>3</td>
+  <td>&nbsp;</td>
+  <td>30天內估算單</td>
+</tr>
+<tr class="cell">
+  <td>ZSOURCE_P</td>
+  <td>31</td>
+  <td>&nbsp;</td>
+  <td>上月的每月成本推估單</td>
+</tr>
+<tr class="cell">
+  <td>ZSOURCE_P</td>
+  <td>4</td>
+  <td>&nbsp;</td>
+  <td>自製單價維護表-件號(ZTQT0003)</td>
+</tr>
+<tr class="cell">
+  <td>ZSOURCE_P</td>
+  <td>41</td>
+  <td>&nbsp;</td>
+  <td>自製單價維護表-圖號(ZTQT0017)</td>
+</tr>
+<tr class="cell">
+  <td>ZSOURCE_P</td>
+  <td>5</td>
+  <td>&nbsp;</td>
+  <td>上月加權平均價格</td>
+</tr>
+<tr class="cell">
+  <td>ZSOURCE_P</td>
+  <td>51</td>
+  <td>&nbsp;</td>
+  <td>PO上月收貨驗收平均單價</td>
+</tr>
+<tr class="cell">
+  <td>ZSOURCE_P</td>
+  <td>52</td>
+  <td>&nbsp;</td>
+  <td>PO上月收貨驗收平均單價-友廠</td>
+</tr>
+<tr class="cell">
+  <td>ZSOURCE_P</td>
+  <td>61</td>
+  <td>&nbsp;</td>
+  <td>採購資訊紀錄(加權平均)</td>
+</tr>
+<tr class="cell">
+  <td>ZSOURCE_P</td>
+  <td>62</td>
+  <td>&nbsp;</td>
+  <td>採購資訊紀錄(加權平均)-友廠</td>
+</tr>
+<tr class="cell">
+  <td>ZSOURCE_P</td>
+  <td>7</td>
+  <td>&nbsp;</td>
+  <td>公式計算(半品件工費計算)</td>
+</tr>
+<tr class="cell">
+  <td>XFELD</td>
+  <td>X</td>
+  <td>&nbsp;</td>
+  <td>Yes</td>
+</tr>
+<tr class="cell">
+  <td>XFELD</td>
+  <td>&nbsp;</td>
+  <td>&nbsp;</td>
+  <td>No</td>
+</tr>
+<tr class="cell">
+  <td>XFELD</td>
+  <td>X</td>
+  <td>&nbsp;</td>
+  <td>Yes</td>
+</tr>
+<tr class="cell">
+  <td>XFELD</td>
+  <td>&nbsp;</td>
+  <td>&nbsp;</td>
+  <td>No</td>
+</tr>
+<tr class="cell">
+  <td>BESKZ</td>
+  <td>E</td>
+  <td>&nbsp;</td>
+  <td>In-House Production</td>
+</tr>
+<tr class="cell">
+  <td>BESKZ</td>
+  <td>F</td>
+  <td>&nbsp;</td>
+  <td>External Procurement</td>
+</tr>
+<tr class="cell">
+  <td>BESKZ</td>
+  <td>&nbsp;</td>
+  <td>&nbsp;</td>
+  <td>No Procurement</td>
+</tr>
+<tr class="cell">
+  <td>BESKZ</td>
+  <td>X</td>
+  <td>&nbsp;</td>
+  <td>Both Procurement Types</td>
+</tr>
+<tr class="cell">
+  <td>ZSOURCE_P</td>
+  <td>&nbsp;</td>
+  <td>&nbsp;</td>
+  <td>自行輸入</td>
+</tr>
+<tr class="cell">
+  <td>ZSOURCE_P</td>
+  <td>0A</td>
+  <td>&nbsp;</td>
+  <td>熱處理公式</td>
+</tr>
+<tr class="cell">
+  <td>ZSOURCE_P</td>
+  <td>0B</td>
+  <td>&nbsp;</td>
+  <td>焊接件公式</td>
+</tr>
+<tr class="cell">
+  <td>ZSOURCE_P</td>
+  <td>0C</td>
+  <td>&nbsp;</td>
+  <td>管件(鐵鋁管)加工公式</td>
+</tr>
+<tr class="cell">
+  <td>ZSOURCE_P</td>
+  <td>0D</td>
+  <td>&nbsp;</td>
+  <td>車縫件公式</td>
+</tr>
+<tr class="cell">
+  <td>ZSOURCE_P</td>
+  <td>0E</td>
+  <td>&nbsp;</td>
+  <td>鐵管加工件公式</td>
+</tr>
+<tr class="cell">
+  <td>ZSOURCE_P</td>
+  <td>0F</td>
+  <td>&nbsp;</td>
+  <td>工塑件公式</td>
+</tr>
+<tr class="cell">
+  <td>ZSOURCE_P</td>
+  <td>1</td>
+  <td>&nbsp;</td>
+  <td>自製成本系統</td>
+</tr>
+<tr class="cell">
+  <td>ZSOURCE_P</td>
+  <td>11</td>
+  <td>&nbsp;</td>
+  <td>自製成本系統-友廠自製</td>
+</tr>
+<tr class="cell">
+  <td>ZSOURCE_P</td>
+  <td>21</td>
+  <td>&nbsp;</td>
+  <td>採購資訊紀錄-ZPT1</td>
+</tr>
+<tr class="cell">
+  <td>ZSOURCE_P</td>
+  <td>22</td>
+  <td>&nbsp;</td>
+  <td>採購資訊紀錄(PB00)</td>
+</tr>
+<tr class="cell">
+  <td>ZSOURCE_P</td>
+  <td>23</td>
+  <td>&nbsp;</td>
+  <td>採購資訊紀錄(ZPT1)-友廠</td>
+</tr>
+<tr class="cell">
+  <td>ZSOURCE_P</td>
+  <td>24</td>
+  <td>&nbsp;</td>
+  <td>採購資訊紀錄(PB00)-友廠</td>
+</tr>
+<tr class="cell">
+  <td>ZSOURCE_P</td>
+  <td>3</td>
+  <td>&nbsp;</td>
+  <td>30天內估算單</td>
+</tr>
+<tr class="cell">
+  <td>ZSOURCE_P</td>
+  <td>31</td>
+  <td>&nbsp;</td>
+  <td>上月的每月成本推估單</td>
+</tr>
+<tr class="cell">
+  <td>ZSOURCE_P</td>
+  <td>4</td>
+  <td>&nbsp;</td>
+  <td>自製單價維護表-件號(ZTQT0003)</td>
+</tr>
+<tr class="cell">
+  <td>ZSOURCE_P</td>
+  <td>41</td>
+  <td>&nbsp;</td>
+  <td>自製單價維護表-圖號(ZTQT0017)</td>
+</tr>
+<tr class="cell">
+  <td>ZSOURCE_P</td>
+  <td>5</td>
+  <td>&nbsp;</td>
+  <td>上月加權平均價格</td>
+</tr>
+<tr class="cell">
+  <td>ZSOURCE_P</td>
+  <td>51</td>
+  <td>&nbsp;</td>
+  <td>PO上月收貨驗收平均單價</td>
+</tr>
+<tr class="cell">
+  <td>ZSOURCE_P</td>
+  <td>52</td>
+  <td>&nbsp;</td>
+  <td>PO上月收貨驗收平均單價-友廠</td>
+</tr>
+<tr class="cell">
+  <td>ZSOURCE_P</td>
+  <td>61</td>
+  <td>&nbsp;</td>
+  <td>採購資訊紀錄(加權平均)</td>
+</tr>
+<tr class="cell">
+  <td>ZSOURCE_P</td>
+  <td>62</td>
+  <td>&nbsp;</td>
+  <td>採購資訊紀錄(加權平均)-友廠</td>
+</tr>
+<tr class="cell">
+  <td>ZSOURCE_P</td>
+  <td>7</td>
+  <td>&nbsp;</td>
+  <td>公式計算(半品件工費計算)</td>
+</tr>
+<tr class="cell">
+  <td>XFELD</td>
+  <td>X</td>
+  <td>&nbsp;</td>
+  <td>Yes</td>
+</tr>
+<tr class="cell">
+  <td>XFELD</td>
+  <td>&nbsp;</td>
+  <td>&nbsp;</td>
+  <td>No</td>
+</tr>
+<tr class="cell">
+  <td>Z_REQUEST</td>
+  <td>0</td>
+  <td>&nbsp;</td>
+  <td>新建立</td>
+</tr>
+<tr class="cell">
+  <td>Z_REQUEST</td>
+  <td>1</td>
+  <td>&nbsp;</td>
+  <td>新增子件</td>
+</tr>
+<tr class="cell">
+  <td>Z_REQUEST</td>
+  <td>2</td>
+  <td>&nbsp;</td>
+  <td>刪除</td>
+</tr>
+<tr class="cell">
+  <td>Z_REQUEST</td>
+  <td>3</td>
+  <td>&nbsp;</td>
+  <td>替換件號 替換：查找編號相同 (項次相同)</td>
+</tr>
+<tr class="cell">
+  <td>Z_REQUEST</td>
+  <td>4</td>
+  <td>&nbsp;</td>
+  <td>件號用量、屬性</td>
+</tr>
+<tr class="cell">
+  <td>PLMIN</td>
+  <td>0</td>
+  <td>&nbsp;</td>
+  <td>Zero</td>
+</tr>
+<tr class="cell">
+  <td>PLMIN</td>
+  <td>+</td>
+  <td>&nbsp;</td>
+  <td>Positive</td>
+</tr>
+<tr class="cell">
+  <td>PLMIN</td>
+  <td>-</td>
+  <td>&nbsp;</td>
+  <td>Negative</td>
+</tr>
+<tr class="cell">
+  <td>XFELD</td>
+  <td>X</td>
+  <td>&nbsp;</td>
+  <td>Yes</td>
+</tr>
+<tr class="cell">
+  <td>XFELD</td>
+  <td>&nbsp;</td>
+  <td>&nbsp;</td>
+  <td>No</td>
+</tr>
+<tr class="cell">
+  <td>ZISMATERIAL</td>
+  <td>&nbsp;</td>
+  <td>&nbsp;</td>
+  <td>(空白)</td>
+</tr>
+<tr class="cell">
+  <td>ZISMATERIAL</td>
+  <td>是</td>
+  <td>&nbsp;</td>
+  <td>是</td>
+</tr>
+<tr class="cell">
+  <td>ZISMATERIAL</td>
+  <td>否</td>
+  <td>&nbsp;</td>
+  <td>否</td>
+</tr>
+<tr class="cell">
+  <td>XFELD</td>
+  <td>X</td>
+  <td>&nbsp;</td>
+  <td>Yes</td>
+</tr>
+<tr class="cell">
+  <td>XFELD</td>
+  <td>&nbsp;</td>
+  <td>&nbsp;</td>
+  <td>No</td>
+</tr>
+<tr class="cell">
+  <td>ZTEAM_CO</td>
+  <td>1</td>
+  <td>&nbsp;</td>
+  <td>車架組</td>
+</tr>
+<tr class="cell">
+  <td>ZTEAM_CO</td>
+  <td>2</td>
+  <td>&nbsp;</td>
+  <td>座布組</td>
+</tr>
+      </table>
+     </td>
+   </tr>
+   <tr>
+<td class="footer">Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2026. Sap Release 757</td>
+   </tr>
+</table>
+</body>
+</html>

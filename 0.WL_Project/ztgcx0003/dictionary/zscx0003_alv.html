@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
 <meta http-equiv="Content-Type" content="application/xhtml+xml; charset=ISO-8859-1" />
-<title>Dictionary object- ZTCX0004</title>
+<title>Dictionary object- ZSCX0003_ALV</title>
 <style type="text/css">
   th{text-align:left}
   .cell{
@@ -47,8 +47,8 @@
 <body>
   <table class="outerTable">
     <tr>
-      <td><h2>Table: ZTCX0004</h2>
-  <h3>Description: Order changes and cancellation of inventory report</h3></td>
+      <td><h2>Table: ZSCX0003_ALV</h2>
+  <h3>Description: </h3></td>
     </tr>
     <tr>
       <td><!--This is where our main table begins  -->
@@ -67,21 +67,21 @@
 </tr>
 <tr class="cell">
   <td> 1</td>
-  <td>MANDT</td>
+  <td>SEL</td>
   <td>1</td>
-  <td>X</td>
-  <td>MANDT</td>
-  <td>MANDT</td>
-  <td>CLNT</td>
-  <td>3</td>
   <td>&nbsp;</td>
-  <td>用戶端</td>
+  <td>XFELD</td>
+  <td>XFELD</td>
+  <td>CHAR</td>
+  <td>1</td>
+  <td>&nbsp;</td>
+  <td>核取方塊</td>
 </tr>
 <tr class="cell">
   <td> 2</td>
   <td>XJ</td>
   <td>2</td>
-  <td>X</td>
+  <td>&nbsp;</td>
   <td>ZXJ</td>
   <td>CHAR12</td>
   <td>CHAR</td>
@@ -93,7 +93,7 @@
   <td> 3</td>
   <td>XJ_ITEM</td>
   <td>3</td>
-  <td>X</td>
+  <td>&nbsp;</td>
   <td>ZXJ_ITEM</td>
   <td>NUMC6</td>
   <td>NUMC</td>
@@ -259,20 +259,8 @@
 </tr>
 <tr class="cell">
   <td>17</td>
-  <td>WL2_ERPSPECIFICATION</td>
-  <td>17</td>
-  <td>&nbsp;</td>
-  <td>ZWL2_ERPSPECIFICATION</td>
-  <td>TEXT128</td>
-  <td>CHAR</td>
-  <td>128</td>
-  <td>X</td>
-  <td>完整規格說明</td>
-</tr>
-<tr class="cell">
-  <td>18</td>
   <td>WL2_ENGLISHSPECIFICATIONS</td>
-  <td>18</td>
+  <td>17</td>
   <td>&nbsp;</td>
   <td>ZWL2_ENGLISHSPECIFICATIONS</td>
   <td>TEXT300</td>
@@ -280,6 +268,18 @@
   <td>300</td>
   <td>X</td>
   <td>英文詳細規格</td>
+</tr>
+<tr class="cell">
+  <td>18</td>
+  <td>WL2_ERPSPECIFICATION</td>
+  <td>18</td>
+  <td>&nbsp;</td>
+  <td>ZWL2_ERPSPECIFICATION</td>
+  <td>TEXT128</td>
+  <td>CHAR</td>
+  <td>128</td>
+  <td>X</td>
+  <td>完整規格說明</td>
 </tr>
 <tr class="cell">
   <td>19</td>
@@ -763,8 +763,20 @@
 </tr>
 <tr class="cell">
   <td>59</td>
-  <td>PUR_REMARK</td>
+  <td>PP_NAME_TEXT</td>
   <td>59</td>
+  <td>&nbsp;</td>
+  <td>AD_NAMTEXT</td>
+  <td>TEXT80</td>
+  <td>CHAR</td>
+  <td>80</td>
+  <td>X</td>
+  <td>完整人名</td>
+</tr>
+<tr class="cell">
+  <td>60</td>
+  <td>PUR_REMARK</td>
+  <td>60</td>
   <td>&nbsp;</td>
   <td>ZPUR_REMARK</td>
   <td>CHAR50</td>
@@ -774,9 +786,9 @@
   <td>採購備註</td>
 </tr>
 <tr class="cell">
-  <td>60</td>
+  <td>61</td>
   <td>PUR_CHG_DATE</td>
-  <td>60</td>
+  <td>61</td>
   <td>&nbsp;</td>
   <td>ZPUR_CHG_DATE</td>
   <td>DATS</td>
@@ -786,9 +798,9 @@
   <td>採購維護日期</td>
 </tr>
 <tr class="cell">
-  <td>61</td>
+  <td>62</td>
   <td>PUR_CHG_TIME</td>
-  <td>61</td>
+  <td>62</td>
   <td>&nbsp;</td>
   <td>ZPUR_CHG_TIME</td>
   <td>TIMS</td>
@@ -798,9 +810,9 @@
   <td>採購維護時間</td>
 </tr>
 <tr class="cell">
-  <td>62</td>
+  <td>63</td>
   <td>PUR_UNAME</td>
-  <td>62</td>
+  <td>63</td>
   <td>&nbsp;</td>
   <td>ZPUR_UNAME</td>
   <td>UNAME</td>
@@ -810,9 +822,21 @@
   <td>採購維護人員</td>
 </tr>
 <tr class="cell">
-  <td>63</td>
+  <td>64</td>
+  <td>PUR_NAME_TEXT</td>
+  <td>64</td>
+  <td>&nbsp;</td>
+  <td>AD_NAMTEXT</td>
+  <td>TEXT80</td>
+  <td>CHAR</td>
+  <td>80</td>
+  <td>X</td>
+  <td>完整人名</td>
+</tr>
+<tr class="cell">
+  <td>65</td>
   <td>SA_REMARK</td>
-  <td>63</td>
+  <td>65</td>
   <td>&nbsp;</td>
   <td>ZSA_REMARK</td>
   <td>CHAR50</td>
@@ -822,9 +846,9 @@
   <td>業務備註</td>
 </tr>
 <tr class="cell">
-  <td>64</td>
+  <td>66</td>
   <td>SA_CHG_DATE</td>
-  <td>64</td>
+  <td>66</td>
   <td>&nbsp;</td>
   <td>ZSA_CHG_DATE</td>
   <td>DATS</td>
@@ -834,9 +858,9 @@
   <td>業務維護日期</td>
 </tr>
 <tr class="cell">
-  <td>65</td>
+  <td>67</td>
   <td>SA_CHG_TIME</td>
-  <td>65</td>
+  <td>67</td>
   <td>&nbsp;</td>
   <td>ZSA_CHG_TIME</td>
   <td>TIMS</td>
@@ -846,9 +870,9 @@
   <td>業務維護時間</td>
 </tr>
 <tr class="cell">
-  <td>66</td>
+  <td>68</td>
   <td>SA_UNAME</td>
-  <td>66</td>
+  <td>68</td>
   <td>&nbsp;</td>
   <td>ZSA_UNAME</td>
   <td>UNAME</td>
@@ -858,9 +882,21 @@
   <td>業務維護人員</td>
 </tr>
 <tr class="cell">
-  <td>67</td>
+  <td>69</td>
+  <td>SA_NAME_TEXT</td>
+  <td>69</td>
+  <td>&nbsp;</td>
+  <td>AD_NAMTEXT</td>
+  <td>TEXT80</td>
+  <td>CHAR</td>
+  <td>80</td>
+  <td>X</td>
+  <td>完整人名</td>
+</tr>
+<tr class="cell">
+  <td>70</td>
   <td>XJ_STATUS</td>
-  <td>67</td>
+  <td>70</td>
   <td>&nbsp;</td>
   <td>ZXJ_STATUS</td>
   <td>ZSJ_STATUS</td>
@@ -870,9 +906,9 @@
   <td>狀態</td>
 </tr>
 <tr class="cell">
-  <td>68</td>
+  <td>71</td>
   <td>XJ_ERDAT</td>
-  <td>68</td>
+  <td>71</td>
   <td>&nbsp;</td>
   <td>ERDAT</td>
   <td>DATUM</td>
@@ -882,9 +918,9 @@
   <td>記錄建立日期</td>
 </tr>
 <tr class="cell">
-  <td>69</td>
+  <td>72</td>
   <td>XJ_ERTIM</td>
-  <td>69</td>
+  <td>72</td>
   <td>&nbsp;</td>
   <td>/AIF/CREATE_TIME</td>
   <td>UZEIT</td>
@@ -894,9 +930,9 @@
   <td>建立時間</td>
 </tr>
 <tr class="cell">
-  <td>70</td>
+  <td>73</td>
   <td>XJ_ERNAM</td>
-  <td>70</td>
+  <td>73</td>
   <td>&nbsp;</td>
   <td>ERNAM</td>
   <td>USNAM</td>
@@ -906,33 +942,21 @@
   <td>建立物件的負責人名稱</td>
 </tr>
 <tr class="cell">
-  <td>71</td>
-  <td>CUST_QTY</td>
-  <td>71</td>
+  <td>74</td>
+  <td>MSG</td>
+  <td>74</td>
   <td>&nbsp;</td>
-  <td>ZCUST_QTY</td>
-  <td>MENGE</td>
-  <td>QUAN</td>
-  <td>13</td>
+  <td>CHAR100</td>
+  <td>CHAR100</td>
+  <td>CHAR</td>
+  <td>100</td>
   <td>&nbsp;</td>
-  <td>客戶同意數量</td>
+  <td>字元 100</td>
 </tr>
 <tr class="cell">
-  <td>72</td>
-  <td>CUST_AMT</td>
-  <td>72</td>
-  <td>&nbsp;</td>
-  <td>ZCUST_AMT</td>
-  <td>WERTV6</td>
-  <td>CURR</td>
-  <td>11</td>
-  <td>&nbsp;</td>
-  <td>客戶同意金額</td>
-</tr>
-<tr class="cell">
-  <td>73</td>
+  <td>75</td>
   <td>NETPR_CNY</td>
-  <td>73</td>
+  <td>75</td>
   <td>&nbsp;</td>
   <td>ZUP_M</td>
   <td>&nbsp;</td>
@@ -942,9 +966,9 @@
   <td>料價(外顯值)</td>
 </tr>
 <tr class="cell">
-  <td>74</td>
+  <td>76</td>
   <td>WAERS_CNY</td>
-  <td>74</td>
+  <td>76</td>
   <td>&nbsp;</td>
   <td>WAERS</td>
   <td>WAERS</td>
@@ -954,9 +978,9 @@
   <td>幣別碼</td>
 </tr>
 <tr class="cell">
-  <td>75</td>
+  <td>77</td>
   <td>NETPR_TWD</td>
-  <td>75</td>
+  <td>77</td>
   <td>&nbsp;</td>
   <td>ZUP_M</td>
   <td>&nbsp;</td>
@@ -966,9 +990,9 @@
   <td>料價(外顯值)</td>
 </tr>
 <tr class="cell">
-  <td>76</td>
+  <td>78</td>
   <td>WAERS_TWD</td>
-  <td>76</td>
+  <td>78</td>
   <td>&nbsp;</td>
   <td>WAERS</td>
   <td>WAERS</td>
@@ -978,9 +1002,9 @@
   <td>幣別碼</td>
 </tr>
 <tr class="cell">
-  <td>77</td>
+  <td>79</td>
   <td>WERKS_SO</td>
-  <td>77</td>
+  <td>79</td>
   <td>&nbsp;</td>
   <td>WERKS_D</td>
   <td>WERKS</td>
@@ -988,6 +1012,18 @@
   <td>4</td>
   <td>&nbsp;</td>
   <td>工廠</td>
+</tr>
+<tr class="cell">
+  <td>80</td>
+  <td>CELLSTYLES</td>
+  <td>80</td>
+  <td>&nbsp;</td>
+  <td>LVC_T_STYL</td>
+  <td>&nbsp;</td>
+  <td>TTYP</td>
+  <td>0</td>
+  <td>&nbsp;</td>
+  <td>ALV 控制：字元格的式樣表格</td>
 </tr>
       </table>
      </td>
@@ -1005,6 +1041,18 @@
   <th>Value Low</th>
   <th>Value High</th>
   <th>Text</th>
+</tr>
+<tr class="cell">
+  <td>XFELD</td>
+  <td>X</td>
+  <td>&nbsp;</td>
+  <td>Yes</td>
+</tr>
+<tr class="cell">
+  <td>XFELD</td>
+  <td>&nbsp;</td>
+  <td>&nbsp;</td>
+  <td>No</td>
 </tr>
 <tr class="cell">
   <td>BESKZ</td>

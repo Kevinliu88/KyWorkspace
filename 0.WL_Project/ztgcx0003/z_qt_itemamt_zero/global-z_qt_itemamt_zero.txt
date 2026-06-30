@@ -1,0 +1,170 @@
+FUNCTION-POOL zqt_system.                   "MESSAGE-ID ..
+* INCLUDE LZQT_SYSTEMD...                    " Local class definition
+TABLES: konh, konp.
+
+DATA: it_exch_rate LIKE bapi1093_0 OCCURS 0 WITH HEADER LINE.
+DATA: ls_wa   TYPE REF TO data,
+      lt_itab TYPE REF TO data,
+      p_tabix LIKE sy-tabix,
+      wa_konv TYPE konv.
+
+FIELD-SYMBOLS: <fs_itab>    TYPE ANY TABLE,
+               <fs_wa_itab> TYPE any.
+DATA: e_tabname  TYPE dntab-tabname,
+      g_kschl    TYPE kscha,
+      g_kotabnr  TYPE kotabnr,
+      it_details TYPE abap_compdescr_tab,
+      wa_details TYPE abap_compdescr,
+      it_nametab LIKE dntab OCCURS 0 WITH HEADER LINE,
+      p_factor   TYPE isoc_factor.
+DATA: ref_table_des TYPE REF TO cl_abap_structdescr,
+      lr_table      TYPE REF TO data,
+      gt_fieldcat   TYPE slis_t_fieldcat_alv.
+
+DATA: it_xkondat LIKE vkondat OCCURS 0 WITH HEADER LINE,
+      it_xkonh   LIKE konhdb OCCURS 0 WITH HEADER LINE,
+      it_xkonm   LIKE vkonm OCCURS 0 WITH HEADER LINE,
+      it_xkonp   LIKE konpdb OCCURS 0 WITH HEADER LINE,
+      it_xkonw   LIKE vkonw OCCURS 0 WITH HEADER LINE,
+      it_ykondat LIKE vkondat OCCURS 0 WITH HEADER LINE,
+      it_ykonh   LIKE konhdb OCCURS 0 WITH HEADER LINE,
+      it_ykonm   LIKE vkonm OCCURS 0 WITH HEADER LINE,
+      it_ykonp   LIKE konpdb OCCURS 0 WITH HEADER LINE,
+      it_ykonw   LIKE vkonw OCCURS 0 WITH HEADER LINE.
+DATA: it_condct      LIKE bapicondct OCCURS 0 WITH HEADER LINE,
+      it_condhd      LIKE bapicondhd OCCURS 0 WITH HEADER LINE,
+      it_condit      LIKE bapicondit OCCURS 0 WITH HEADER LINE,
+      it_condqs      LIKE bapicondqs OCCURS 0 WITH HEADER LINE,
+      it_condvs      LIKE bapicondvs OCCURS 0 WITH HEADER LINE,
+      it_return      LIKE bapiret2 OCCURS 0 WITH HEADER LINE,
+      it_knumhs      LIKE bapiknumhs OCCURS 0 WITH HEADER LINE,
+      it_mem_initial LIKE cnd_mem_initial OCCURS 0 WITH HEADER LINE.
+DATA: delete_mode TYPE msgfn VALUE '003',
+      change_mode TYPE msgfn VALUE '004',
+      create_mode TYPE msgfn VALUE '009'.
+DATA idoc_amount(16).
+
+DATA: BEGIN OF itab OCCURS 0,
+        werks_d TYPE werks_d,
+        datuv_d TYPE datuv,
+        matnr   TYPE matnr,
+      END OF itab.
+TYPES: BEGIN OF alv_ltb_m.
+         INCLUDE STRUCTURE stpov_alv.
+TYPES:   info(3) TYPE c,
+         sel     TYPE c,                                    "N_2907642
+       END OF alv_ltb_m.
+DATA: it_outtab TYPE TABLE OF alv_ltb_m,
+      wa_outtab TYPE alv_ltb_m.
+FIELD-SYMBOLS: <it_outtab> LIKE it_outtab.
+RANGES: s_idnrk FOR stpov_alv-idnrk.
+
+DATA: p_repid TYPE repid VALUE 'RCS15001M', " CS15M
+      gt_data TYPE REF TO data.
+
+FIELD-SYMBOLS: <dyn_table> TYPE STANDARD TABLE,
+               <dyn_wa>,
+               <dyn_field>.
+DATA: dy_table TYPE REF TO data,
+      dy_line  TYPE REF TO data,
+      wa_fcat  TYPE lvc_s_fcat,
+      it_fcat  TYPE lvc_t_fcat.
+*field symbols declaration
+FIELD-SYMBOLS: <it_table> TYPE STANDARD TABLE,
+               <fs_table>,
+               <dyn_str>  TYPE any,
+               <str_comp> TYPE abap_compdescr.
+FIELD-SYMBOLS: <fs_wa>    TYPE any,
+               <fs_field> TYPE any.
+
+FIELD-SYMBOLS: <fs_datbi>, <fs_datab>, <fs_knumh>.
+FIELD-SYMBOLS: <fs_zterm>, <fs_kpein>, <fs_kmein>, <fs_kbetr>,
+               <fs_waers>, <fs_kappl>, <fs_kschl>.
+
+DATA: g_kappl   LIKE konp-kappl VALUE 'V'.
+
+*Connect external db
+DATA: lv_tabname          TYPE tabname,
+      lv_con_name         TYPE dbcon-con_name,
+      lr_cx_sql_exception TYPE REF TO cx_sql_exception,
+      lr_connection       TYPE REF TO cl_sql_connection,
+      lv_sql              TYPE string,
+      lr_data             TYPE REF TO data.
+DATA: i_con_name TYPE dbcon-con_name,
+      gv_sql     TYPE string,
+      sel_sql    TYPE string,
+      lv_text    TYPE string.
+DATA: selec_list  TYPE string,
+      where_conds TYPE string,
+      alias_name  TYPE string.
+DATA: lv_error_text          TYPE string,
+      lv_exec_ref            TYPE REF TO cx_sy_native_sql_error,
+      con_ref                TYPE REF TO cl_sql_connection,
+      stmt_ref               TYPE REF TO cl_sql_statement,
+      cx_sql_exception       TYPE REF TO cx_sql_exception,
+      cx_sy_struct_comp_name TYPE REF TO cx_sy_struct_comp_name.
+DATA: gt_sql LIKE zsqt_self_made_basepricing OCCURS 0 WITH HEADER LINE.
+DATA: gt_ztmm0050 LIKE ztmm0050 OCCURS 0 WITH HEADER LINE.
+DATA: gt_color LIKE zsmm_object_color OCCURS 0 WITH HEADER LINE.
+DATA: gt_ztmara LIKE ztmara OCCURS 0 WITH HEADER LINE.
+DATA: gt_ztmarc LIKE ztmarc OCCURS 0 WITH HEADER LINE.
+DATA: BEGIN OF gt_pir OCCURS 0,  "a017 & konp
+        kschl_h LIKE a017-kschl,
+        lifnr_h LIKE a017-lifnr,
+        matnr   LIKE a017-matnr,
+        ekorg   LIKE a017-ekorg,
+        werks   LIKE a017-werks,
+        esokz   LIKE a017-esokz,
+        datbi   LIKE a017-datbi,
+        datab   LIKE a017-datab.
+        INCLUDE STRUCTURE konp.
+DATA: END OF gt_pir.
+DATA: e_conv   LIKE ekpo-menge,
+      e_factor LIKE  bapicurr-bapicurr.
+
+*CKM3N的實際成本
+DATA: BEGIN OF gt_ckm3n OCCURS 0,
+        matnr LIKE mbew-matnr,
+        bwkey LIKE mbew-bwkey.
+        INCLUDE STRUCTURE ckmlcr.
+DATA: END OF gt_ckm3n.
+
+DATA: gt_qt0029 LIKE ztqt0029 OCCURS 0 WITH HEADER LINE.
+DATA: gt_ztwqt0039 LIKE zstwqt0039 OCCURS 0 WITH HEADER LINE. "submit ztwqt0039
+DATA: gt_ztwqt0040 LIKE zstwqt0040 OCCURS 0 WITH HEADER LINE. "submit ztwqt0040
+DATA: gt_ztwqt0043 LIKE zstwqt0043 OCCURS 0 WITH HEADER LINE. "submit ztwqt0043
+DEFINE cls.
+  CLEAR &1. REFRESH &1.
+END-OF-DEFINITION.
+DEFINE assign_range_table.
+  &1-sign = &2. &1-option = &3.
+  &1-low  = &4. &1-high = &5.
+  APPEND &1. CLEAR &1.
+END-OF-DEFINITION.
+
+DEFINE exit_alpha_input.
+  CALL FUNCTION 'CONVERSION_EXIT_ALPHA_INPUT'
+    EXPORTING
+      input  = &1
+    IMPORTING
+      output = &2.
+END-OF-DEFINITION.
+
+DEFINE zexit_alpha_input.
+**料號專用
+  CALL FUNCTION 'ZCONVERSION_EXIT_ALPHA_INPUT'
+    EXPORTING
+      input  = &1
+    IMPORTING
+      output = &2.
+END-OF-DEFINITION.
+DEFINE exit_alpha_output.
+  CALL FUNCTION 'CONVERSION_EXIT_ALPHA_OUTPUT'
+    EXPORTING
+      input  = &1
+    IMPORTING
+      output = &2.
+END-OF-DEFINITION.
+
+----------------------------------------------------------------------------------
+Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2026. Sap Release 757

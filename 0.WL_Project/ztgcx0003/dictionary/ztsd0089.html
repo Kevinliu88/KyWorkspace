@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
 <meta http-equiv="Content-Type" content="application/xhtml+xml; charset=ISO-8859-1" />
-<title>Dictionary object- ZTCX0003_PROD</title>
+<title>Dictionary object- ZTSD0089</title>
 <style type="text/css">
   th{text-align:left}
   .cell{
@@ -47,8 +47,8 @@
 <body>
   <table class="outerTable">
     <tr>
-      <td><h2>Table: ZTCX0003_PROD</h2>
-  <h3>Description: </h3></td>
+      <td><h2>Table: ZTSD0089</h2>
+  <h3>Description: 預採帳產品匯率查詢表</h3></td>
     </tr>
     <tr>
       <td><!--This is where our main table begins  -->
@@ -79,87 +79,123 @@
 </tr>
 <tr class="cell">
   <td> 2</td>
-  <td>WERKS</td>
+  <td>VTWEG</td>
   <td>2</td>
   <td>X</td>
-  <td>WERKS_D</td>
-  <td>WERKS</td>
+  <td>VTWEG</td>
+  <td>VTWEG</td>
   <td>CHAR</td>
-  <td>4</td>
+  <td>2</td>
   <td>&nbsp;</td>
-  <td>工廠</td>
+  <td>配銷通路</td>
 </tr>
 <tr class="cell">
   <td> 3</td>
-  <td>IDNRK</td>
+  <td>ZPRDATE</td>
   <td>3</td>
   <td>X</td>
-  <td>IDNRK</td>
-  <td>MATNR</td>
+  <td>ZPRDATE</td>
+  <td>CHAR6</td>
   <td>CHAR</td>
-  <td>40</td>
+  <td>6</td>
   <td>&nbsp;</td>
-  <td>BOM 元件</td>
+  <td>報價年月</td>
 </tr>
 <tr class="cell">
   <td> 4</td>
-  <td>MATNR</td>
+  <td>Z_NTRATE</td>
   <td>4</td>
-  <td>X</td>
-  <td>MATNR</td>
-  <td>MATNR</td>
-  <td>CHAR</td>
-  <td>40</td>
   <td>&nbsp;</td>
-  <td>物料號碼</td>
+  <td>Z_NTRATE</td>
+  <td>&nbsp;</td>
+  <td>DEC</td>
+  <td>18</td>
+  <td>&nbsp;</td>
+  <td>TWD匯率</td>
 </tr>
 <tr class="cell">
   <td> 5</td>
-  <td>REP</td>
+  <td>Z_RMBRATE</td>
   <td>5</td>
   <td>&nbsp;</td>
-  <td>ZREP</td>
-  <td>CHAR1</td>
-  <td>CHAR</td>
-  <td>1</td>
+  <td>Z_RMBRATE</td>
   <td>&nbsp;</td>
-  <td>可轉不可轉</td>
+  <td>DEC</td>
+  <td>18</td>
+  <td>&nbsp;</td>
+  <td>CNY匯率</td>
 </tr>
 <tr class="cell">
   <td> 6</td>
-  <td>PROD</td>
+  <td>Z_HKRATE</td>
   <td>6</td>
   <td>&nbsp;</td>
-  <td>ZCX_PROD</td>
-  <td>TEXT200</td>
-  <td>CHAR</td>
-  <td>200</td>
-  <td>X</td>
-  <td>適用型號</td>
+  <td>Z_HKRATE</td>
+  <td>&nbsp;</td>
+  <td>DEC</td>
+  <td>18</td>
+  <td>&nbsp;</td>
+  <td>HKD匯率</td>
 </tr>
 <tr class="cell">
   <td> 7</td>
-  <td>SKUITEM</td>
+  <td>Z_USRATE</td>
   <td>7</td>
   <td>&nbsp;</td>
-  <td>ZCN</td>
-  <td>ZCN</td>
-  <td>CHAR</td>
-  <td>20</td>
+  <td>Z_USRATE</td>
   <td>&nbsp;</td>
-  <td>型號</td>
+  <td>DEC</td>
+  <td>18</td>
+  <td>&nbsp;</td>
+  <td>USD匯率</td>
 </tr>
 <tr class="cell">
   <td> 8</td>
-  <td>WL2_BRAND</td>
+  <td>Z_EURRATE</td>
   <td>8</td>
   <td>&nbsp;</td>
-  <td>ZPLM_CUSTOMER</td>
-  <td>CHAR12</td>
-  <td>CHAR</td>
-  <td>12</td>
+  <td>Z_EURRATE</td>
   <td>&nbsp;</td>
-  <td>大客戶別</td>
+  <td>DEC</td>
+  <td>18</td>
+  <td>&nbsp;</td>
+  <td>EUR匯率</td>
+</tr>
+<tr class="cell">
+  <td> 9</td>
+  <td>Z_OPR</td>
+  <td>9</td>
+  <td>&nbsp;</td>
+  <td>Z_OPR</td>
+  <td>CHAR30</td>
+  <td>CHAR</td>
+  <td>30</td>
+  <td>&nbsp;</td>
+  <td>維護人員</td>
+</tr>
+<tr class="cell">
+  <td>10</td>
+  <td>Z_LUDT</td>
+  <td>10</td>
+  <td>&nbsp;</td>
+  <td>ERDAT</td>
+  <td>DATUM</td>
+  <td>DATS</td>
+  <td>8</td>
+  <td>&nbsp;</td>
+  <td>記錄建立日期</td>
+</tr>
+<tr class="cell">
+  <td>11</td>
+  <td>ZP_ENTITY</td>
+  <td>11</td>
+  <td>&nbsp;</td>
+  <td>ZP_ENTITY</td>
+  <td>&nbsp;</td>
+  <td>CHAR</td>
+  <td>4</td>
+  <td>&nbsp;</td>
+  <td>ERP公司</td>
 </tr>
       </table>
      </td>
