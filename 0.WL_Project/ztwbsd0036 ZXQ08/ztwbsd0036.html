@@ -1,0 +1,2269 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="application/xhtml+xml; charset=ISO-8859-1" />
+<title>ZTWBSD0036</title>
+<style type="text/css">
+.code{ font-family:"Courier New", Courier, monospace; color:#000; font-size:14px; background-color:#F2F4F7 }
+  .codeComment {font-family:"Courier New", Courier, monospace; color:#0000F0; font-size:14px; background-color:#F2F4F7 }
+  .normalBold{ font-family:Arial, Helvetica, sans-serif; color:#000; font-size:12px; font-weight:800 }
+  .normalBoldLarge{ font-family:Arial, Helvetica, sans-serif; color:#000; font-size:16px; font-weight:800 }
+</style>
+<style type="text/css">
+  .normal{ font-family:Arial, Helvetica, sans-serif; color:#000; font-size:12px }
+  .footer{ font-family:Arial, Helvetica, sans-serif; color:#000; font-size:12px; text-align: center }
+  h2{ font-family:Arial, Helvetica, sans-serif; color:#000; font-size:16px; font-weight:800 }
+  h3{ font-family:Arial, Helvetica, sans-serif; color:#000; font-size:14px; font-weight:800 }
+  .outerTable{
+   background-color:#E0E7ED;
+   width:100%;
+   border-top-width: thin;
+   border-right-width: thin;
+   border-right-width: thin;
+   border-left-width: thin;
+   border-top-style: solid;
+   border-right-style: solid;
+   border-bottom-style: solid;
+   border-left-style: solid;
+  }
+  .innerTable{
+   background-color:#F2F4F7;
+   width:100%;
+   border-top-width: thin;
+   border-right-width: thin;
+   border-bottom-width: thin;
+   border-left-width: thin;
+   border-top-style: solid;
+   border-right-style: solid;
+   border-bottom-style: solid;
+   border-left-style: solid;
+  }
+</style>
+</head>
+<body>
+<table class="outerTable">
+  <tr class="normalBoldLarge">
+     <td><h2>Code listing for: ZTWBSD0036</h2>
+<h3> Description: 預採帳 - 整批匯入轉出明細</h3></td>
+   </tr>
+  <tr>
+     <td>
+     <table class="innerTable">
+       <tr>
+          <td>
+   <div class="codeComment">
+***********************************************************************<br />
+*PROGRAM&nbsp;ID&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ZTWBSD0036&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;T-CODE&nbsp;:&nbsp;ZXQ08<br />
+*DESCRIPTION&nbsp;&nbsp;&nbsp;&nbsp;預採帳-整批匯入轉出明細<br />
+*Change&nbsp;History<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;DATE&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;VERSION&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AUTHOR&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;DESCRIPTION<br />
+*&nbsp;==========&nbsp;========&nbsp;&nbsp;==============&nbsp;&nbsp;=================================<br />
+*&nbsp;2023/01/10&nbsp;V006&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Joseph&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;轉出數量有小數的轉換處理<br />
+*&nbsp;2026/04/27&nbsp;V007&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Tristan&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;XQ轉出序號不限制95開頭,直接取ZTSD0100最大號+1&nbsp;(ZTSD0100-ZSEQ)<br />
+*&nbsp;2026/06/09&nbsp;V008&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Tristan&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;寫入ZTSD0100時須補上VTWEG<br />
+*&---------------------------------------------------------------------*<br />
+   </div>
+   <div class="code">
+REPORT ztwbsd0036 MESSAGE-ID zodmsd01.<br />
+<br />
+<br />
+FIELD-SYMBOLS:&lt;dyn_table&gt; TYPE STANDARD TABLE,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;dyn_wa&gt;,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;dyn_field&gt;.<br />
+DATA: dy_table TYPE REF TO data,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;dy_line&nbsp;&nbsp;TYPE&nbsp;REF&nbsp;TO&nbsp;data,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;wa_fcat&nbsp;&nbsp;TYPE&nbsp;lvc_s_fcat,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;it_fcat&nbsp;&nbsp;TYPE&nbsp;lvc_t_fcat.<br />
+<br />
+DATA: BEGIN OF rt_events OCCURS 0,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;name(30),<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;form(30),<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;END&nbsp;OF&nbsp;rt_events.<br />
+<br />
+DATA: gt_events   LIKE rt_events OCCURS 0 WITH HEADER LINE,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;gt_fieldcat&nbsp;TYPE&nbsp;slis_t_fieldcat_alv,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;gt_sortinfo&nbsp;TYPE&nbsp;slis_t_sortinfo_alv,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;l_layout&nbsp;&nbsp;&nbsp;&nbsp;TYPE&nbsp;slis_layout_alv,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;g_variant&nbsp;&nbsp;&nbsp;TYPE&nbsp;disvariant,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;g_title&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;TYPE&nbsp;lvc_title,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;gt_extab&nbsp;&nbsp;&nbsp;&nbsp;TYPE&nbsp;&nbsp;slis_t_extab.<br />
+<br />
+   </div>
+   <div class="codeComment">
+**ALV<br />
+   </div>
+   <div class="code">
+DATA:BEGIN OF gt_alv OCCURS 0,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;vtweg&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;LIKE&nbsp;ztsd0098-vtweg,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;werks&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;LIKE&nbsp;ztsd0098-werks.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;include&nbsp;structure&nbsp;<a&nbsp;href&nbsp;="zssd_excel_upload_xq100/dictionary-zssd_excel_upload_xq100.html">zssd_excel_upload_xq100</a>.<br />
+DATA:  zqty          LIKE ztsd0100-zqty,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;zptyp&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;LIKE&nbsp;ztsd0100-zptyp,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;zbcust&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;LIKE&nbsp;ztsd0100-zbcust,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;zm090pno&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;LIKE&nbsp;ztsd0100a-zm090pno,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;zcnt&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;TYPE&nbsp;i,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;light&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;TYPE&nbsp;icon-name,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;colinfo&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;TYPE&nbsp;slis_t_specialcol_alv,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;line_color(4).&nbsp;"&nbsp;Line&nbsp;color<br />
+DATA:  END OF gt_alv.<br />
+<br />
+   </div>
+   <div class="codeComment">
+*&nbsp;Kiwi<br />
+   </div>
+   <div class="code">
+DATA:BEGIN OF gt_alv_log OCCURS 0,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;vtweg&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;LIKE&nbsp;ztsd0098-vtweg,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;werks&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;LIKE&nbsp;ztsd0098-werks.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;include&nbsp;structure&nbsp;<a&nbsp;href&nbsp;="zssd_excel_upload_xq100/dictionary-zssd_excel_upload_xq100.html">zssd_excel_upload_xq100</a>.<br />
+DATA:  zqty          LIKE ztsd0100-zqty,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;zptyp&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;LIKE&nbsp;ztsd0100-zptyp,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;zbcust&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;LIKE&nbsp;ztsd0100-zbcust,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;zm090pno&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;LIKE&nbsp;ztsd0100a-zm090pno,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;zcnt&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;TYPE&nbsp;i,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;light&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;TYPE&nbsp;icon-name,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;colinfo&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;TYPE&nbsp;slis_t_specialcol_alv,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;line_color(4).&nbsp;"&nbsp;Line&nbsp;color<br />
+DATA:  END OF gt_alv_log.<br />
+<br />
+<br />
+DATA: itxq LIKE gt_alv OCCURS 0 WITH HEADER LINE.<br />
+DATA: xq_flag(1).<br />
+<br />
+DATA: lock_100n LIKE ztsd0100n OCCURS 0 WITH HEADER LINE.<br />
+<br />
+   </div>
+   <div class="codeComment">
+************************************************************************<br />
+*&nbsp;SELECT-OPTIONS&nbsp;/&nbsp;PARAMETERS&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*<br />
+************************************************************************<br />
+   </div>
+   <div class="code">
+SELECTION-SCREEN BEGIN OF BLOCK b1 WITH FRAME.<br />
+<br />
+&nbsp;&nbsp;PARAMETERS:&nbsp;p_werks&nbsp;&nbsp;LIKE&nbsp;ztsd0098-werks&nbsp;MEMORY&nbsp;ID&nbsp;zpwerks,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;p_vtweg&nbsp;&nbsp;LIKE&nbsp;ztsd0098-vtweg&nbsp;MEMORY&nbsp;ID&nbsp;zpvtweg,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;p_zbcust&nbsp;LIKE&nbsp;ztsd0098-zbcust&nbsp;&nbsp;MEMORY&nbsp;ID&nbsp;kun.<br />
+<br />
+&nbsp;&nbsp;PARAMETERS:&nbsp;p_upload&nbsp;RADIOBUTTON&nbsp;GROUP&nbsp;gp1&nbsp;DEFAULT&nbsp;'X'&nbsp;USER-COMMAND&nbsp;ucomm,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;p_downld&nbsp;RADIOBUTTON&nbsp;GROUP&nbsp;gp1.<br />
+SELECTION-SCREEN END OF BLOCK b1.<br />
+SELECTION-SCREEN BEGIN OF BLOCK b2 WITH FRAME.<br />
+&nbsp;&nbsp;PARAMETERS:p_fname&nbsp;&nbsp;LIKE&nbsp;rlgrap-filename&nbsp;DEFAULT&nbsp;'C:\temp\ZXQ08_template.xls'&nbsp;OBLIGATORY.<br />
+SELECTION-SCREEN END OF BLOCK b2.<br />
+   </div>
+   <div class="codeComment">
+************************************************************************<br />
+*&nbsp;INITIALIZATION&nbsp;Event&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*<br />
+************************************************************************<br />
+   </div>
+   <div class="code">
+INITIALIZATION.<br />
+<br />
+   </div>
+   <div class="codeComment">
+************************************************************************<br />
+*&nbsp;AT&nbsp;SELECTION-SCREEN&nbsp;Events&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*<br />
+************************************************************************<br />
+   </div>
+   <div class="code">
+AT SELECTION-SCREEN ON VALUE-REQUEST FOR p_fname.<br />
+&nbsp;&nbsp;PERFORM&nbsp;query_filename&nbsp;USING&nbsp;p_fname&nbsp;'O'.<br />
+<br />
+AT SELECTION-SCREEN OUTPUT.<br />
+<br />
+AT SELECTION-SCREEN ON p_vtweg.<br />
+&nbsp;&nbsp;IF&nbsp;p_upload&nbsp;=&nbsp;'X'.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;p_vtweg&nbsp;IS&nbsp;INITIAL.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;MESSAGE&nbsp;e002(sy)&nbsp;WITH&nbsp;'銷售通路必填'.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+   </div>
+   <div class="codeComment">
+*檢查權限<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;""&nbsp;&nbsp;AUTHORITY-CHECK&nbsp;OBJECT&nbsp;'Z_AUTHORG'<br />
+&nbsp;&nbsp;&nbsp;&nbsp;""&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ID&nbsp;'ZAUTHORG'&nbsp;FIELD&nbsp;p_vtweg<br />
+&nbsp;&nbsp;&nbsp;&nbsp;""&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ID&nbsp;'ACTVT'&nbsp;FIELD&nbsp;'01'.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;""&nbsp;&nbsp;IF&nbsp;sy-subrc&nbsp;&lt;&gt;&nbsp;0.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;""&nbsp;&nbsp;&nbsp;&nbsp;MESSAGE&nbsp;e002(sy)&nbsp;WITH&nbsp;'無此權限組織的新增權限'.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;""&nbsp;&nbsp;ENDIF.<br />
+&nbsp;&nbsp;ENDIF.<br />
+<br />
+AT SELECTION-SCREEN ON p_zbcust.<br />
+&nbsp;&nbsp;IF&nbsp;p_upload&nbsp;=&nbsp;'X'.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;p_zbcust&nbsp;IS&nbsp;INITIAL.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;MESSAGE&nbsp;e002(sy)&nbsp;WITH&nbsp;'客戶必填'.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+&nbsp;&nbsp;ENDIF.<br />
+   </div>
+   <div class="codeComment">
+************************************************************************<br />
+*&nbsp;START-OF-SELECTION&nbsp;Event&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*<br />
+************************************************************************<br />
+   </div>
+   <div class="code">
+START-OF-SELECTION.<br />
+&nbsp;&nbsp;CASE&nbsp;'X'.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;WHEN&nbsp;p_upload.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PERFORM&nbsp;upload_data.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PERFORM&nbsp;data_process.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;itxq[]&nbsp;IS&nbsp;NOT&nbsp;INITIAL.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PERFORM&nbsp;output_alv&nbsp;USING&nbsp;'XQ'.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ELSE.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;MESSAGE&nbsp;s002(sy)&nbsp;WITH&nbsp;'No&nbsp;Data'.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;WHEN&nbsp;p_downld.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PERFORM&nbsp;download_template.<br />
+&nbsp;&nbsp;ENDCASE.<br />
+   </div>
+   <div class="codeComment">
+************************************************************************<br />
+*&nbsp;END-OF-SELECTION&nbsp;Event&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*<br />
+************************************************************************<br />
+   </div>
+   <div class="code">
+END-OF-SELECTION.<br />
+<br />
+<br />
+<br />
+   </div>
+   <div class="codeComment">
+*&---------------------------------------------------------------------*<br />
+*&&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Form&nbsp;&nbsp;QUERY_FILENAME<br />
+*&---------------------------------------------------------------------*<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;text<br />
+*----------------------------------------------------------------------*<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--&gt;P_P_DATA&nbsp;&nbsp;text<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--&gt;P_0088&nbsp;&nbsp;&nbsp;text<br />
+*----------------------------------------------------------------------*<br />
+   </div>
+   <div class="code">
+FORM query_filename USING pi_path  pi_mode.<br />
+&nbsp;&nbsp;DATA:lt_files&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;TYPE&nbsp;filetable,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;l_file&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;TYPE&nbsp;file_table,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;l_title&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;TYPE&nbsp;string,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;l_def_file&nbsp;&nbsp;&nbsp;TYPE&nbsp;string,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;l_df_directo&nbsp;TYPE&nbsp;string,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;l_subrc&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;TYPE&nbsp;i.<br />
+<br />
+&nbsp;&nbsp;DATA:&nbsp;l_string&nbsp;TYPE&nbsp;string.<br />
+<br />
+&nbsp;&nbsp;l_title&nbsp;=&nbsp;'開啟檔案'.<br />
+<br />
+&nbsp;&nbsp;MOVE&nbsp;'*.*|*.*'&nbsp;TO&nbsp;l_string.<br />
+&nbsp;&nbsp;l_df_directo&nbsp;&nbsp;=&nbsp;pi_path.<br />
+<br />
+&nbsp;&nbsp;CALL&nbsp;METHOD&nbsp;cl_gui_frontend_services=&gt;file_open_dialog<br />
+&nbsp;&nbsp;&nbsp;&nbsp;EXPORTING<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;window_title&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;l_title<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;default_filename&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;l_def_file<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;file_filter&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;l_string<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;initial_directory&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;l_df_directo<br />
+&nbsp;&nbsp;&nbsp;&nbsp;CHANGING<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;file_table&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;lt_files<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rc&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;l_subrc<br />
+&nbsp;&nbsp;&nbsp;&nbsp;EXCEPTIONS<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;file_open_dialog_failed&nbsp;=&nbsp;1<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;cntl_error&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;2<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;error_no_gui&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;3<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;OTHERS&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;4.<br />
+&nbsp;&nbsp;CHECK&nbsp;sy-subrc&nbsp;=&nbsp;0.<br />
+<br />
+&nbsp;&nbsp;LOOP&nbsp;AT&nbsp;lt_files&nbsp;INTO&nbsp;l_file&nbsp;.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;pi_path&nbsp;=&nbsp;l_file.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;EXIT.<br />
+&nbsp;&nbsp;ENDLOOP.<br />
+ENDFORM.<br />
+<br />
+   </div>
+   <div class="codeComment">
+*&---------------------------------------------------------------------*<br />
+*&&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Form&nbsp;&nbsp;DOWNLOAD_TEMPLATE<br />
+*&---------------------------------------------------------------------*<br />
+   </div>
+   <div class="code">
+FORM download_template .<br />
+&nbsp;&nbsp;DATA:&nbsp;g_fldnam(25).<br />
+&nbsp;&nbsp;FIELD-SYMBOLS:&nbsp;&lt;fs_value&gt;,&nbsp;&lt;fs_field&gt;.<br />
+   </div>
+   <div class="codeComment">
+*&nbsp;Table&nbsp;Schema<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;PERFORM&nbsp;assign_field_catalog.<br />
+   </div>
+   <div class="codeComment">
+*&nbsp;Create&nbsp;dynamic&nbsp;internal&nbsp;table&nbsp;and&nbsp;assign&nbsp;to&nbsp;FS<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;CALL&nbsp;METHOD&nbsp;cl_alv_table_create=&gt;create_dynamic_table<br />
+&nbsp;&nbsp;&nbsp;&nbsp;EXPORTING<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;it_fieldcatalog&nbsp;=&nbsp;it_fcat<br />
+&nbsp;&nbsp;&nbsp;&nbsp;IMPORTING<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ep_table&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;dy_table.<br />
+&nbsp;&nbsp;ASSIGN&nbsp;dy_table-&gt;*&nbsp;TO&nbsp;&lt;dyn_table&gt;.<br />
+   </div>
+   <div class="codeComment">
+*&nbsp;Create&nbsp;dynamic&nbsp;work&nbsp;area&nbsp;and&nbsp;assign&nbsp;to&nbsp;FS<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;CREATE&nbsp;DATA&nbsp;dy_line&nbsp;LIKE&nbsp;LINE&nbsp;OF&nbsp;&lt;dyn_table&gt;.<br />
+&nbsp;&nbsp;ASSIGN&nbsp;dy_line-&gt;*&nbsp;TO&nbsp;&lt;dyn_wa&gt;.<br />
+<br />
+   </div>
+   <div class="codeComment">
+*&nbsp;Field&nbsp;Description<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;LOOP&nbsp;AT&nbsp;it_fcat&nbsp;INTO&nbsp;wa_fcat.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;g_fldnam&nbsp;=&nbsp;'&lt;dyn_wa&gt;-'&nbsp;&&&nbsp;wa_fcat-fieldname.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ASSIGN&nbsp;(g_fldnam)&nbsp;TO&nbsp;&lt;fs_field&gt;.<br />
+   </div>
+   <div class="codeComment">
+*&nbsp;Description<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;READ&nbsp;TABLE&nbsp;gt_fieldcat&nbsp;INTO&nbsp;DATA(wa_fieldcat)<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;WITH&nbsp;KEY&nbsp;fieldname&nbsp;=&nbsp;wa_fcat-fieldname.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ASSIGN&nbsp;wa_fieldcat-seltext_l&nbsp;TO&nbsp;&lt;fs_value&gt;.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;fs_field&gt;&nbsp;=&nbsp;&lt;fs_value&gt;.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;AT&nbsp;LAST.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;APPEND&nbsp;&lt;dyn_wa&gt;&nbsp;TO&nbsp;&lt;dyn_table&gt;.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ENDAT.<br />
+&nbsp;&nbsp;ENDLOOP.<br />
+<br />
+&nbsp;&nbsp;PERFORM&nbsp;gui_download&nbsp;TABLES&nbsp;&lt;dyn_table&gt;<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;USING&nbsp;p_fname.<br />
+ENDFORM.<br />
+<br />
+   </div>
+   <div class="codeComment">
+*&---------------------------------------------------------------------*<br />
+*&&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Form&nbsp;&nbsp;ASSIGN_FIELD_CATALOG<br />
+*&---------------------------------------------------------------------*<br />
+   </div>
+   <div class="code">
+FORM assign_field_catalog .<br />
+&nbsp;&nbsp;DATA:&nbsp;st_fieldcat&nbsp;TYPE&nbsp;slis_fieldcat_alv,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;wa_fieldcat&nbsp;LIKE&nbsp;st_fieldcat.<br />
+&nbsp;&nbsp;RANGES:&nbsp;r_fieldname&nbsp;FOR&nbsp;st_fieldcat-fieldname.<br />
+&nbsp;&nbsp;DEFINE&nbsp;assign_range_table.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&1-sign&nbsp;=&nbsp;&2.&nbsp;&1-option&nbsp;=&nbsp;&3.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&1-low&nbsp;&nbsp;=&nbsp;&4.&nbsp;&1-high&nbsp;=&nbsp;&5.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;APPEND&nbsp;&1.&nbsp;CLEAR&nbsp;&1.<br />
+&nbsp;&nbsp;END-OF-DEFINITION.<br />
+&nbsp;&nbsp;DEFINE&nbsp;assign_seltext.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;wa_fieldcat-fieldname&nbsp;=&nbsp;&1.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;wa_fieldcat-seltext_s&nbsp;=&nbsp;wa_fieldcat-seltext_m&nbsp;=<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;wa_fieldcat-seltext_l&nbsp;=&nbsp;wa_fieldcat-reptext_ddic&nbsp;=&nbsp;&2.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+&nbsp;&nbsp;END-OF-DEFINITION.<br />
+<br />
+&nbsp;&nbsp;CALL&nbsp;FUNCTION&nbsp;'REUSE_ALV_FIELDCATALOG_MERGE'<br />
+&nbsp;&nbsp;&nbsp;&nbsp;EXPORTING<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;i_program_name&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;sy-repid<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;i_structure_name&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;'ZSSD_EXCEL_UPLOAD_XQ100'<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;i_inclname&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;sy-repid<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;i_bypassing_buffer&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;'X'<br />
+&nbsp;&nbsp;&nbsp;&nbsp;CHANGING<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ct_fieldcat&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;gt_fieldcat<br />
+&nbsp;&nbsp;&nbsp;&nbsp;EXCEPTIONS<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inconsistent_interface&nbsp;=&nbsp;1<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;program_error&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;2.<br />
+&nbsp;&nbsp;assign_range_table&nbsp;r_fieldname&nbsp;'I'&nbsp;'EQ'&nbsp;'MESSAGE'&nbsp;''.<br />
+&nbsp;&nbsp;DELETE&nbsp;gt_fieldcat&nbsp;WHERE&nbsp;fieldname&nbsp;IN&nbsp;r_fieldname.<br />
+&nbsp;&nbsp;LOOP&nbsp;AT&nbsp;gt_fieldcat&nbsp;INTO&nbsp;wa_fieldcat.<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;assign_seltext:&nbsp;'ZXQNO'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'XQ&nbsp;單號',<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'ZXQSEQ'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'XQ&nbsp;單序號',<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'ZYM'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'處理年月',<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'ZPERIOD'&nbsp;&nbsp;&nbsp;&nbsp;'期別',<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'ZQTY_C'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'轉出數量',<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'ZCORD'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'客戶&nbsp;PO',<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'ZSDAT'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'轉出日期',<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'ZSONO'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'訂單',<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'ZSOSEQ'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'訂單項目',<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'ZPNO'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'預採件號',<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'ZRDAT'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'預計交貨日',<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'ZREM2'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'備註',<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'ZINVO'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'Invoice&nbsp;No',<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'ZETD'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'ETD&nbsp;Date'.<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;MODIFY&nbsp;gt_fieldcat&nbsp;FROM&nbsp;wa_fieldcat.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;MOVE-CORRESPONDING&nbsp;wa_fieldcat&nbsp;TO&nbsp;wa_fcat.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;wa_fcat-datatype&nbsp;=&nbsp;'C'.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;wa_fcat-inttype&nbsp;=&nbsp;'C'.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;wa_fcat-intlen&nbsp;=&nbsp;100.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;APPEND&nbsp;wa_fcat&nbsp;TO&nbsp;it_fcat.<br />
+&nbsp;&nbsp;ENDLOOP.<br />
+<br />
+ENDFORM.<br />
+   </div>
+   <div class="codeComment">
+*&---------------------------------------------------------------------*<br />
+*&&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Form&nbsp;&nbsp;GUI_DOWNLOAD<br />
+*&---------------------------------------------------------------------*<br />
+   </div>
+   <div class="code">
+FORM gui_download TABLES it_out<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;USING&nbsp;&nbsp;i_filename.<br />
+&nbsp;&nbsp;PERFORM&nbsp;delete_file&nbsp;USING&nbsp;i_filename.<br />
+<br />
+   </div>
+   <div class="codeComment">
+*&nbsp;如果要下載成EXCEL&nbsp;所有的欄位屬性都要宣告成CHAR<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;CALL&nbsp;FUNCTION&nbsp;'SAP_CONVERT_TO_XLS_FORMAT'<br />
+&nbsp;&nbsp;&nbsp;&nbsp;EXPORTING<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;i_field_seperator&nbsp;=&nbsp;'#'&nbsp;"Field&nbsp;seprator&nbsp;in&nbsp;internal&nbsp;table<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;i_line_header&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;'X'<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;i_filename&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;i_filename<br />
+&nbsp;&nbsp;&nbsp;&nbsp;TABLES<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;i_tab_sap_data&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;it_out<br />
+&nbsp;&nbsp;&nbsp;&nbsp;EXCEPTIONS<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;conversion_failed&nbsp;=&nbsp;1<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;OTHERS&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;2.<br />
+<br />
+&nbsp;&nbsp;IF&nbsp;sy-subrc&nbsp;&lt;&gt;&nbsp;0.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;MESSAGE&nbsp;'Template&nbsp;Download&nbsp;Fail'&nbsp;TYPE&nbsp;'S'&nbsp;DISPLAY&nbsp;LIKE&nbsp;'E'.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;LEAVE&nbsp;LIST-PROCESSING.<br />
+&nbsp;&nbsp;ELSE.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;MESSAGE&nbsp;s000&nbsp;WITH&nbsp;'Template&nbsp;Download&nbsp;Successfully'.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;LEAVE&nbsp;LIST-PROCESSING.<br />
+&nbsp;&nbsp;ENDIF.<br />
+ENDFORM.<br />
+   </div>
+   <div class="codeComment">
+*&---------------------------------------------------------------------*<br />
+*&&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Form&nbsp;&nbsp;DELETE_FILE<br />
+*&---------------------------------------------------------------------*<br />
+   </div>
+   <div class="code">
+FORM delete_file USING i_file.<br />
+&nbsp;&nbsp;DATA:&nbsp;rc&nbsp;LIKE&nbsp;sy-subrc&nbsp;.<br />
+&nbsp;&nbsp;DATA:&nbsp;rs&nbsp;TYPE&nbsp;abap_bool&nbsp;.<br />
+&nbsp;&nbsp;DATA:&nbsp;fn&nbsp;TYPE&nbsp;string&nbsp;.<br />
+&nbsp;&nbsp;DATA:&nbsp;ifz&nbsp;&nbsp;LIKE&nbsp;&nbsp;file_table&nbsp;OCCURS&nbsp;0&nbsp;.&nbsp;"&nbsp;WITH&nbsp;HEADER&nbsp;LINE&nbsp;.<br />
+&nbsp;&nbsp;DATA:&nbsp;wfz&nbsp;&nbsp;LIKE&nbsp;&nbsp;file_table&nbsp;.&nbsp;"&nbsp;WITH&nbsp;HEADER&nbsp;LINE&nbsp;.<br />
+&nbsp;&nbsp;DATA:&nbsp;y&nbsp;&nbsp;&nbsp;&nbsp;TYPE&nbsp;&nbsp;abap_bool&nbsp;VALUE&nbsp;'X'&nbsp;&nbsp;.<br />
+&nbsp;&nbsp;DATA:&nbsp;cnt&nbsp;TYPE&nbsp;i&nbsp;.<br />
+&nbsp;&nbsp;DATA:&nbsp;dir&nbsp;TYPE&nbsp;string&nbsp;.<br />
+&nbsp;&nbsp;DATA:&nbsp;flt&nbsp;TYPE&nbsp;string&nbsp;.<br />
+&nbsp;&nbsp;DATA:&nbsp;len(5)&nbsp;TYPE&nbsp;n.<br />
+&nbsp;&nbsp;DATA:&nbsp;lt_split&nbsp;TYPE&nbsp;TABLE&nbsp;OF&nbsp;char300,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;lr_split&nbsp;TYPE&nbsp;REF&nbsp;TO&nbsp;char300.<br />
+   </div>
+   <div class="codeComment">
+*拆分路徑及檔名<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;SPLIT&nbsp;i_file&nbsp;AT&nbsp;'\'&nbsp;INTO:&nbsp;TABLE&nbsp;lt_split.<br />
+&nbsp;&nbsp;LOOP&nbsp;AT&nbsp;lt_split&nbsp;REFERENCE&nbsp;INTO&nbsp;lr_split.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;AT&nbsp;LAST.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;flt&nbsp;=&nbsp;lr_split-&gt;*.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;EXIT.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ENDAT.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;CONCATENATE&nbsp;dir&nbsp;lr_split-&gt;*&nbsp;'\'&nbsp;INTO&nbsp;dir.<br />
+&nbsp;&nbsp;ENDLOOP.<br />
+   </div>
+   <div class="codeComment">
+*檢查檔案是否存在<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;CALL&nbsp;METHOD&nbsp;cl_gui_frontend_services=&gt;directory_list_files<br />
+&nbsp;&nbsp;&nbsp;&nbsp;EXPORTING<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;directory&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;dir&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"&nbsp;c:\tmp\2018-12\<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;filter&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;flt&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"&nbsp;J4KID-BP18037-1130_*.PDF<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;files_only&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;y&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"<br />
+&nbsp;&nbsp;&nbsp;&nbsp;CHANGING<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;file_table&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;ifz&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"&nbsp;Type	STANDARD&nbsp;TABLE<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;count&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;cnt&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"&nbsp;Changing&nbsp;Type&nbsp;&nbsp;I<br />
+&nbsp;&nbsp;&nbsp;&nbsp;EXCEPTIONS<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;cntl_error&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;1&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"&nbsp;#Control&nbsp;error<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;directory_list_files_failed&nbsp;=&nbsp;2<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;wrong_parameter&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;3&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"&nbsp;#Incorrect&nbsp;parameter<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;error_no_gui&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;4&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"&nbsp;#Disk&nbsp;full<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;not_supported_by_gui&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;5.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"&nbsp;#Access&nbsp;Denied&nbsp;to&nbsp;Source&nbsp;or&nbsp;Destination&nbsp;File<br />
+&nbsp;&nbsp;IF&nbsp;ifz[]&nbsp;IS&nbsp;INITIAL.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;EXIT.<br />
+&nbsp;&nbsp;ENDIF.<br />
+   </div>
+   <div class="codeComment">
+*刪除檔案<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;fn&nbsp;=&nbsp;i_file.<br />
+&nbsp;&nbsp;CALL&nbsp;METHOD&nbsp;cl_gui_frontend_services=&gt;file_delete<br />
+&nbsp;&nbsp;&nbsp;&nbsp;EXPORTING<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;filename&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;fn<br />
+&nbsp;&nbsp;&nbsp;&nbsp;CHANGING<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rc&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;rc<br />
+&nbsp;&nbsp;&nbsp;&nbsp;EXCEPTIONS<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;file_delete_failed&nbsp;&nbsp;&nbsp;=&nbsp;2&nbsp;"&nbsp;&nbsp;Could&nbsp;not&nbsp;delete&nbsp;file<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;cntl_error&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;2&nbsp;"&nbsp;&nbsp;Control&nbsp;error<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;error_no_gui&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;3&nbsp;"&nbsp;&nbsp;Error:&nbsp;No&nbsp;GUI<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;file_not_found&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;4&nbsp;"&nbsp;&nbsp;File&nbsp;not&nbsp;found<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;access_denied&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;5&nbsp;"&nbsp;&nbsp;Access&nbsp;denied<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;unknown_error&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;6&nbsp;"&nbsp;&nbsp;Unknown&nbsp;error<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;not_supported_by_gui&nbsp;=&nbsp;7&nbsp;"&nbsp;&nbsp;GUI&nbsp;does&nbsp;not&nbsp;support&nbsp;this<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;wrong_parameter&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;8.&nbsp;"&nbsp;&nbsp;&nbsp;Wrong&nbsp;parameter<br />
+&nbsp;&nbsp;IF&nbsp;rc&nbsp;=&nbsp;0&nbsp;OR&nbsp;rc&nbsp;=&nbsp;4&nbsp;.<br />
+&nbsp;&nbsp;ELSE&nbsp;.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;MESSAGE&nbsp;e002(sy)&nbsp;WITH&nbsp;'檔案開啟中無法重新下載'.<br />
+&nbsp;&nbsp;ENDIF&nbsp;.<br />
+<br />
+ENDFORM.<br />
+   </div>
+   <div class="codeComment">
+*&---------------------------------------------------------------------*<br />
+*&&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Form&nbsp;&nbsp;UPLOAD_DATA<br />
+*&---------------------------------------------------------------------*<br />
+   </div>
+   <div class="code">
+FORM upload_data .<br />
+&nbsp;&nbsp;DATA:&nbsp;l_index&nbsp;TYPE&nbsp;i.<br />
+&nbsp;&nbsp;FIELD-SYMBOLS:&nbsp;&lt;fs&gt;.<br />
+&nbsp;&nbsp;DATA:lt_upload&nbsp;LIKE&nbsp;TABLE&nbsp;OF&nbsp;zssd_excel_upload_xq100&nbsp;WITH&nbsp;HEADER&nbsp;LINE.<br />
+&nbsp;&nbsp;DATA&nbsp;:&nbsp;lt_data&nbsp;TYPE&nbsp;truxs_t_text_data.<br />
+&nbsp;&nbsp;DATA:&nbsp;l_tabix&nbsp;TYPE&nbsp;sy-tabix.<br />
+&nbsp;&nbsp;DATA:&nbsp;l_end(1).<br />
+<br />
+&nbsp;&nbsp;DATA:tmp_output_str&nbsp;TYPE&nbsp;string.<br />
+&nbsp;&nbsp;DATA:tmp_type&nbsp;LIKE&nbsp;dd01v-datatype.<br />
+&nbsp;&nbsp;DATA:&nbsp;tmp_p&nbsp;TYPE&nbsp;p&nbsp;DECIMALS&nbsp;6."V006<br />
+<br />
+&nbsp;&nbsp;REFRESH:&nbsp;lt_upload.<br />
+&nbsp;&nbsp;CALL&nbsp;FUNCTION&nbsp;'TEXT_CONVERT_XLS_TO_SAP'<br />
+&nbsp;&nbsp;&nbsp;&nbsp;EXPORTING<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;i_field_seperator&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;'X'<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;i_line_header&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;'X'<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;i_tab_raw_data&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;lt_data<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;i_filename&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;p_fname<br />
+&nbsp;&nbsp;&nbsp;&nbsp;TABLES<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;i_tab_converted_data&nbsp;=&nbsp;lt_upload<br />
+&nbsp;&nbsp;&nbsp;&nbsp;EXCEPTIONS<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;conversion_failed&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;1<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;OTHERS&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;2.<br />
+&nbsp;&nbsp;IF&nbsp;sy-subrc&nbsp;&lt;&gt;&nbsp;0.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;MESSAGE&nbsp;ID&nbsp;sy-msgid&nbsp;TYPE&nbsp;sy-msgty&nbsp;NUMBER&nbsp;sy-msgno<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;WITH&nbsp;sy-msgv1&nbsp;sy-msgv2&nbsp;sy-msgv3&nbsp;sy-msgv4.<br />
+&nbsp;&nbsp;ENDIF.<br />
+<br />
+&nbsp;&nbsp;REFRESH:&nbsp;gt_alv.<br />
+&nbsp;&nbsp;CLEAR&nbsp;gt_alv.<br />
+&nbsp;&nbsp;LOOP&nbsp;AT&nbsp;lt_upload.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;MOVE-CORRESPONDING&nbsp;lt_upload&nbsp;TO&nbsp;gt_alv.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;gt_alv-zcnt&nbsp;=&nbsp;sy-tabix.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;gt_alv-vtweg&nbsp;=&nbsp;p_vtweg.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;gt_alv-werks&nbsp;=&nbsp;p_werks.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;TRANSLATE&nbsp;gt_alv-zxqno&nbsp;TO&nbsp;UPPER&nbsp;CASE.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;TRANSLATE&nbsp;gt_alv-zsono&nbsp;TO&nbsp;UPPER&nbsp;CASE.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;TRANSLATE&nbsp;gt_alv-zpno&nbsp;TO&nbsp;UPPER&nbsp;CASE.<br />
+<br />
+   </div>
+   <div class="codeComment">
+*若為空白預設系統年月<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;gt_alv-zym&nbsp;IS&nbsp;INITIAL.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;gt_alv-zym&nbsp;=&nbsp;sy-datum+0(6).<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+   </div>
+   <div class="codeComment">
+*若空白則為01<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;gt_alv-zperiod&nbsp;IS&nbsp;INITIAL<br />
+&nbsp;&nbsp;&nbsp;&nbsp;OR&nbsp;gt_alv-zperiod&nbsp;=&nbsp;'0'.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;gt_alv-zperiod&nbsp;=&nbsp;'01'.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+<br />
+   </div>
+   <div class="codeComment">
+*&nbsp;&nbsp;&nbsp;&nbsp;V006&nbsp;Start<br />
+<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;CALL&nbsp;FUNCTION&nbsp;'NUMERIC_CHECK'<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;EXPORTING<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;string_in&nbsp;&nbsp;=&nbsp;gt_alv-zqty_c<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IMPORTING<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;string_out&nbsp;=&nbsp;tmp_output_str<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;htype&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;tmp_type.<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;tmp_type&nbsp;=&nbsp;'CHAR'.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;tmp_p&nbsp;=&nbsp;gt_alv-zqty_c.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;gt_alv-zqty_c&nbsp;=&nbsp;tmp_p.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SHIFT&nbsp;gt_alv-zqty_c&nbsp;LEFT&nbsp;DELETING&nbsp;LEADING&nbsp;space.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+<br />
+   </div>
+   <div class="codeComment">
+*&nbsp;&nbsp;&nbsp;&nbsp;V006&nbsp;End<br />
+<br />
+*若為空白預設系統日期&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2022/07/11&nbsp;CaroL&nbsp;-Ivy取消預設,強迫必填<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;gt_alv-zsdat&nbsp;IS&nbsp;INITIAL.<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;gt_alv-zsdat&nbsp;=&nbsp;sy-datum.<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+<br />
+<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;APPEND&nbsp;gt_alv.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;CLEAR&nbsp;gt_alv.<br />
+&nbsp;&nbsp;ENDLOOP.<br />
+<br />
+ENDFORM.<br />
+   </div>
+   <div class="codeComment">
+*&---------------------------------------------------------------------*<br />
+*&&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Form&nbsp;&nbsp;DATA_PROCESS<br />
+*----------------------------------------------------------------------*<br />
+   </div>
+   <div class="code">
+FORM data_process.<br />
+&nbsp;&nbsp;DATA:&nbsp;lock_flag(1),<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;l_msg(100)&nbsp;&nbsp;&nbsp;TYPE&nbsp;c,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;lock_user&nbsp;&nbsp;&nbsp;&nbsp;TYPE&nbsp;sy-msgv1,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ls98&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;TYPE&nbsp;ztsd0098,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ls99&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;TYPE&nbsp;ztsd0099,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ls101&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;TYPE&nbsp;ztsd0101,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;t_qty&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;LIKE&nbsp;ztsd0100-zqty,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;p_qty&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;LIKE&nbsp;ztsd0100-zqty,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;n_qty&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;LIKE&nbsp;ztsd0100-zqty,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;l_flag(1).<br />
+<br />
+&nbsp;&nbsp;REFRESH:&nbsp;itxq.<br />
+&nbsp;&nbsp;SORT&nbsp;gt_alv&nbsp;BY&nbsp;vtweg&nbsp;zxqno&nbsp;zym&nbsp;zperiod&nbsp;zcnt.<br />
+&nbsp;&nbsp;LOOP&nbsp;AT&nbsp;gt_alv&nbsp;ASSIGNING&nbsp;FIELD-SYMBOL(&lt;wa&gt;).<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;wa&gt;-light&nbsp;=&nbsp;'2'.&nbsp;&nbsp;"YELLOW&nbsp;LIGHT&nbsp;&nbsp;&nbsp;2022/07/11&nbsp;CaroL<br />
+<br />
+   </div>
+   <div class="codeComment">
+*必填欄位檢查<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;PERFORM&nbsp;check_required_field&nbsp;USING&nbsp;'權限組織'&nbsp;&lt;wa&gt;-vtweg<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CHANGING&nbsp;l_msg.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;PERFORM&nbsp;assign_msg&nbsp;USING&nbsp;&nbsp;&nbsp;&nbsp;l_msg<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CHANGING&nbsp;&lt;wa&gt;-light&nbsp;&lt;wa&gt;-message.<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;PERFORM&nbsp;check_required_field&nbsp;USING&nbsp;'XQ單號'&nbsp;&lt;wa&gt;-zxqno<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CHANGING&nbsp;l_msg.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;PERFORM&nbsp;assign_msg&nbsp;USING&nbsp;&nbsp;&nbsp;&nbsp;l_msg<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CHANGING&nbsp;&lt;wa&gt;-light&nbsp;&lt;wa&gt;-message.<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;PERFORM&nbsp;check_required_field&nbsp;USING&nbsp;'轉出日期'&nbsp;&lt;wa&gt;-zsdat&nbsp;&nbsp;"2022/07/11&nbsp;CaroL<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CHANGING&nbsp;l_msg.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;PERFORM&nbsp;assign_msg&nbsp;USING&nbsp;&nbsp;&nbsp;&nbsp;l_msg<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CHANGING&nbsp;&lt;wa&gt;-light&nbsp;&lt;wa&gt;-message.<br />
+<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;AT&nbsp;NEW&nbsp;zxqno.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CLEAR:&nbsp;lock_flag,lock_user,xq_flag,ls98.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;REFRESH:&nbsp;lock_100n.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PERFORM&nbsp;lock_xq&nbsp;USING&nbsp;&nbsp;&nbsp;&lt;wa&gt;-vtweg<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;wa&gt;-werks<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;wa&gt;-zxqno<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CHANGING&nbsp;l_msg<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ls98<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;lock_flag.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ENDAT.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;lock_flag&nbsp;=&nbsp;'X'.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PERFORM&nbsp;assign_msg&nbsp;USING&nbsp;&nbsp;&nbsp;&nbsp;l_msg<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CHANGING&nbsp;&lt;wa&gt;-light&nbsp;&lt;wa&gt;-message.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;&nbsp;ls98&nbsp;IS&nbsp;NOT&nbsp;INITIAL<br />
+&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;ls98-zbcust&nbsp;&lt;&gt;&nbsp;p_zbcust.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CONCATENATE&nbsp;'該&nbsp;XQ&nbsp;單不屬於客戶'&nbsp;p_zbcust&nbsp;INTO&nbsp;l_msg.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PERFORM&nbsp;assign_msg&nbsp;USING&nbsp;&nbsp;&nbsp;&nbsp;l_msg<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CHANGING&nbsp;&lt;wa&gt;-light&nbsp;&lt;wa&gt;-message.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;PERFORM&nbsp;check_zxqseq&nbsp;CHANGING&nbsp;&lt;wa&gt;-zxqseq<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;l_msg.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;PERFORM&nbsp;assign_msg&nbsp;USING&nbsp;&nbsp;&nbsp;&nbsp;l_msg<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CHANGING&nbsp;&lt;wa&gt;-light&nbsp;&lt;wa&gt;-message.<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;PERFORM&nbsp;check_zsoseq&nbsp;CHANGING&nbsp;&lt;wa&gt;-zsoseq<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;l_msg.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;PERFORM&nbsp;assign_msg&nbsp;USING&nbsp;&nbsp;&nbsp;&nbsp;l_msg<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CHANGING&nbsp;&lt;wa&gt;-light&nbsp;&lt;wa&gt;-message.<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;CLEAR:&nbsp;ls99.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;SELECT&nbsp;SINGLE&nbsp;*<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;INTO&nbsp;ls99<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FROM&nbsp;ztsd0099<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;WHERE&nbsp;vtweg&nbsp;=&nbsp;&lt;wa&gt;-vtweg<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;zxqno&nbsp;=&nbsp;&lt;wa&gt;-zxqno<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;zxqseq&nbsp;=&nbsp;&lt;wa&gt;-zxqseq.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;sy-subrc&nbsp;&lt;&gt;&nbsp;0.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;l_msg&nbsp;=&nbsp;'該&nbsp;XQ&nbsp;單項次不存在'.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PERFORM&nbsp;assign_msg&nbsp;USING&nbsp;l_msg<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CHANGING&nbsp;&lt;wa&gt;-light&nbsp;&lt;wa&gt;-message.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ELSE.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;ls99-zxqwrktyp&nbsp;=&nbsp;'8'.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;l_msg&nbsp;=&nbsp;'該&nbsp;XQ&nbsp;單項次已結案，不可新增轉出數量'.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PERFORM&nbsp;assign_msg&nbsp;USING&nbsp;l_msg<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CHANGING&nbsp;&lt;wa&gt;-light&nbsp;&lt;wa&gt;-message.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;ls99-zpno&nbsp;&lt;&gt;&nbsp;&lt;wa&gt;-zpno.&nbsp;&nbsp;&nbsp;"2022/07/11&nbsp;CaroL<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;l_msg&nbsp;=&nbsp;'該&nbsp;XQ&nbsp;單件號不一致，不可新增轉出數量'.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PERFORM&nbsp;assign_msg&nbsp;USING&nbsp;l_msg<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CHANGING&nbsp;&lt;wa&gt;-light&nbsp;&lt;wa&gt;-message.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;wa&gt;-zbcust&nbsp;=&nbsp;ls98-zbcust.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;wa&gt;-zm090pno&nbsp;=&nbsp;ls99-zpno.<br />
+<br />
+   </div>
+   <div class="codeComment">
+*日期格式檢查<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;PERFORM&nbsp;check_yymm&nbsp;&nbsp;USING&nbsp;'處理年月'&nbsp;CHANGING&nbsp;&lt;wa&gt;-zym&nbsp;l_msg.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;PERFORM&nbsp;assign_msg&nbsp;USING&nbsp;l_msg<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CHANGING&nbsp;&lt;wa&gt;-light&nbsp;&lt;wa&gt;-message.<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;PERFORM&nbsp;check_date_format&nbsp;CHANGING&nbsp;&lt;wa&gt;-zsdat.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;PERFORM&nbsp;check_plausibility&nbsp;USING&nbsp;'轉出日期'&nbsp;CHANGING&nbsp;&lt;wa&gt;-zsdat&nbsp;l_msg.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;PERFORM&nbsp;assign_msg&nbsp;USING&nbsp;l_msg<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CHANGING&nbsp;&lt;wa&gt;-light&nbsp;&lt;wa&gt;-message.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;PERFORM&nbsp;check_yyyy&nbsp;USING&nbsp;'轉出日期'&nbsp;&lt;wa&gt;-zsdat&nbsp;CHANGING&nbsp;l_msg.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;PERFORM&nbsp;assign_msg&nbsp;USING&nbsp;l_msg<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CHANGING&nbsp;&lt;wa&gt;-light&nbsp;&lt;wa&gt;-message.<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;PERFORM&nbsp;check_date_format&nbsp;CHANGING&nbsp;&lt;wa&gt;-zrdat.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;PERFORM&nbsp;check_plausibility&nbsp;USING&nbsp;'預計交貨日'&nbsp;CHANGING&nbsp;&lt;wa&gt;-zrdat&nbsp;l_msg.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;PERFORM&nbsp;assign_msg&nbsp;USING&nbsp;l_msg<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CHANGING&nbsp;&lt;wa&gt;-light&nbsp;&lt;wa&gt;-message.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;PERFORM&nbsp;check_yyyy&nbsp;USING&nbsp;'預計交貨日'&nbsp;&lt;wa&gt;-zrdat&nbsp;CHANGING&nbsp;l_msg.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;PERFORM&nbsp;assign_msg&nbsp;USING&nbsp;l_msg<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CHANGING&nbsp;&lt;wa&gt;-light&nbsp;&lt;wa&gt;-message.<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;PERFORM&nbsp;check_date_format&nbsp;CHANGING&nbsp;&lt;wa&gt;-zetd.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;PERFORM&nbsp;check_plausibility&nbsp;USING&nbsp;'ETD&nbsp;Date'&nbsp;CHANGING&nbsp;&lt;wa&gt;-zetd&nbsp;l_msg.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;PERFORM&nbsp;assign_msg&nbsp;USING&nbsp;l_msg<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CHANGING&nbsp;&lt;wa&gt;-light&nbsp;&lt;wa&gt;-message.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;PERFORM&nbsp;check_yyyy&nbsp;USING&nbsp;'ETD&nbsp;Date'&nbsp;&lt;wa&gt;-zetd&nbsp;CHANGING&nbsp;l_msg.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;PERFORM&nbsp;assign_msg&nbsp;USING&nbsp;l_msg<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CHANGING&nbsp;&lt;wa&gt;-light&nbsp;&lt;wa&gt;-message.<br />
+<br />
+   </div>
+   <div class="codeComment">
+*數量欄位檢查<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;PERFORM&nbsp;convert_to_num&nbsp;CHANGING&nbsp;&lt;wa&gt;-zqty_c&nbsp;&lt;wa&gt;-zqty&nbsp;l_msg.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;PERFORM&nbsp;assign_msg&nbsp;USING&nbsp;l_msg<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CHANGING&nbsp;&lt;wa&gt;-light&nbsp;&lt;wa&gt;-message.<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;AT&nbsp;NEW&nbsp;zperiod.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PERFORM&nbsp;lock_100n&nbsp;USING&nbsp;&lt;wa&gt;-vtweg&nbsp;ls98-zbcust&nbsp;&lt;wa&gt;-zym&nbsp;&lt;wa&gt;-zperiod<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CHANGING&nbsp;l_msg.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ENDAT.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;PERFORM&nbsp;assign_msg&nbsp;USING&nbsp;l_msg<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CHANGING&nbsp;&lt;wa&gt;-light&nbsp;&lt;wa&gt;-message.<br />
+<br />
+<br />
+   </div>
+   <div class="codeComment">
+*XQ項次總轉出數量檢查:該項次都無錯誤，才檢查總轉出數量<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;AT&nbsp;NEW&nbsp;zxqseq.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CLEAR:&nbsp;l_flag,ls101,t_qty,p_qty,n_qty.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SELECT&nbsp;SINGLE&nbsp;*<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;INTO&nbsp;ls101<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FROM&nbsp;ztsd0101<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;WHERE&nbsp;vtweg&nbsp;=&nbsp;&lt;wa&gt;-vtweg<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;zxqno&nbsp;=&nbsp;&lt;wa&gt;-zxqno<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;zxqseq&nbsp;=&nbsp;&lt;wa&gt;-zxqseq.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ENDAT.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;&lt;wa&gt;-message&nbsp;=&nbsp;''<br />
+&nbsp;&nbsp;&nbsp;&nbsp;OR&nbsp;&lt;wa&gt;-light&nbsp;&lt;&gt;&nbsp;'1'.&nbsp;&nbsp;"Red&nbsp;light.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;t_qty&nbsp;=&nbsp;t_qty&nbsp;+&nbsp;&lt;wa&gt;-zqty.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;ls101&nbsp;IS&nbsp;NOT&nbsp;INITIAL.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;wa&gt;-zptyp&nbsp;=&nbsp;'P'.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;p_qty&nbsp;=&nbsp;&nbsp;p_qty&nbsp;+&nbsp;&lt;wa&gt;-zqty.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ELSE.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;wa&gt;-zptyp&nbsp;=&nbsp;'N'.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;n_qty&nbsp;=&nbsp;&nbsp;n_qty&nbsp;+&nbsp;&lt;wa&gt;-zqty.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ELSE.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;l_flag&nbsp;=&nbsp;'X'.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;AT&nbsp;END&nbsp;OF&nbsp;zxqseq.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;l_flag&nbsp;=&nbsp;''.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PERFORM&nbsp;check_zqty&nbsp;USING&nbsp;ls99&nbsp;t_qty&nbsp;p_qty&nbsp;n_qty<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CHANGING&nbsp;l_msg.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ENDAT.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;PERFORM&nbsp;assign_msg&nbsp;USING&nbsp;l_msg<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CHANGING&nbsp;&lt;wa&gt;-light&nbsp;&lt;wa&gt;-message.<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;AT&nbsp;END&nbsp;OF&nbsp;zxqno.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;xq_flag&nbsp;=&nbsp;''.<br />
+   </div>
+   <div class="codeComment">
+*整張XQ單無錯誤時，才新增轉出明細到DB&nbsp;&&nbsp;產生傳輸TG資料<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PERFORM&nbsp;proc_ztsd0100&nbsp;USING&nbsp;&lt;wa&gt;-vtweg<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;wa&gt;-zxqno.<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;wa&gt;-light&nbsp;=&nbsp;'3'.&nbsp;&nbsp;"GREEN&nbsp;LIGHT&nbsp;&nbsp;&nbsp;2022/07/11&nbsp;CaroL<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ELSE.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PERFORM&nbsp;crt_itxq&nbsp;USING&nbsp;&lt;wa&gt;-vtweg<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;wa&gt;-werks<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;wa&gt;-zxqno<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'1'<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'上傳資料有錯誤，詳見&nbsp;LOG'.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PERFORM&nbsp;unlock_xq&nbsp;USING&nbsp;&lt;wa&gt;-vtweg&nbsp;&lt;wa&gt;-werks&nbsp;&lt;wa&gt;-zxqno.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PERFORM&nbsp;unlock_100n.<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ENDAT.<br />
+&nbsp;&nbsp;ENDLOOP.<br />
+ENDFORM.<br />
+   </div>
+   <div class="codeComment">
+*&---------------------------------------------------------------------*<br />
+*&&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Form&nbsp;&nbsp;LOCK_XQ<br />
+*&---------------------------------------------------------------------*<br />
+   </div>
+   <div class="code">
+FORM lock_xq  USING    i_vtweg i_werks i_zxqno<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CHANGING&nbsp;e_msg<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;e_98&nbsp;STRUCTURE&nbsp;ztsd0098<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;e_flag.<br />
+<br />
+<br />
+&nbsp;&nbsp;CLEAR:&nbsp;e_msg,e_flag,e_98.<br />
+<br />
+&nbsp;&nbsp;SELECT&nbsp;SINGLE&nbsp;*<br />
+&nbsp;&nbsp;&nbsp;&nbsp;INTO&nbsp;e_98<br />
+&nbsp;&nbsp;&nbsp;&nbsp;FROM&nbsp;ztsd0098<br />
+&nbsp;&nbsp;&nbsp;WHERE&nbsp;vtweg&nbsp;=&nbsp;i_vtweg<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;zxqno&nbsp;=&nbsp;i_zxqno.<br />
+<br />
+&nbsp;&nbsp;CHECK&nbsp;e_98&nbsp;IS&nbsp;NOT&nbsp;INITIAL.<br />
+<br />
+&nbsp;&nbsp;CALL&nbsp;FUNCTION&nbsp;'ENQUEUE_EZ_ZTSD0098'<br />
+&nbsp;&nbsp;&nbsp;&nbsp;EXPORTING<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mode_ztsd0098&nbsp;&nbsp;=&nbsp;'E'<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mandt&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;sy-mandt<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;werks&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;i_werks<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;zxqno&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;i_zxqno<br />
+&nbsp;&nbsp;&nbsp;&nbsp;EXCEPTIONS<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;foreign_lock&nbsp;&nbsp;&nbsp;=&nbsp;1<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;system_failure&nbsp;=&nbsp;2<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;OTHERS&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;3.<br />
+&nbsp;&nbsp;IF&nbsp;sy-subrc&nbsp;&lt;&gt;&nbsp;0.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;e_flag&nbsp;=&nbsp;'X'.&nbsp;&nbsp;"lock&nbsp;fail<br />
+&nbsp;&nbsp;&nbsp;&nbsp;CONCATENATE&nbsp;'XQ&nbsp;單正在處理中，使用者'&nbsp;sy-msgv1&nbsp;INTO&nbsp;e_msg.<br />
+&nbsp;&nbsp;ENDIF.<br />
+<br />
+<br />
+ENDFORM.<br />
+   </div>
+   <div class="codeComment">
+*&---------------------------------------------------------------------*<br />
+*&&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Form&nbsp;&nbsp;ASSIGN_MSG<br />
+*&---------------------------------------------------------------------*<br />
+   </div>
+   <div class="code">
+FORM assign_msg  USING    i_msg<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CHANGING&nbsp;e_light<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;e_msg.<br />
+<br />
+&nbsp;&nbsp;CHECK&nbsp;i_msg&nbsp;&lt;&gt;&nbsp;space.<br />
+&nbsp;&nbsp;IF&nbsp;e_msg&nbsp;&lt;&gt;&nbsp;''.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;e_msg&nbsp;=&nbsp;e_msg&nbsp;&&&nbsp;';'.<br />
+&nbsp;&nbsp;ENDIF.<br />
+&nbsp;&nbsp;e_light&nbsp;=&nbsp;'1'.&nbsp;&nbsp;"RED&nbsp;LIGHT<br />
+&nbsp;&nbsp;CONCATENATE&nbsp;e_msg&nbsp;i_msg&nbsp;INTO&nbsp;e_msg.<br />
+<br />
+&nbsp;&nbsp;xq_flag&nbsp;=&nbsp;'X'.&nbsp;&nbsp;"代表整張XQ有存在錯誤<br />
+<br />
+<br />
+ENDFORM.<br />
+<br />
+   </div>
+   <div class="codeComment">
+*&---------------------------------------------------------------------*<br />
+*&&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Form&nbsp;&nbsp;CHECK_ZXQSEQ<br />
+*&---------------------------------------------------------------------*<br />
+   </div>
+   <div class="code">
+FORM check_zxqseq CHANGING p_xqseq p_msg.<br />
+<br />
+&nbsp;&nbsp;DATA:&nbsp;l_xqseq&nbsp;LIKE&nbsp;ztsd0099-zxqseq.<br />
+&nbsp;&nbsp;DATA:&nbsp;l_num&nbsp;TYPE&nbsp;p.<br />
+<br />
+&nbsp;&nbsp;CLEAR:&nbsp;p_msg.<br />
+<br />
+&nbsp;&nbsp;IF&nbsp;p_xqseq&nbsp;IS&nbsp;INITIAL.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;p_xqseq&nbsp;=&nbsp;'0'.<br />
+&nbsp;&nbsp;ENDIF.<br />
+<br />
+&nbsp;&nbsp;CALL&nbsp;FUNCTION&nbsp;'MOVE_CHAR_TO_NUM'<br />
+&nbsp;&nbsp;&nbsp;&nbsp;EXPORTING<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;chr&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;p_xqseq<br />
+&nbsp;&nbsp;&nbsp;&nbsp;IMPORTING<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;num&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;l_num<br />
+&nbsp;&nbsp;&nbsp;&nbsp;EXCEPTIONS<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;convt_no_number&nbsp;=&nbsp;1<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;convt_overflow&nbsp;&nbsp;=&nbsp;2<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;OTHERS&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;3.<br />
+&nbsp;&nbsp;IF&nbsp;sy-subrc&nbsp;&lt;&gt;&nbsp;0.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;MESSAGE&nbsp;e002(sy)&nbsp;WITH&nbsp;'XQ&nbsp;項次格式錯誤'&nbsp;INTO&nbsp;p_msg.<br />
+&nbsp;&nbsp;ELSE.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;l_xqseq&nbsp;=&nbsp;p_xqseq.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;PERFORM&nbsp;convert_input&nbsp;&nbsp;CHANGING&nbsp;l_xqseq.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;p_xqseq&nbsp;=&nbsp;l_xqseq.<br />
+&nbsp;&nbsp;ENDIF.<br />
+ENDFORM.<br />
+   </div>
+   <div class="codeComment">
+*&---------------------------------------------------------------------*<br />
+*&&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Form&nbsp;&nbsp;CHECK_ZSOSEQ<br />
+*&---------------------------------------------------------------------*<br />
+   </div>
+   <div class="code">
+FORM check_zsoseq CHANGING p_soseq p_msg.<br />
+<br />
+&nbsp;&nbsp;DATA:&nbsp;l_soseq&nbsp;LIKE&nbsp;ztsd0100a-zsoseq.<br />
+&nbsp;&nbsp;DATA:&nbsp;l_num&nbsp;TYPE&nbsp;p.<br />
+<br />
+&nbsp;&nbsp;CLEAR:&nbsp;p_msg.<br />
+<br />
+&nbsp;&nbsp;IF&nbsp;p_soseq&nbsp;IS&nbsp;INITIAL.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;p_soseq&nbsp;=&nbsp;'0'.<br />
+&nbsp;&nbsp;ENDIF.<br />
+<br />
+&nbsp;&nbsp;CALL&nbsp;FUNCTION&nbsp;'MOVE_CHAR_TO_NUM'<br />
+&nbsp;&nbsp;&nbsp;&nbsp;EXPORTING<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;chr&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;p_soseq<br />
+&nbsp;&nbsp;&nbsp;&nbsp;IMPORTING<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;num&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;l_num<br />
+&nbsp;&nbsp;&nbsp;&nbsp;EXCEPTIONS<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;convt_no_number&nbsp;=&nbsp;1<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;convt_overflow&nbsp;&nbsp;=&nbsp;2<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;OTHERS&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;3.<br />
+&nbsp;&nbsp;IF&nbsp;sy-subrc&nbsp;&lt;&gt;&nbsp;0.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;MESSAGE&nbsp;e002(sy)&nbsp;WITH&nbsp;'SO&nbsp;項次格式錯誤'&nbsp;INTO&nbsp;p_msg.<br />
+&nbsp;&nbsp;ELSE.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;l_soseq&nbsp;=&nbsp;p_soseq.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;PERFORM&nbsp;convert_input&nbsp;&nbsp;CHANGING&nbsp;l_soseq.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;p_soseq&nbsp;=&nbsp;l_soseq.<br />
+&nbsp;&nbsp;ENDIF.<br />
+ENDFORM.<br />
+   </div>
+   <div class="codeComment">
+*&---------------------------------------------------------------------*<br />
+*&&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Form&nbsp;&nbsp;CONVERT_INPUT<br />
+*&---------------------------------------------------------------------*<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;text<br />
+*----------------------------------------------------------------------*<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;--P_GT_ALV_ZPOSEX&nbsp;&nbsp;text<br />
+*----------------------------------------------------------------------*<br />
+   </div>
+   <div class="code">
+FORM convert_input  CHANGING e_field.<br />
+&nbsp;&nbsp;CHECK&nbsp;e_field&nbsp;IS&nbsp;NOT&nbsp;INITIAL.<br />
+&nbsp;&nbsp;CALL&nbsp;FUNCTION&nbsp;'CONVERSION_EXIT_ALPHA_INPUT'<br />
+&nbsp;&nbsp;&nbsp;&nbsp;EXPORTING<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;input&nbsp;&nbsp;=&nbsp;e_field<br />
+&nbsp;&nbsp;&nbsp;&nbsp;IMPORTING<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;output&nbsp;=&nbsp;e_field.<br />
+ENDFORM.<br />
+   </div>
+   <div class="codeComment">
+*&---------------------------------------------------------------------*<br />
+*&&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Form&nbsp;&nbsp;CHECK_YYMM<br />
+*&---------------------------------------------------------------------*<br />
+   </div>
+   <div class="code">
+FORM check_yymm USING i_type CHANGING e_yymm e_msg.<br />
+&nbsp;&nbsp;DATA:&nbsp;yy(4)&nbsp;TYPE&nbsp;n,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mm(2)&nbsp;TYPE&nbsp;n,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;l_len&nbsp;TYPE&nbsp;i,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;l_num&nbsp;TYPE&nbsp;p.<br />
+&nbsp;&nbsp;CLEAR:&nbsp;e_msg.<br />
+<br />
+&nbsp;&nbsp;CHECK&nbsp;e_yymm&nbsp;IS&nbsp;NOT&nbsp;INITIAL.<br />
+<br />
+&nbsp;&nbsp;CALL&nbsp;FUNCTION&nbsp;'MOVE_CHAR_TO_NUM'<br />
+&nbsp;&nbsp;&nbsp;&nbsp;EXPORTING<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;chr&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;e_yymm<br />
+&nbsp;&nbsp;&nbsp;&nbsp;IMPORTING<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;num&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;l_num<br />
+&nbsp;&nbsp;&nbsp;&nbsp;EXCEPTIONS<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;convt_no_number&nbsp;=&nbsp;1<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;convt_overflow&nbsp;&nbsp;=&nbsp;2<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;OTHERS&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;3.<br />
+&nbsp;&nbsp;IF&nbsp;sy-subrc&nbsp;=&nbsp;0.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;yy&nbsp;=&nbsp;e_yymm+0(4).<br />
+&nbsp;&nbsp;&nbsp;&nbsp;mm&nbsp;=&nbsp;e_yymm+4(2).<br />
+&nbsp;&nbsp;ELSEIF&nbsp;e_yymm&nbsp;CA&nbsp;'/'.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;SPLIT&nbsp;e_yymm&nbsp;AT&nbsp;'/'&nbsp;INTO:&nbsp;yy&nbsp;mm.<br />
+&nbsp;&nbsp;ELSEIF&nbsp;e_yymm&nbsp;CA&nbsp;'.'.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;SPLIT&nbsp;e_yymm&nbsp;AT&nbsp;'.'&nbsp;INTO:&nbsp;yy&nbsp;mm.<br />
+&nbsp;&nbsp;ELSE.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;CONCATENATE&nbsp;i_type&nbsp;'格式錯誤'&nbsp;INTO&nbsp;e_msg.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;EXIT.<br />
+&nbsp;&nbsp;ENDIF.<br />
+<br />
+&nbsp;&nbsp;SHIFT&nbsp;mm&nbsp;RIGHT&nbsp;DELETING&nbsp;TRAILING&nbsp;space.<br />
+&nbsp;&nbsp;OVERLAY&nbsp;mm&nbsp;WITH&nbsp;'00'&nbsp;ONLY&nbsp;space.<br />
+&nbsp;&nbsp;CONCATENATE&nbsp;yy&nbsp;mm&nbsp;INTO&nbsp;e_yymm.<br />
+<br />
+&nbsp;&nbsp;l_len&nbsp;=&nbsp;strlen(&nbsp;e_yymm&nbsp;).<br />
+&nbsp;&nbsp;IF&nbsp;l_len&nbsp;&lt;&gt;&nbsp;6<br />
+&nbsp;&nbsp;OR&nbsp;yy&nbsp;=&nbsp;0.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;CONCATENATE&nbsp;i_type&nbsp;'格式錯誤'&nbsp;INTO&nbsp;e_msg.<br />
+&nbsp;&nbsp;ENDIF.<br />
+ENDFORM.<br />
+   </div>
+   <div class="codeComment">
+*&---------------------------------------------------------------------*<br />
+*&&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Form&nbsp;&nbsp;CHECK_DATE_FORMAT<br />
+*&---------------------------------------------------------------------*<br />
+   </div>
+   <div class="code">
+FORM check_date_format  CHANGING p_ketdat.<br />
+&nbsp;&nbsp;DATA:&nbsp;result_tab&nbsp;TYPE&nbsp;match_result_tab.<br />
+&nbsp;&nbsp;DATA:&nbsp;patt&nbsp;&nbsp;TYPE&nbsp;string&nbsp;VALUE&nbsp;'/'.<br />
+&nbsp;&nbsp;DATA:pos1&nbsp;TYPE&nbsp;i,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;pos2&nbsp;TYPE&nbsp;i.<br />
+&nbsp;&nbsp;DATA:w_lines&nbsp;LIKE&nbsp;sy-tabix.<br />
+&nbsp;&nbsp;DATA:w_date(10)&nbsp;TYPE&nbsp;c.<br />
+&nbsp;&nbsp;DATA&nbsp;w_date_d&nbsp;TYPE&nbsp;d.<br />
+<br />
+<br />
+&nbsp;&nbsp;REFRESH&nbsp;result_tab.<br />
+&nbsp;&nbsp;FIND&nbsp;ALL&nbsp;OCCURRENCES&nbsp;OF&nbsp;patt&nbsp;IN&nbsp;p_ketdat<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;RESULTS&nbsp;result_tab.<br />
+<br />
+<br />
+&nbsp;&nbsp;DESCRIBE&nbsp;TABLE&nbsp;result_tab&nbsp;LINES&nbsp;w_lines.<br />
+   </div>
+   <div class="codeComment">
+**只能有兩個'/&nbsp;'<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;IF&nbsp;w_lines&nbsp;=&nbsp;2.<br />
+   </div>
+   <div class="codeComment">
+**只能有數字,/,跟空白<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;p_ketdat&nbsp;CO&nbsp;'/0123456789&nbsp;'.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SHIFT&nbsp;p_ketdat&nbsp;RIGHT&nbsp;DELETING&nbsp;TRAILING&nbsp;space.<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;READ&nbsp;TABLE&nbsp;result_tab&nbsp;INTO&nbsp;DATA(w_tab)&nbsp;INDEX&nbsp;1.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;pos1&nbsp;=&nbsp;w_tab-offset.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;READ&nbsp;TABLE&nbsp;result_tab&nbsp;INTO&nbsp;w_tab&nbsp;INDEX&nbsp;2.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;pos2&nbsp;=&nbsp;w_tab-offset.<br />
+   </div>
+   <div class="codeComment">
+**如果月份小於十，有0或無0都要可以接受<br />
+*Ex:&nbsp;2017/8/30&nbsp;&nbsp;-&gt;&nbsp;系統補0<br />
+*2017/08/30<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SHIFT&nbsp;p_ketdat&nbsp;LEFT&nbsp;DELETING&nbsp;LEADING&nbsp;space.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;DATA(w_len)&nbsp;=&nbsp;pos2&nbsp;-&nbsp;pos1.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;w_len&nbsp;=&nbsp;2.&nbsp;"yyyy/m/d&nbsp;or&nbsp;yyyy/m/dd<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;w_date(5)&nbsp;=&nbsp;p_ketdat(5).&nbsp;&nbsp;&nbsp;"yyyy/<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;w_date+5(1)&nbsp;=&nbsp;'0'.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"0<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;w_date+6(1)&nbsp;=&nbsp;p_ketdat+5(1).&nbsp;"M<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;w_date+7(1)&nbsp;=&nbsp;p_ketdat+6(1).&nbsp;"/<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;w_date+8(2)&nbsp;=&nbsp;p_ketdat+7(2).&nbsp;"dd<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SHIFT&nbsp;w_date+8(2)&nbsp;RIGHT&nbsp;DELETING&nbsp;TRAILING&nbsp;space.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;OVERLAY&nbsp;w_date+8(2)&nbsp;WITH&nbsp;'00'&nbsp;ONLY&nbsp;space.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ELSEIF&nbsp;w_len&nbsp;=&nbsp;3.&nbsp;"yyyy/mm/d&nbsp;or&nbsp;yyyy/mm/dd<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;w_date&nbsp;=&nbsp;p_ketdat.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;w_date+8(2)&nbsp;=&nbsp;p_ketdat+8(2).&nbsp;"dd<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SHIFT&nbsp;w_date+8(2)&nbsp;RIGHT&nbsp;DELETING&nbsp;TRAILING&nbsp;space.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;OVERLAY&nbsp;w_date+8(2)&nbsp;WITH&nbsp;'00'&nbsp;ONLY&nbsp;space.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;OVERLAY&nbsp;w_date&nbsp;WITH&nbsp;'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'&nbsp;ONLY&nbsp;'/'.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CONDENSE&nbsp;w_date&nbsp;NO-GAPS.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;p_ketdat&nbsp;=&nbsp;w_date.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+<br />
+&nbsp;&nbsp;ENDIF.<br />
+ENDFORM.<br />
+   </div>
+   <div class="codeComment">
+*&---------------------------------------------------------------------*<br />
+*&&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Form&nbsp;&nbsp;CHECK_PLAUSIBILITY<br />
+*&---------------------------------------------------------------------*<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;text<br />
+*----------------------------------------------------------------------*<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--&gt;P_W_DATE_D&nbsp;&nbsp;text<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;--P_P_LIGHT&nbsp;&nbsp;text<br />
+*----------------------------------------------------------------------*<br />
+   </div>
+   <div class="code">
+FORM check_plausibility  USING    i_type<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CHANGING&nbsp;e_date<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;e_msg.<br />
+&nbsp;&nbsp;DATA:w_date_d&nbsp;TYPE&nbsp;d.<br />
+<br />
+&nbsp;&nbsp;CLEAR&nbsp;e_msg.<br />
+&nbsp;&nbsp;CHECK&nbsp;e_date&nbsp;IS&nbsp;NOT&nbsp;INITIAL.<br />
+<br />
+&nbsp;&nbsp;WRITE&nbsp;e_date&nbsp;TO&nbsp;w_date_d.<br />
+<br />
+   </div>
+   <div class="codeComment">
+**合理日期檢查<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;CALL&nbsp;FUNCTION&nbsp;'DATE_CHECK_PLAUSIBILITY'<br />
+&nbsp;&nbsp;&nbsp;&nbsp;EXPORTING<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;date&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;w_date_d<br />
+&nbsp;&nbsp;&nbsp;&nbsp;EXCEPTIONS<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;plausibility_check_failed&nbsp;=&nbsp;1<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;OTHERS&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;2.<br />
+&nbsp;&nbsp;IF&nbsp;sy-subrc&nbsp;&lt;&gt;&nbsp;0.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;CONCATENATE&nbsp;i_type&nbsp;'格式錯誤'&nbsp;INTO&nbsp;e_msg.<br />
+&nbsp;&nbsp;ENDIF.<br />
+ENDFORM.<br />
+   </div>
+   <div class="codeComment">
+*&---------------------------------------------------------------------*<br />
+*&&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Form&nbsp;&nbsp;CHECK_YYYY<br />
+*&---------------------------------------------------------------------*<br />
+   </div>
+   <div class="code">
+FORM check_yyyy  USING    i_type<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;i_date<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CHANGING&nbsp;e_msg.<br />
+&nbsp;&nbsp;CLEAR:&nbsp;e_msg.<br />
+&nbsp;&nbsp;CHECK&nbsp;i_date&nbsp;IS&nbsp;NOT&nbsp;INITIAL.<br />
+   </div>
+   <div class="codeComment">
+*檢查前四碼是否為年yyyy<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;IF&nbsp;i_date&nbsp;CA&nbsp;'/'.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;SPLIT&nbsp;i_date&nbsp;AT&nbsp;'/'&nbsp;INTO:&nbsp;DATA(yy)&nbsp;&nbsp;DATA(mm)&nbsp;DATA(dd).<br />
+&nbsp;&nbsp;&nbsp;&nbsp;DATA(l_len)&nbsp;=&nbsp;strlen(&nbsp;yy&nbsp;).<br />
+&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;l_len&nbsp;&lt;&gt;&nbsp;4.&nbsp;&nbsp;"YYYY<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CONCATENATE&nbsp;i_type&nbsp;'格式錯誤'&nbsp;INTO&nbsp;e_msg.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+&nbsp;&nbsp;ENDIF.<br />
+ENDFORM.<br />
+   </div>
+   <div class="codeComment">
+*&---------------------------------------------------------------------*<br />
+*&&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Form&nbsp;&nbsp;CONVERT_TO_NUM<br />
+*&---------------------------------------------------------------------*<br />
+   </div>
+   <div class="code">
+FORM convert_to_num  CHANGING e_qty_c e_qty_n<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;e_msg.<br />
+&nbsp;&nbsp;"DATA:&nbsp;num&nbsp;TYPE&nbsp;p.<br />
+&nbsp;&nbsp;DATA:&nbsp;lv_num_dec&nbsp;TYPE&nbsp;decfloat34.&nbsp;&nbsp;"或:&nbsp;TYPE&nbsp;p&nbsp;DECIMALS&nbsp;6<br />
+&nbsp;&nbsp;CLEAR:&nbsp;e_msg.<br />
+<br />
+&nbsp;&nbsp;"&nbsp;先清格式（移除逗號、空白）<br />
+&nbsp;&nbsp;PERFORM&nbsp;change_chr_format&nbsp;CHANGING&nbsp;e_qty_c.&nbsp;&nbsp;"移掉千分位逗號並壓縮空白<br />
+<br />
+&nbsp;&nbsp;"&nbsp;允許像&nbsp;'.43'&nbsp;這種寫法&nbsp;→&nbsp;補&nbsp;0<br />
+&nbsp;&nbsp;IF&nbsp;e_qty_c&nbsp;CP&nbsp;'.*'&nbsp;AND&nbsp;e_qty_c(1)&nbsp;=&nbsp;'.'.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;e_qty_c&nbsp;=&nbsp;|0{&nbsp;e_qty_c&nbsp;}|.<br />
+&nbsp;&nbsp;ENDIF.<br />
+<br />
+&nbsp;&nbsp;"&nbsp;嘗試轉成十進位浮點/具小數的&nbsp;Packed<br />
+&nbsp;&nbsp;TRY.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;lv_num_dec&nbsp;=&nbsp;CONV&nbsp;decfloat34(&nbsp;e_qty_c&nbsp;).<br />
+&nbsp;&nbsp;&nbsp;&nbsp;CATCH&nbsp;cx_sy_conversion_no_number&nbsp;cx_sy_conversion_overflow.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;e_msg&nbsp;=&nbsp;'轉出數量格式錯誤'.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;RETURN.<br />
+&nbsp;&nbsp;ENDTRY.<br />
+<br />
+&nbsp;&nbsp;"&nbsp;合法性檢查（含小數）<br />
+&nbsp;&nbsp;IF&nbsp;lv_num_dec&nbsp;&lt;=&nbsp;0.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;e_msg&nbsp;=&nbsp;'轉出數量不可&nbsp;&lt;=&nbsp;0'.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;RETURN.<br />
+&nbsp;&nbsp;ENDIF.<br />
+<br />
+&nbsp;&nbsp;"&nbsp;回寫數值欄位與字串欄位<br />
+&nbsp;&nbsp;e_qty_n&nbsp;=&nbsp;CONV&nbsp;#(&nbsp;lv_num_dec&nbsp;).&nbsp;&nbsp;&nbsp;"型別會依&nbsp;ZTSD0100-ZQTY&nbsp;自動轉<br />
+&nbsp;&nbsp;e_qty_c&nbsp;=&nbsp;|{&nbsp;lv_num_dec&nbsp;}|.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"或用適合的格式字串<br />
+&nbsp;&nbsp;SHIFT&nbsp;e_qty_c&nbsp;LEFT&nbsp;DELETING&nbsp;LEADING&nbsp;space.<br />
+<br />
+&nbsp;&nbsp;""&nbsp;&nbsp;CALL&nbsp;FUNCTION&nbsp;'MOVE_CHAR_TO_NUM'<br />
+&nbsp;&nbsp;""&nbsp;&nbsp;&nbsp;&nbsp;EXPORTING<br />
+&nbsp;&nbsp;""&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;chr&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;e_qty_c<br />
+&nbsp;&nbsp;""&nbsp;&nbsp;&nbsp;&nbsp;IMPORTING<br />
+&nbsp;&nbsp;""&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;num&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;num<br />
+&nbsp;&nbsp;""&nbsp;&nbsp;&nbsp;&nbsp;EXCEPTIONS<br />
+&nbsp;&nbsp;""&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;convt_no_number&nbsp;=&nbsp;1<br />
+&nbsp;&nbsp;""&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;convt_overflow&nbsp;&nbsp;=&nbsp;2<br />
+&nbsp;&nbsp;""&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;OTHERS&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;3.<br />
+&nbsp;&nbsp;""&nbsp;&nbsp;IF&nbsp;sy-subrc&nbsp;&lt;&gt;&nbsp;0.<br />
+&nbsp;&nbsp;""&nbsp;&nbsp;&nbsp;&nbsp;e_msg&nbsp;=&nbsp;'轉出數量格式錯誤'.<br />
+&nbsp;&nbsp;""&nbsp;&nbsp;ELSE.<br />
+&nbsp;&nbsp;""&nbsp;&nbsp;&nbsp;&nbsp;PERFORM&nbsp;change_chr_format&nbsp;CHANGING&nbsp;e_qty_c.<br />
+&nbsp;&nbsp;""<br />
+&nbsp;&nbsp;""&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;num&nbsp;&lt;=&nbsp;0.<br />
+&nbsp;&nbsp;""&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;e_msg&nbsp;=&nbsp;'轉出數量不可&nbsp;&lt;=&nbsp;0'.<br />
+&nbsp;&nbsp;""&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+&nbsp;&nbsp;""&nbsp;&nbsp;&nbsp;&nbsp;e_qty_n&nbsp;=&nbsp;e_qty_c.<br />
+&nbsp;&nbsp;""&nbsp;&nbsp;&nbsp;&nbsp;SHIFT&nbsp;e_qty_c&nbsp;LEFT&nbsp;DELETING&nbsp;LEADING&nbsp;space.<br />
+&nbsp;&nbsp;""&nbsp;&nbsp;ENDIF.<br />
+<br />
+ENDFORM.<br />
+   </div>
+   <div class="codeComment">
+*&---------------------------------------------------------------------*<br />
+*&&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Form&nbsp;&nbsp;CHANGE_CHR_FORMAT<br />
+*&---------------------------------------------------------------------*<br />
+   </div>
+   <div class="code">
+FORM change_chr_format CHANGING p_chr.<br />
+&nbsp;&nbsp;CONSTANTS:<br />
+&nbsp;&nbsp;&nbsp;&nbsp;con_comma&nbsp;TYPE&nbsp;c&nbsp;VALUE&nbsp;','.<br />
+<br />
+&nbsp;&nbsp;CONDENSE&nbsp;p_chr&nbsp;NO-GAPS.<br />
+   </div>
+   <div class="codeComment">
+*清除,千分位<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;OVERLAY&nbsp;p_chr&nbsp;WITH&nbsp;'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'&nbsp;ONLY&nbsp;&nbsp;con_comma.<br />
+<br />
+&nbsp;&nbsp;CONDENSE&nbsp;p_chr&nbsp;NO-GAPS.<br />
+<br />
+ENDFORM.<br />
+   </div>
+   <div class="codeComment">
+*&---------------------------------------------------------------------*<br />
+*&&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Form&nbsp;&nbsp;CHECK_ZQTY<br />
+*&---------------------------------------------------------------------*<br />
+   </div>
+   <div class="code">
+FORM check_zqty  USING    i_99 STRUCTURE ztsd0099<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;i_t_qty<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;i_p_qty<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;i_n_qty<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CHANGING&nbsp;e_msg.<br />
+&nbsp;&nbsp;DATA:&nbsp;lqqty07&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;TYPE&nbsp;zcn7qty,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;lqqty08&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;TYPE&nbsp;zcn7qty,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;lcvalu1(16),<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;lcvalu2(16),<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;lqscrap&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;TYPE&nbsp;zqty100,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;lqtotal&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;TYPE&nbsp;zqty100,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ls101&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;TYPE&nbsp;ztsd0101,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ls100&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;TYPE&nbsp;ztsd0100.<br />
+&nbsp;&nbsp;DATA:&nbsp;l_updflag&nbsp;TYPE&nbsp;c.<br />
+<br />
+&nbsp;&nbsp;CLEAR:&nbsp;e_msg.<br />
+<br />
+<br />
+   </div>
+   <div class="codeComment">
+*已存在的轉出明細加總<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;SELECT&nbsp;*<br />
+&nbsp;&nbsp;&nbsp;&nbsp;INTO&nbsp;ls100<br />
+&nbsp;&nbsp;&nbsp;&nbsp;FROM&nbsp;ztsd0100<br />
+&nbsp;&nbsp;&nbsp;WHERE&nbsp;vtweg&nbsp;=&nbsp;i_99-vtweg<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;zxqno&nbsp;=&nbsp;i_99-zxqno<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;zxqseq&nbsp;=&nbsp;i_99-zxqseq<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;zopr_new&nbsp;&lt;&gt;&nbsp;'ZXQ08A'.&nbsp;&nbsp;"&nbsp;有被迴轉處理過的&nbsp;不要再撈進來<br />
+&nbsp;&nbsp;&nbsp;&nbsp;CASE&nbsp;ls100-zptyp.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;WHEN&nbsp;'P'.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;lqqty07&nbsp;=&nbsp;lqqty07&nbsp;+&nbsp;ls100-zqty.&nbsp;&nbsp;&nbsp;"收款後轉出&nbsp;:P<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;WHEN&nbsp;'N'.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;lqqty08&nbsp;=&nbsp;lqqty08&nbsp;+&nbsp;ls100-zqty.&nbsp;&nbsp;&nbsp;"收款前轉出&nbsp;:N<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ENDCASE.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;lqtotal&nbsp;=&nbsp;lqtotal&nbsp;+&nbsp;ls100-zqty.<br />
+&nbsp;&nbsp;ENDSELECT.<br />
+&nbsp;&nbsp;lqtotal&nbsp;=&nbsp;lqtotal&nbsp;+&nbsp;i_t_qty.<br />
+<br />
+&nbsp;&nbsp;lqqty07&nbsp;=&nbsp;lqqty07&nbsp;+&nbsp;i_p_qty.&nbsp;&nbsp;&nbsp;"收款後轉出&nbsp;:P<br />
+&nbsp;&nbsp;lqqty08&nbsp;=&nbsp;lqqty08&nbsp;+&nbsp;i_n_qty.&nbsp;&nbsp;&nbsp;"收款前轉出&nbsp;:N<br />
+<br />
+&nbsp;&nbsp;i_99-zp653bqty&nbsp;=&nbsp;lqqty07.<br />
+&nbsp;&nbsp;i_99-zn653bqty&nbsp;=&nbsp;lqqty08.<br />
+&nbsp;&nbsp;i_99-zqtybalace&nbsp;=&nbsp;i_99-zqty&nbsp;-&nbsp;i_99-zn653bqty&nbsp;-&nbsp;i_99-zp653bqty&nbsp;-<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;i_99-zdn3qty&nbsp;-&nbsp;i_99-zdn4qty&nbsp;-&nbsp;i_99-zcn5qty&nbsp;+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;i_99-zdn6qty.<br />
+<br />
+&nbsp;&nbsp;IF&nbsp;i_99-zdn1qty&nbsp;=&nbsp;0&nbsp;AND&nbsp;i_99-zdn3qty&nbsp;=&nbsp;0&nbsp;AND&nbsp;i_99-zdn4qty&nbsp;=&nbsp;0.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;lqtotal&nbsp;&gt;&nbsp;i_99-zqty.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;WRITE&nbsp;lqtotal&nbsp;TO&nbsp;lcvalu1&nbsp;NO-GROUPING&nbsp;LEFT-JUSTIFIED.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CONDENSE&nbsp;lcvalu1.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;WRITE&nbsp;i_99-zqty&nbsp;TO&nbsp;lcvalu2&nbsp;NO-GROUPING&nbsp;LEFT-JUSTIFIED.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CONDENSE&nbsp;lcvalu2.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;MESSAGE&nbsp;e038(zmm01)&nbsp;WITH&nbsp;i_99-zxqno&nbsp;i_99-zxqseq&nbsp;lcvalu1&nbsp;lcvalu2&nbsp;INTO&nbsp;e_msg.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+&nbsp;&nbsp;ELSE.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;lqscrap&nbsp;=&nbsp;i_99-zdn3qty&nbsp;&nbsp;+&nbsp;i_99-zdn4qty&nbsp;+&nbsp;i_99-zcn5qty&nbsp;+&nbsp;i_99-zdn6qty.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;lqtotal&nbsp;=&nbsp;lqtotal&nbsp;+&nbsp;lqscrap.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;lqtotal&nbsp;&gt;&nbsp;i_99-zqty.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;WRITE&nbsp;lqtotal&nbsp;TO&nbsp;lcvalu1&nbsp;NO-GROUPING&nbsp;LEFT-JUSTIFIED.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CONDENSE&nbsp;lcvalu1.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;WRITE&nbsp;i_99-zqty&nbsp;TO&nbsp;lcvalu2&nbsp;NO-GROUPING&nbsp;LEFT-JUSTIFIED.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CONDENSE&nbsp;lcvalu2.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;MESSAGE&nbsp;e039(zmm01)&nbsp;WITH&nbsp;i_99-zxqno&nbsp;i_99-zxqseq&nbsp;lcvalu1&nbsp;lcvalu2&nbsp;INTO&nbsp;e_msg.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+&nbsp;&nbsp;ENDIF.<br />
+&nbsp;&nbsp;IF&nbsp;i_99-zcn2qty&nbsp;=&nbsp;0&nbsp;AND&nbsp;i_99-zcn7qty&nbsp;=&nbsp;0.<br />
+&nbsp;&nbsp;ELSE.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;lqtotal&nbsp;=&nbsp;i_99-zcn2qty&nbsp;&nbsp;+&nbsp;i_99-zcn7qty.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;lqtotal&nbsp;&gt;&nbsp;lqqty07.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;WRITE&nbsp;lqqty07&nbsp;TO&nbsp;lcvalu1&nbsp;NO-GROUPING&nbsp;LEFT-JUSTIFIED.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CONDENSE&nbsp;lcvalu1.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;WRITE&nbsp;lqtotal&nbsp;TO&nbsp;lcvalu2&nbsp;NO-GROUPING&nbsp;LEFT-JUSTIFIED.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CONDENSE&nbsp;lcvalu2.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;MESSAGE&nbsp;e040(zmm01)&nbsp;WITH&nbsp;i_99-zxqno&nbsp;i_99-zxqseq&nbsp;lcvalu1&nbsp;lcvalu2&nbsp;INTO&nbsp;e_msg.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+&nbsp;&nbsp;ENDIF.<br />
+<br />
+ENDFORM.<br />
+   </div>
+   <div class="codeComment">
+*&---------------------------------------------------------------------*<br />
+*&&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Form&nbsp;&nbsp;OUTPUT_ALV<br />
+*&---------------------------------------------------------------------*<br />
+   </div>
+   <div class="code">
+FORM output_alv USING i_type.<br />
+<br />
+&nbsp;&nbsp;REFRESH:&nbsp;gt_fieldcat,gt_extab,gt_events,gt_sortinfo.<br />
+   </div>
+   <div class="codeComment">
+**顯示欄位資訊<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;PERFORM&nbsp;crt_field&nbsp;USING&nbsp;i_type.<br />
+   </div>
+   <div class="codeComment">
+**輸出設定<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;PERFORM&nbsp;layout_init&nbsp;USING&nbsp;l_layout.<br />
+<br />
+   </div>
+   <div class="codeComment">
+**按鈕控制<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;PERFORM&nbsp;exclude_but&nbsp;USING&nbsp;i_type&nbsp;CHANGING&nbsp;gt_extab.<br />
+<br />
+&nbsp;&nbsp;g_title&nbsp;=&nbsp;TEXT-t02.<br />
+<br />
+&nbsp;&nbsp;CASE&nbsp;i_type.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;WHEN&nbsp;'XQ'.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CALL&nbsp;FUNCTION&nbsp;'REUSE_ALV_GRID_DISPLAY'<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;EXPORTING<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;i_callback_program&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;sy-repid<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;i_callback_pf_status_set&nbsp;=&nbsp;'PF_STATUS_SET'<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;i_grid_title&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;g_title<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;is_layout&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;l_layout<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;it_fieldcat&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;gt_fieldcat[]<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;it_sort&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;gt_sortinfo[]<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;it_events&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;gt_events[]<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;i_save&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;'A'<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;is_variant&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;g_variant<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;i_callback_user_command&nbsp;&nbsp;=&nbsp;'USER_COMMAND'<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;TABLES<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;t_outtab&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;itxq[]<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;EXCEPTIONS<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;program_error&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;1<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;OTHERS&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;2.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;WHEN&nbsp;'LOG'.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SORT&nbsp;gt_alv&nbsp;BY&nbsp;zcnt.&nbsp;&nbsp;"依上傳順序顯示LOG<br />
+   </div>
+   <div class="codeComment">
+*&nbsp;Kiwi<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;gt_alv_log[]&nbsp;=&nbsp;gt_alv[].<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;DELETE&nbsp;gt_alv_log&nbsp;WHERE&nbsp;light&nbsp;=&nbsp;'3'.<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CALL&nbsp;FUNCTION&nbsp;'REUSE_ALV_GRID_DISPLAY'<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;EXPORTING<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;i_callback_program&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;sy-repid<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;i_callback_pf_status_set&nbsp;=&nbsp;'PF_STATUS_SET'<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;i_grid_title&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;g_title<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;is_layout&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;l_layout<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;it_fieldcat&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;gt_fieldcat[]<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;it_sort&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;gt_sortinfo[]<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;it_events&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;gt_events[]<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;i_save&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;'A'<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;is_variant&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;g_variant<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;i_screen_start_column&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;10<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;i_screen_start_line&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;3<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;i_screen_end_column&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;150<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;i_screen_end_line&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;20<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;i_callback_user_command&nbsp;&nbsp;=&nbsp;'USER_COMMAND'<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;it_excluding&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;gt_extab[]<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;TABLES<br />
+   </div>
+   <div class="codeComment">
+*&nbsp;Kiwi<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;t_outtab&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;gt_alv[]<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;t_outtab&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;gt_alv_log[]<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;EXCEPTIONS<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;program_error&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;1<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;OTHERS&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;2.<br />
+&nbsp;&nbsp;ENDCASE.<br />
+<br />
+ENDFORM.<br />
+   </div>
+   <div class="codeComment">
+*&---------------------------------------------------------------------*<br />
+*&&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Form&nbsp;&nbsp;CRT_FIELD<br />
+*&---------------------------------------------------------------------*<br />
+   </div>
+   <div class="code">
+FORM crt_field USING i_type.<br />
+&nbsp;&nbsp;PERFORM&nbsp;assign_field&nbsp;USING&nbsp;'LIGHT'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;''&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'X'&nbsp;''.<br />
+&nbsp;&nbsp;PERFORM&nbsp;assign_field&nbsp;USING&nbsp;'MESSAGE'&nbsp;&nbsp;&nbsp;&nbsp;TEXT-f01&nbsp;'X'&nbsp;''.<br />
+&nbsp;&nbsp;PERFORM&nbsp;assign_field&nbsp;USING&nbsp;'VTWEG'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;TEXT-f02&nbsp;'X'&nbsp;''.<br />
+&nbsp;&nbsp;PERFORM&nbsp;assign_field&nbsp;USING&nbsp;'WERKS'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;TEXT-f18&nbsp;'X'&nbsp;''.<br />
+&nbsp;&nbsp;PERFORM&nbsp;assign_field&nbsp;USING&nbsp;'ZXQNO'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;TEXT-f03&nbsp;'X'&nbsp;''.<br />
+&nbsp;&nbsp;IF&nbsp;i_type&nbsp;=&nbsp;'LOG'.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;PERFORM&nbsp;assign_field&nbsp;USING&nbsp;'ZXQSEQ'&nbsp;&nbsp;&nbsp;TEXT-f04&nbsp;'X'&nbsp;''.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;PERFORM&nbsp;assign_field&nbsp;USING&nbsp;'ZYM'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;TEXT-f05&nbsp;''&nbsp;''.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;PERFORM&nbsp;assign_field&nbsp;USING&nbsp;'ZPERIOD'&nbsp;&nbsp;TEXT-f06&nbsp;''&nbsp;''.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;PERFORM&nbsp;assign_field&nbsp;USING&nbsp;'ZCORD'&nbsp;&nbsp;&nbsp;&nbsp;TEXT-f07&nbsp;''&nbsp;''.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;PERFORM&nbsp;assign_field&nbsp;USING&nbsp;'ZQTY'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;TEXT-f08&nbsp;''&nbsp;''.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;PERFORM&nbsp;assign_field&nbsp;USING&nbsp;'ZSDAT'&nbsp;&nbsp;&nbsp;&nbsp;TEXT-f09&nbsp;''&nbsp;''.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;PERFORM&nbsp;assign_field&nbsp;USING&nbsp;'ZSONO'&nbsp;&nbsp;&nbsp;&nbsp;TEXT-f10&nbsp;''&nbsp;''.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;PERFORM&nbsp;assign_field&nbsp;USING&nbsp;'ZSOSEQ'&nbsp;&nbsp;&nbsp;TEXT-f11&nbsp;''&nbsp;''.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;PERFORM&nbsp;assign_field&nbsp;USING&nbsp;'ZPNO'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;TEXT-f12&nbsp;''&nbsp;''.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;PERFORM&nbsp;assign_field&nbsp;USING&nbsp;'ZRDAT'&nbsp;&nbsp;&nbsp;&nbsp;TEXT-f13&nbsp;''&nbsp;''.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;PERFORM&nbsp;assign_field&nbsp;USING&nbsp;'ZREM2'&nbsp;&nbsp;&nbsp;&nbsp;TEXT-f14&nbsp;''&nbsp;''.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;PERFORM&nbsp;assign_field&nbsp;USING&nbsp;'ZINVo'&nbsp;&nbsp;&nbsp;&nbsp;TEXT-f15&nbsp;''&nbsp;''.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;PERFORM&nbsp;assign_field&nbsp;USING&nbsp;'ZETD'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;TEXT-f16&nbsp;''&nbsp;''.<br />
+&nbsp;&nbsp;ENDIF.<br />
+ENDFORM.<br />
+<br />
+   </div>
+   <div class="codeComment">
+*&---------------------------------------------------------------------*<br />
+*&&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Form&nbsp;&nbsp;ASSIGN_FIELD<br />
+*&---------------------------------------------------------------------*<br />
+   </div>
+   <div class="code">
+FORM assign_field USING i_field i_text i_key i_cfield.<br />
+&nbsp;&nbsp;DATA:&nbsp;st_fieldcate&nbsp;TYPE&nbsp;slis_fieldcat_alv.<br />
+   </div>
+   <div class="codeComment">
+*<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;st_fieldcate-fieldname&nbsp;&nbsp;=&nbsp;i_field.<br />
+&nbsp;&nbsp;st_fieldcate-seltext_l&nbsp;&nbsp;=&nbsp;i_text.<br />
+&nbsp;&nbsp;st_fieldcate-key&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;i_key.<br />
+&nbsp;&nbsp;st_fieldcate-cfieldname&nbsp;=&nbsp;i_cfield.<br />
+&nbsp;&nbsp;APPEND&nbsp;st_fieldcate&nbsp;TO&nbsp;gt_fieldcat.<br />
+&nbsp;&nbsp;CLEAR&nbsp;&nbsp;st_fieldcate.<br />
+<br />
+ENDFORM.<br />
+   </div>
+   <div class="codeComment">
+*&---------------------------------------------------------------------*<br />
+*&&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Form&nbsp;&nbsp;LAYOUT_INIT<br />
+*&---------------------------------------------------------------------*<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;text<br />
+*----------------------------------------------------------------------*<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--&gt;P_L_LAYOUT&nbsp;&nbsp;text<br />
+*----------------------------------------------------------------------*<br />
+   </div>
+   <div class="code">
+FORM layout_init USING p_l_layout TYPE slis_layout_alv.<br />
+&nbsp;&nbsp;p_l_layout-colwidth_optimize&nbsp;=&nbsp;'X'.<br />
+&nbsp;&nbsp;p_l_layout-coltab_fieldname&nbsp;=&nbsp;'COLINFO'.<br />
+&nbsp;&nbsp;p_l_layout-info_fieldname&nbsp;=&nbsp;'LINE_COLOR'.<br />
+&nbsp;&nbsp;p_l_layout-lights_fieldname&nbsp;=&nbsp;'LIGHT'.<br />
+ENDFORM.<br />
+<br />
+   </div>
+   <div class="codeComment">
+*&---------------------------------------------------------------------*<br />
+*&&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Form&nbsp;&nbsp;EXCLUDE_BUT<br />
+*&---------------------------------------------------------------------*<br />
+   </div>
+   <div class="code">
+FORM exclude_but  USING i_type CHANGING pt_extab TYPE slis_t_extab.<br />
+&nbsp;&nbsp;DATA:w_slis_extab&nbsp;TYPE&nbsp;slis_extab.<br />
+&nbsp;&nbsp;REFRESH&nbsp;pt_extab.<br />
+<br />
+&nbsp;&nbsp;IF&nbsp;i_type&nbsp;=&nbsp;'LOG'.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;w_slis_extab-fcode&nbsp;=&nbsp;'&LOG'.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;COLLECT&nbsp;w_slis_extab&nbsp;INTO&nbsp;pt_extab.<br />
+&nbsp;&nbsp;ENDIF.<br />
+<br />
+ENDFORM.<br />
+   </div>
+   <div class="codeComment">
+*&---------------------------------------------------------------------*<br />
+*&&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Form&nbsp;&nbsp;user_command<br />
+*&---------------------------------------------------------------------*<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;text<br />
+*----------------------------------------------------------------------*<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--&gt;W_UCOMM&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;text<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--&gt;LS_SELFIELD&nbsp;&nbsp;text<br />
+*----------------------------------------------------------------------*<br />
+   </div>
+   <div class="code">
+FORM user_command USING w_ucomm LIKE sy-ucomm<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ls_selfield&nbsp;TYPE&nbsp;slis_selfield.<br />
+&nbsp;&nbsp;CASE&nbsp;w_ucomm.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;WHEN&nbsp;'&LOG'.&nbsp;&nbsp;"display&nbsp;log<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PERFORM&nbsp;output_alv&nbsp;USING&nbsp;'LOG'.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;WHEN&nbsp;'&IC1'.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;READ&nbsp;TABLE&nbsp;itxq&nbsp;INDEX&nbsp;ls_selfield-tabindex.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;sy-subrc&nbsp;=&nbsp;0.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CASE&nbsp;ls_selfield-fieldname.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;WHEN&nbsp;'ZXQNO'.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SUBMIT&nbsp;ztwbsd0021&nbsp;AND&nbsp;RETURN&nbsp;&nbsp;&nbsp;&nbsp;"ZXQ02<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;WITH&nbsp;pcautho&nbsp;=&nbsp;itxq-vtweg<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;WITH&nbsp;sczxqno&nbsp;=&nbsp;itxq-zxqno.<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ENDCASE.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+&nbsp;&nbsp;ENDCASE.<br />
+<br />
+ENDFORM.                    "user_command<br />
+   </div>
+   <div class="codeComment">
+*---------------------------------------------------------------------*<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FORM&nbsp;PF_STATUS_SET&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*<br />
+*---------------------------------------------------------------------*<br />
+   </div>
+   <div class="code">
+FORM pf_status_set USING  extab TYPE slis_t_extab.<br />
+&nbsp;&nbsp;SET&nbsp;PF-STATUS&nbsp;'ZTWBSD0036'&nbsp;EXCLUDING&nbsp;extab.<br />
+ENDFORM.<br />
+   </div>
+   <div class="codeComment">
+*&---------------------------------------------------------------------*<br />
+*&&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Form&nbsp;&nbsp;PROC_ZTSD0100<br />
+*&---------------------------------------------------------------------*<br />
+   </div>
+   <div class="code">
+FORM proc_ztsd0100  USING    i_vtweg<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;i_zxqno.<br />
+&nbsp;&nbsp;DATA:&nbsp;wt98&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;LIKE&nbsp;ztsd0098,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;it99&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;LIKE&nbsp;ztsd0099&nbsp;OCCURS&nbsp;0&nbsp;WITH&nbsp;HEADER&nbsp;LINE,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;it100&nbsp;&nbsp;&nbsp;&nbsp;LIKE&nbsp;ztsd0100&nbsp;OCCURS&nbsp;0&nbsp;WITH&nbsp;HEADER&nbsp;LINE,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;it100a&nbsp;&nbsp;&nbsp;LIKE&nbsp;ztsd0100a&nbsp;OCCURS&nbsp;0&nbsp;WITH&nbsp;HEADER&nbsp;LINE,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;it100n&nbsp;&nbsp;&nbsp;LIKE&nbsp;ztsd0100n&nbsp;OCCURS&nbsp;0&nbsp;WITH&nbsp;HEADER&nbsp;LINE,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;wt100n&nbsp;&nbsp;&nbsp;LIKE&nbsp;ztsd0100n,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;it101&nbsp;&nbsp;&nbsp;&nbsp;LIKE&nbsp;ztsd0101&nbsp;OCCURS&nbsp;0&nbsp;WITH&nbsp;HEADER&nbsp;LINE,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;max_zseq&nbsp;LIKE&nbsp;ztsd0100n-zseq,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;l_ym&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;LIKE&nbsp;ztsd0100-zym,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;l_per&nbsp;&nbsp;&nbsp;&nbsp;LIKE&nbsp;ztsd0100-zperiod,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;gt_out&nbsp;&nbsp;&nbsp;LIKE&nbsp;gt_alv&nbsp;OCCURS&nbsp;0&nbsp;WITH&nbsp;HEADER&nbsp;LINE,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;itou99&nbsp;&nbsp;&nbsp;LIKE&nbsp;ztsd0099_out&nbsp;OCCURS&nbsp;0&nbsp;WITH&nbsp;HEADER&nbsp;LINE,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ito100&nbsp;&nbsp;&nbsp;LIKE&nbsp;ztsd0100_out&nbsp;OCCURS&nbsp;0&nbsp;WITH&nbsp;HEADER&nbsp;LINE,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ito10a&nbsp;&nbsp;&nbsp;LIKE&nbsp;ztsd0100a_out&nbsp;OCCURS&nbsp;0&nbsp;WITH&nbsp;HEADER&nbsp;LINE,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ito101&nbsp;&nbsp;&nbsp;LIKE&nbsp;ztsd0101_out&nbsp;OCCURS&nbsp;0&nbsp;WITH&nbsp;HEADER&nbsp;LINE,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;stcr98&nbsp;&nbsp;&nbsp;TYPE&nbsp;ztsd0098_crt,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;itcr98&nbsp;&nbsp;&nbsp;TYPE&nbsp;ztsd0098_crt&nbsp;OCCURS&nbsp;0&nbsp;WITH&nbsp;HEADER&nbsp;LINE,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;stou98&nbsp;&nbsp;&nbsp;TYPE&nbsp;ztsd0098_out,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;itou98&nbsp;&nbsp;&nbsp;TYPE&nbsp;ztsd0098_out&nbsp;OCCURS&nbsp;0&nbsp;WITH&nbsp;HEADER&nbsp;LINE,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ituomp&nbsp;&nbsp;&nbsp;LIKE&nbsp;ztmm_uom_map&nbsp;OCCURS&nbsp;0&nbsp;WITH&nbsp;HEADER&nbsp;LINE,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;itsd23&nbsp;&nbsp;&nbsp;LIKE&nbsp;ztsd0023&nbsp;OCCURS&nbsp;0&nbsp;WITH&nbsp;HEADER&nbsp;LINE,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;itsd15&nbsp;&nbsp;&nbsp;LIKE&nbsp;ztsd0015&nbsp;OCCURS&nbsp;0&nbsp;WITH&nbsp;HEADER&nbsp;LINE,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;lnverno&nbsp;&nbsp;TYPE&nbsp;zverno.<br />
+<br />
+   </div>
+   <div class="codeComment">
+*Get&nbsp;已存在的&nbsp;ztsd0098,&nbsp;ztsd0099&nbsp;,ztsd0100,ztsd0100a,ztsd0101<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;REFRESH:&nbsp;it99,it100,it100,it100a,it100n,it101,itou99,ito100,ito10a,ito101,itcr98,itou98,ituomp,itsd23,itsd15,gt_out.<br />
+&nbsp;&nbsp;CLEAR&nbsp;:&nbsp;wt98,stcr98,stou98,wt100n.<br />
+&nbsp;&nbsp;SELECT&nbsp;SINGLE&nbsp;*<br />
+&nbsp;&nbsp;&nbsp;&nbsp;INTO&nbsp;wt98<br />
+&nbsp;&nbsp;&nbsp;&nbsp;FROM&nbsp;ztsd0098<br />
+&nbsp;&nbsp;&nbsp;WHERE&nbsp;vtweg&nbsp;=&nbsp;i_vtweg<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;zxqno&nbsp;=&nbsp;i_zxqno.<br />
+&nbsp;&nbsp;SELECT&nbsp;*<br />
+&nbsp;&nbsp;&nbsp;&nbsp;INTO&nbsp;TABLE&nbsp;it99<br />
+&nbsp;&nbsp;&nbsp;&nbsp;FROM&nbsp;ztsd0099<br />
+&nbsp;&nbsp;&nbsp;WHERE&nbsp;vtweg&nbsp;=&nbsp;i_vtweg<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;zxqno&nbsp;=&nbsp;i_zxqno.<br />
+&nbsp;&nbsp;SELECT&nbsp;*<br />
+&nbsp;&nbsp;&nbsp;&nbsp;INTO&nbsp;TABLE&nbsp;it100<br />
+&nbsp;&nbsp;&nbsp;&nbsp;FROM&nbsp;ztsd0100<br />
+&nbsp;&nbsp;&nbsp;WHERE&nbsp;vtweg&nbsp;=&nbsp;i_vtweg<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;zxqno&nbsp;=&nbsp;i_zxqno.<br />
+&nbsp;&nbsp;SELECT&nbsp;*<br />
+&nbsp;&nbsp;&nbsp;&nbsp;INTO&nbsp;TABLE&nbsp;it100a<br />
+&nbsp;&nbsp;&nbsp;&nbsp;FROM&nbsp;ztsd0100a<br />
+&nbsp;&nbsp;&nbsp;WHERE&nbsp;"vtweg&nbsp;=&nbsp;i_vtweg<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"AND<br />
+&nbsp;&nbsp;&nbsp;&nbsp;zxqno&nbsp;=&nbsp;i_zxqno.<br />
+&nbsp;&nbsp;SELECT&nbsp;*<br />
+&nbsp;&nbsp;&nbsp;&nbsp;INTO&nbsp;TABLE&nbsp;it101<br />
+&nbsp;&nbsp;&nbsp;&nbsp;FROM&nbsp;ztsd0101<br />
+&nbsp;&nbsp;&nbsp;WHERE&nbsp;vtweg&nbsp;=&nbsp;i_vtweg<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;zxqno&nbsp;=&nbsp;i_zxqno.<br />
+<br />
+&nbsp;&nbsp;LOOP&nbsp;AT&nbsp;gt_alv&nbsp;INTO&nbsp;gt_out&nbsp;WHERE&nbsp;vtweg&nbsp;=&nbsp;i_vtweg<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;zxqno&nbsp;=&nbsp;i_zxqno.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;APPEND&nbsp;gt_out.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;CLEAR&nbsp;gt_out.<br />
+&nbsp;&nbsp;ENDLOOP.<br />
+&nbsp;&nbsp;SORT&nbsp;gt_out&nbsp;BY&nbsp;vtweg&nbsp;zxqno&nbsp;zym&nbsp;zperiod&nbsp;zxqseq&nbsp;zcnt.<br />
+&nbsp;&nbsp;LOOP&nbsp;AT&nbsp;gt_out.<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;&nbsp;gt_out-zym&nbsp;&lt;&gt;&nbsp;l_ym<br />
+&nbsp;&nbsp;&nbsp;&nbsp;OR&nbsp;gt_out-zperiod&nbsp;&lt;&gt;&nbsp;l_per.<br />
+   </div>
+   <div class="codeComment">
+*取得目前ztsd0100n序號最大號<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PERFORM&nbsp;get_101n&nbsp;USING&nbsp;gt_out<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CHANGING&nbsp;wt100n.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;wt100n-zseq&nbsp;&nbsp;=&nbsp;wt100n-zseq&nbsp;+&nbsp;1.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;READ&nbsp;TABLE&nbsp;it100n&nbsp;WITH&nbsp;KEY&nbsp;vtweg&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;wt100n-vtweg<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;zbcust&nbsp;&nbsp;&nbsp;=&nbsp;wt100n-zbcust<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;zym&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;wt100n-zym<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;zperiod&nbsp;&nbsp;=&nbsp;wt100n-zperiod.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;sy-subrc&nbsp;&lt;&gt;&nbsp;0.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;APPEND&nbsp;wt100n&nbsp;TO&nbsp;it100n.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ELSE.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;MODIFY&nbsp;it100n&nbsp;INDEX&nbsp;sy-tabix&nbsp;FROM&nbsp;wt100n<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;TRANSPORTING&nbsp;zseq.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+<br />
+   </div>
+   <div class="codeComment">
+*Create&nbsp;轉出明細:it100,it100a<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;MOVE-CORRESPONDING&nbsp;gt_out&nbsp;TO&nbsp;it100.<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;it100-zseq&nbsp;=&nbsp;wt100n-zseq.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;it100-zopr_new&nbsp;=&nbsp;sy-uname.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;it100-zopd_new&nbsp;=&nbsp;sy-datum.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;it100-zotm_new&nbsp;=&nbsp;sy-uzeit.<br />
+   </div>
+   <div class="codeComment">
+*&nbsp;V008&nbsp;Added&nbsp;by&nbsp;Tristan&nbsp;2026/06/09&nbsp;*<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;it100-vtweg&nbsp;=&nbsp;i_vtweg.<br />
+   </div>
+   <div class="codeComment">
+*&nbsp;V008&nbsp;End&nbsp;off&nbsp;*<br />
+<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;MOVE-CORRESPONDING&nbsp;gt_out&nbsp;TO&nbsp;it100a.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;it100a-zseq&nbsp;=&nbsp;it100-zseq.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;it100a-zopr_new&nbsp;=&nbsp;it100-zopr_new.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;it100a-zopd_new&nbsp;=&nbsp;it100-zopd_new.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;it100a-zopt_new&nbsp;=&nbsp;it100-zotm_new.<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;l_ym&nbsp;=&nbsp;it100-zym.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;l_per&nbsp;=&nbsp;it100-zperiod.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;APPEND:&nbsp;it100,it100a.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;CLEAR:&nbsp;it100,it100a.<br />
+&nbsp;&nbsp;ENDLOOP.<br />
+<br />
+   </div>
+   <div class="codeComment">
+*Update&nbsp;XQ&nbsp;ITEM&nbsp;:it99<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;LOOP&nbsp;AT&nbsp;it99.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;CLEAR:&nbsp;it99-zp653bqty,it99-zn653bqty.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;LOOP&nbsp;AT&nbsp;it100&nbsp;WHERE&nbsp;vtweg&nbsp;&nbsp;=&nbsp;it99-vtweg<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;zxqno&nbsp;&nbsp;=&nbsp;it99-zxqno<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;zxqseq&nbsp;=&nbsp;it99-zxqseq.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;it100-zptyp&nbsp;=&nbsp;'N'.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;it99-zn653bqty&nbsp;=&nbsp;it99-zn653bqty&nbsp;+&nbsp;it100-zqty.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ELSEIF&nbsp;it100-zptyp&nbsp;=&nbsp;'P'.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;it99-zp653bqty&nbsp;=&nbsp;it99-zp653bqty&nbsp;+&nbsp;it100-zqty.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ENDLOOP.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;it99-zqtybalace&nbsp;=&nbsp;it99-zqty&nbsp;-&nbsp;it99-zn653bqty&nbsp;-&nbsp;it99-zp653bqty&nbsp;-<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;it99-zdn3qty&nbsp;-&nbsp;it99-zdn4qty&nbsp;-&nbsp;it99-zcn5qty&nbsp;+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;it99-zdn6qty.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;it99-zqtybalace&nbsp;&lt;=&nbsp;0.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;it99-zqtybalace&nbsp;=&nbsp;0.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;it99-zxqwrktyp&nbsp;=&nbsp;'8'.&nbsp;"結案<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ELSE.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;it99-zxqwrktyp&nbsp;=&nbsp;'1'.&nbsp;"開立<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;it99-zopr&nbsp;=&nbsp;sy-uname.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;it99-zopd&nbsp;=&nbsp;sy-datum.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;it99-zopt&nbsp;=&nbsp;sy-uzeit.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;MODIFY&nbsp;it99.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;CLEAR&nbsp;it99.<br />
+&nbsp;&nbsp;ENDLOOP.<br />
+   </div>
+   <div class="codeComment">
+*Update&nbsp;XQ:&nbsp;it98<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;IF&nbsp;wt98&nbsp;IS&nbsp;NOT&nbsp;INITIAL.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;LOOP&nbsp;AT&nbsp;it99&nbsp;WHERE&nbsp;vtweg&nbsp;&nbsp;=&nbsp;wt98-vtweg<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;zxqno&nbsp;&nbsp;=&nbsp;wt98-zxqno<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;zxqwrktyp&nbsp;&lt;&gt;&nbsp;'8'.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;EXIT.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ENDLOOP.<br />
+   </div>
+   <div class="codeComment">
+*XQ項次全部結案時，XQ單為結案<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;sy-subrc&nbsp;&lt;&gt;&nbsp;0.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;wt98-zxqsta&nbsp;=&nbsp;'8'.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;wt98-zopr&nbsp;=&nbsp;sy-uname.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;wt98-zopd&nbsp;=&nbsp;sy-datum.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;wt98-zopt&nbsp;=&nbsp;sy-uzeit.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+&nbsp;&nbsp;ENDIF.<br />
+<br />
+   </div>
+   <div class="codeComment">
+*建立傳輸檔<br />
+*ztsd0098_crt,ztsd0098_out,ztsd0099_out,ztsd0100_out,ztsd0100a_out,ztsd0101_out.<br />
+<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;SELECT&nbsp;*&nbsp;INTO&nbsp;TABLE&nbsp;ituomp&nbsp;FROM&nbsp;ztmm_uom_map.<br />
+&nbsp;&nbsp;SELECT&nbsp;*&nbsp;INTO&nbsp;TABLE&nbsp;itsd23&nbsp;FROM&nbsp;ztsd0023.<br />
+&nbsp;&nbsp;SELECT&nbsp;*&nbsp;INTO&nbsp;TABLE&nbsp;itsd15&nbsp;FROM&nbsp;ztsd0015.<br />
+<br />
+   </div>
+   <div class="codeComment">
+*Create&nbsp;ztsd0098_crt,ztsd0098_out.<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;IF&nbsp;wt98&nbsp;IS&nbsp;NOT&nbsp;INITIAL.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;MOVE-CORRESPONDING&nbsp;wt98&nbsp;TO&nbsp;stou98.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;MOVE-CORRESPONDING&nbsp;wt98&nbsp;TO&nbsp;stcr98.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;SELECT&nbsp;MAX(&nbsp;zverno&nbsp;)<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;INTO&nbsp;lnverno<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;FROM&nbsp;ztsd0098_crt<br />
+&nbsp;&nbsp;&nbsp;&nbsp;WHERE&nbsp;"vtweg&nbsp;=&nbsp;wt98-vtweg<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"AND<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;zxqno&nbsp;=&nbsp;wt98-zxqno.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;lnverno&nbsp;=&nbsp;lnverno&nbsp;+&nbsp;1.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;stcr98-zverno&nbsp;=&nbsp;lnverno.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;stcr98-uuid&nbsp;=&nbsp;/bobf/cl_frw_factory=&gt;get_new_key(&nbsp;).<br />
+&nbsp;&nbsp;&nbsp;&nbsp;stcr98-zout_proc_status&nbsp;=&nbsp;'N'.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;stcr98-zout_trans_num&nbsp;=&nbsp;stcr98-uuid.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;stcr98-zout_trans_date&nbsp;=&nbsp;sy-datum.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;stcr98-zout_trans_time&nbsp;=&nbsp;sy-uzeit.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;stcr98-zout_trans_name&nbsp;=&nbsp;sy-uname.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;MOVE-CORRESPONDING&nbsp;stcr98&nbsp;TO&nbsp;stou98.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;call&nbsp;function&nbsp;<a&nbsp;href&nbsp;="z_sd_convert_kunnr_to_wlpno/z_sd_convert_kunnr_to_wlpno.html">'Z_SD_CONVERT_KUNNR_TO_WLPNO'</a><br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;EXPORTING<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;i_kunnr&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;stou98-zbcust<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IMPORTING<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;e_altkn&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;stou98-zbcust<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;EXCEPTIONS<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;customer_mapping_not_found&nbsp;=&nbsp;1<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;OTHERS&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;2.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;call&nbsp;function&nbsp;<a&nbsp;href&nbsp;="z_sd_convert_kunnr_to_wlpno/z_sd_convert_kunnr_to_wlpno.html">'Z_SD_CONVERT_KUNNR_TO_WLPNO'</a><br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;EXPORTING<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;i_kunnr&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;stou98-zscust<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IMPORTING<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;e_altkn&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;stou98-zscust<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;EXCEPTIONS<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;customer_mapping_not_found&nbsp;=&nbsp;1<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;OTHERS&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;2.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;READ&nbsp;TABLE&nbsp;ituomp&nbsp;WITH&nbsp;KEY&nbsp;msehi&nbsp;=&nbsp;stou98-zpnouq.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;sy-subrc&nbsp;=&nbsp;0.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;stou98-zpnouq&nbsp;=&nbsp;ituomp-pguom.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;stou98-zaction&nbsp;=&nbsp;'U'.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;APPEND&nbsp;stcr98&nbsp;TO&nbsp;itcr98.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;APPEND&nbsp;stou98&nbsp;TO&nbsp;itou98.<br />
+<br />
+   </div>
+   <div class="codeComment">
+*Create&nbsp;ztsd0099_out.<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;LOOP&nbsp;AT&nbsp;it99&nbsp;WHERE&nbsp;vtweg&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;wt98-vtweg<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;zxqno&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;wt98-zxqno.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;MOVE-CORRESPONDING&nbsp;it99&nbsp;TO&nbsp;itou99.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;itou99-uuid&nbsp;=&nbsp;stcr98-uuid.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;itou99-zout_proc_status&nbsp;=&nbsp;'N'.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;itou99-zverno&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;stcr98-zverno.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;itou99-zout_trans_num&nbsp;&nbsp;&nbsp;=&nbsp;stcr98-uuid.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;itou99-zout_trans_date&nbsp;&nbsp;=&nbsp;sy-datum.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;itou99-zout_trans_time&nbsp;&nbsp;=&nbsp;sy-uzeit.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;itou99-zout_trans_name&nbsp;&nbsp;=&nbsp;sy-uname.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;READ&nbsp;TABLE&nbsp;ituomp&nbsp;WITH&nbsp;KEY&nbsp;msehi&nbsp;=&nbsp;itou99-zuq.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;sy-subrc&nbsp;=&nbsp;0.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;itou99-zuq&nbsp;=&nbsp;ituomp-pguom.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;READ&nbsp;TABLE&nbsp;itsd23&nbsp;WITH&nbsp;KEY&nbsp;waers&nbsp;=&nbsp;itou99-zpcur.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;sy-subrc&nbsp;=&nbsp;0.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;itou99-zpcur&nbsp;=&nbsp;itsd23-zcur.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;READ&nbsp;TABLE&nbsp;itsd23&nbsp;WITH&nbsp;KEY&nbsp;waers&nbsp;=&nbsp;itou99-zptwdcur.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;sy-subrc&nbsp;=&nbsp;0.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;itou99-zptwdcur&nbsp;=&nbsp;itsd23-zcur.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;READ&nbsp;TABLE&nbsp;itsd23&nbsp;WITH&nbsp;KEY&nbsp;waers&nbsp;=&nbsp;itou99-zpcnycur.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;sy-subrc&nbsp;=&nbsp;0.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;itou99-zpcnycur&nbsp;=&nbsp;itsd23-zcur.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;READ&nbsp;TABLE&nbsp;itsd23&nbsp;WITH&nbsp;KEY&nbsp;waers&nbsp;=&nbsp;itou99-zusdcur.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;sy-subrc&nbsp;=&nbsp;0.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;itou99-zusdcur&nbsp;=&nbsp;itsd23-zcur.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;READ&nbsp;TABLE&nbsp;itsd23&nbsp;WITH&nbsp;KEY&nbsp;waers&nbsp;=&nbsp;itou99-zwrkcur.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;sy-subrc&nbsp;=&nbsp;0.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;itou99-zwrkcur&nbsp;=&nbsp;itsd23-zcur.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;itou99-zaction&nbsp;=&nbsp;'U'.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;call&nbsp;function&nbsp;<a&nbsp;href&nbsp;="z_sd_convert_kunnr_to_wlpno/z_sd_convert_kunnr_to_wlpno.html">'Z_SD_CONVERT_KUNNR_TO_WLPNO'</a><br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;EXPORTING<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;i_kunnr&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;itou99-zbcust<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IMPORTING<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;e_altkn&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;itou99-zbcust<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;EXCEPTIONS<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;customer_mapping_not_found&nbsp;=&nbsp;1<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;OTHERS&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;2.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;APPEND&nbsp;itou99.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ENDLOOP.<br />
+   </div>
+   <div class="codeComment">
+*Create&nbsp;ztsd0100_out.<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;LOOP&nbsp;AT&nbsp;it100&nbsp;WHERE&nbsp;vtweg&nbsp;=&nbsp;wt98-vtweg&nbsp;AND&nbsp;zxqno&nbsp;=&nbsp;wt98-zxqno.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;MOVE-CORRESPONDING&nbsp;it100&nbsp;TO&nbsp;ito100.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ito100-uuid&nbsp;=&nbsp;stcr98-uuid.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ito100-zverno&nbsp;=&nbsp;lnverno.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ito100-zout_proc_status&nbsp;=&nbsp;'N'.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ito100-zout_trans_num&nbsp;=&nbsp;ito100-uuid.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ito100-zout_trans_date&nbsp;=&nbsp;sy-datum.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ito100-zout_trans_time&nbsp;=&nbsp;sy-uzeit.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ito100-zout_trans_name&nbsp;=&nbsp;sy-uname.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;APPEND&nbsp;ito100.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ENDLOOP.<br />
+   </div>
+   <div class="codeComment">
+*Create&nbsp;ztsd0100a_out.<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;LOOP&nbsp;AT&nbsp;it100a&nbsp;WHERE&nbsp;&nbsp;zxqno&nbsp;=&nbsp;wt98-zxqno.&nbsp;"&nbsp;vtweg&nbsp;=&nbsp;wt98-vtweg&nbsp;AND<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;MOVE-CORRESPONDING&nbsp;it100a&nbsp;TO&nbsp;ito10a.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ito10a-uuid&nbsp;=&nbsp;stcr98-uuid.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ito10a-zout_proc_status&nbsp;=&nbsp;'N'.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ito10a-zverno&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;stcr98-zverno.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ito10a-zout_trans_num&nbsp;&nbsp;&nbsp;=&nbsp;stcr98-uuid.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ito10a-zout_trans_date&nbsp;&nbsp;=&nbsp;sy-datum.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ito10a-zout_trans_time&nbsp;&nbsp;=&nbsp;sy-uzeit.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ito10a-zout_trans_name&nbsp;&nbsp;=&nbsp;sy-uname.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ito10a-zaction&nbsp;=&nbsp;'U'.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;APPEND&nbsp;ito10a.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ENDLOOP.<br />
+   </div>
+   <div class="codeComment">
+*Create&nbsp;ztsd0101_out.<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;LOOP&nbsp;AT&nbsp;it101&nbsp;WHERE&nbsp;vtweg&nbsp;=&nbsp;wt98-vtweg&nbsp;AND&nbsp;zxqno&nbsp;=&nbsp;wt98-zxqno.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;MOVE-CORRESPONDING&nbsp;it101&nbsp;TO&nbsp;ito101.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ito101-uuid&nbsp;=&nbsp;stcr98-uuid.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ito101-zout_proc_status&nbsp;=&nbsp;'N'.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ito101-zverno&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;stcr98-zverno.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ito101-zout_trans_num&nbsp;&nbsp;&nbsp;=&nbsp;stcr98-uuid.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ito101-zout_trans_date&nbsp;&nbsp;=&nbsp;sy-datum.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ito101-zout_trans_time&nbsp;&nbsp;=&nbsp;sy-uzeit.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ito101-zout_trans_name&nbsp;&nbsp;=&nbsp;sy-uname.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ito101-zaction&nbsp;=&nbsp;'U'.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;ito101-kunrg&nbsp;IS&nbsp;NOT&nbsp;INITIAL.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;call&nbsp;function&nbsp;<a&nbsp;href&nbsp;="z_sd_convert_kunnr_to_wlpno/z_sd_convert_kunnr_to_wlpno.html">'Z_SD_CONVERT_KUNNR_TO_WLPNO'</a><br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;EXPORTING<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;i_kunnr&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;ito101-kunrg<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IMPORTING<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;e_altkn&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;ito101-kunrg<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;EXCEPTIONS<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;customer_mapping_not_found&nbsp;=&nbsp;1<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;OTHERS&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;2.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;ito101-zbcust&nbsp;IS&nbsp;NOT&nbsp;INITIAL.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;call&nbsp;function&nbsp;<a&nbsp;href&nbsp;="z_sd_convert_kunnr_to_wlpno/z_sd_convert_kunnr_to_wlpno.html">'Z_SD_CONVERT_KUNNR_TO_WLPNO'</a><br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;EXPORTING<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;i_kunnr&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;ito101-zbcust<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IMPORTING<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;e_altkn&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;ito101-zbcust<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;EXCEPTIONS<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;customer_mapping_not_found&nbsp;=&nbsp;1<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;OTHERS&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;2.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;READ&nbsp;TABLE&nbsp;ituomp&nbsp;WITH&nbsp;KEY&nbsp;msehi&nbsp;=&nbsp;ito101-zuq.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;sy-subrc&nbsp;=&nbsp;0.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ito101-zuq&nbsp;=&nbsp;ituomp-pguom.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;READ&nbsp;TABLE&nbsp;itsd23&nbsp;WITH&nbsp;KEY&nbsp;waers&nbsp;=&nbsp;ito101-zcur.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;sy-subrc&nbsp;=&nbsp;0.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ito101-zcur&nbsp;=&nbsp;itsd23-zcur.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;READ&nbsp;TABLE&nbsp;itsd15&nbsp;WITH&nbsp;KEY&nbsp;vkorg&nbsp;=&nbsp;ito101-zdcvkorg.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;sy-subrc&nbsp;=&nbsp;0.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ito101-zdcvkorg&nbsp;=&nbsp;itsd15-zp_entity.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;READ&nbsp;TABLE&nbsp;itsd15&nbsp;WITH&nbsp;KEY&nbsp;vkorg&nbsp;=&nbsp;ito101-zdnvkorg.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;sy-subrc&nbsp;=&nbsp;0.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ito101-zdnvkorg&nbsp;=&nbsp;itsd15-zp_entity.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;APPEND&nbsp;ito101.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ENDLOOP.<br />
+&nbsp;&nbsp;ENDIF.<br />
+<br />
+&nbsp;&nbsp;MODIFY&nbsp;ztsd0098&nbsp;FROM&nbsp;wt98.<br />
+&nbsp;&nbsp;MODIFY&nbsp;ztsd0099&nbsp;FROM&nbsp;TABLE&nbsp;it99.<br />
+&nbsp;&nbsp;MODIFY&nbsp;ztsd0100&nbsp;FROM&nbsp;TABLE&nbsp;it100.<br />
+&nbsp;&nbsp;MODIFY&nbsp;ztsd0100a&nbsp;FROM&nbsp;TABLE&nbsp;it100a.<br />
+&nbsp;&nbsp;MODIFY&nbsp;ztsd0100n&nbsp;FROM&nbsp;TABLE&nbsp;it100n.<br />
+<br />
+&nbsp;&nbsp;MODIFY&nbsp;ztsd0098_crt&nbsp;FROM&nbsp;stcr98.<br />
+&nbsp;&nbsp;MODIFY&nbsp;ztsd0098_out&nbsp;FROM&nbsp;TABLE&nbsp;itou98.<br />
+&nbsp;&nbsp;MODIFY&nbsp;ztsd0099_out&nbsp;FROM&nbsp;TABLE&nbsp;itou99.<br />
+&nbsp;&nbsp;MODIFY&nbsp;ztsd0100_out&nbsp;FROM&nbsp;TABLE&nbsp;ito100.<br />
+&nbsp;&nbsp;MODIFY&nbsp;ztsd0100a_out&nbsp;FROM&nbsp;TABLE&nbsp;ito10a.<br />
+&nbsp;&nbsp;MODIFY&nbsp;ztsd0101_out&nbsp;FROM&nbsp;TABLE&nbsp;ito101.<br />
+<br />
+&nbsp;&nbsp;COMMIT&nbsp;WORK.<br />
+&nbsp;&nbsp;IF&nbsp;sy-subrc&nbsp;&lt;&gt;&nbsp;0.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ROLLBACK&nbsp;WORK.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;PERFORM&nbsp;crt_itxq&nbsp;USING&nbsp;wt98-vtweg<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;wt98-werks<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;wt98-zxqno<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'1'<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'無法寫入資料庫，請再上傳一次'.<br />
+&nbsp;&nbsp;ELSE.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;PERFORM&nbsp;crt_itxq&nbsp;USING&nbsp;wt98-vtweg<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;wt98-werks<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;wt98-zxqno<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'3'<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'轉出明細新增成功'.<br />
+&nbsp;&nbsp;ENDIF.<br />
+<br />
+&nbsp;&nbsp;PERFORM&nbsp;unlock_xq&nbsp;USING&nbsp;wt98-vtweg&nbsp;wt98-werks&nbsp;wt98-zxqno.<br />
+&nbsp;&nbsp;PERFORM&nbsp;unlock_100n.<br />
+<br />
+&nbsp;&nbsp;call&nbsp;function&nbsp;<a&nbsp;href&nbsp;="z_sd_odm_dncn_xq_interface/z_sd_odm_dncn_xq_interface.html">'Z_SD_ODM_DNCN_XQ_INTERFACE'</a><br />
+&nbsp;&nbsp;&nbsp;&nbsp;EXPORTING<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;i_zauthorg&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;wt98-werks<br />
+&nbsp;&nbsp;&nbsp;&nbsp;TABLES<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;it_ztsd0098_crt&nbsp;=&nbsp;itcr98.<br />
+ENDFORM.<br />
+   </div>
+   <div class="codeComment">
+*&---------------------------------------------------------------------*<br />
+*&&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Form&nbsp;&nbsp;LOCK_100N<br />
+*&---------------------------------------------------------------------*<br />
+   </div>
+   <div class="code">
+FORM lock_100n  USING i_vtweg<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;i_zbcust<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;i_zym<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;i_zperiod<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CHANGING&nbsp;e_msg.<br />
+&nbsp;&nbsp;DATA:&nbsp;l_100n&nbsp;LIKE&nbsp;ztsd0100n.<br />
+<br />
+&nbsp;&nbsp;CLEAR:&nbsp;e_msg.<br />
+<br />
+&nbsp;&nbsp;CHECK&nbsp;i_vtweg&nbsp;IS&nbsp;NOT&nbsp;INITIAL<br />
+&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;i_zbcust&nbsp;IS&nbsp;NOT&nbsp;INITIAL<br />
+&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;i_zym&nbsp;IS&nbsp;NOT&nbsp;INITIAL<br />
+&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;i_zperiod&nbsp;IS&nbsp;NOT&nbsp;INITIAL.<br />
+<br />
+&nbsp;&nbsp;l_100n-vtweg&nbsp;=&nbsp;i_vtweg.<br />
+&nbsp;&nbsp;l_100n-zbcust&nbsp;&nbsp;&nbsp;=&nbsp;i_zbcust.<br />
+&nbsp;&nbsp;l_100n-zym&nbsp;&nbsp;&nbsp;=&nbsp;i_zym.<br />
+&nbsp;&nbsp;l_100n-zperiod&nbsp;&nbsp;&nbsp;=&nbsp;i_zperiod.<br />
+<br />
+   </div>
+   <div class="codeComment">
+*同一張XQ時，相同處理年月只需LOCK一次<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;READ&nbsp;TABLE&nbsp;lock_100n&nbsp;WITH&nbsp;KEY&nbsp;vtweg&nbsp;=&nbsp;i_vtweg<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;zbcust&nbsp;&nbsp;&nbsp;=&nbsp;i_zbcust<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;zym&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;i_zym<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;zperiod&nbsp;&nbsp;=&nbsp;i_zperiod.<br />
+&nbsp;&nbsp;DATA:&nbsp;l100n&nbsp;LIKE&nbsp;ztsd0100n.<br />
+<br />
+&nbsp;&nbsp;CHECK&nbsp;sy-subrc&nbsp;NE&nbsp;0.<br />
+<br />
+&nbsp;&nbsp;CALL&nbsp;FUNCTION&nbsp;'ENQUEUE_EZ_ZTSD0100N'<br />
+&nbsp;&nbsp;&nbsp;&nbsp;EXPORTING<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mode_ztsd0100n&nbsp;=&nbsp;'E'<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mandt&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;sy-mandt<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;vtweg&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;l_100n-vtweg<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;zbcust&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;l_100n-zbcust<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;zym&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;l_100n-zym<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;zperiod&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;l_100n-zperiod<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_wait&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;'X'<br />
+&nbsp;&nbsp;&nbsp;&nbsp;EXCEPTIONS<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;foreign_lock&nbsp;&nbsp;&nbsp;=&nbsp;1<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;system_failure&nbsp;=&nbsp;2<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;OTHERS&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;3.<br />
+&nbsp;&nbsp;IF&nbsp;sy-subrc&nbsp;&lt;&gt;&nbsp;0.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;e_msg&nbsp;=&nbsp;&nbsp;'轉出明細序號取號失敗(ztsd0100n)'.<br />
+&nbsp;&nbsp;ELSE.<br />
+   </div>
+   <div class="codeComment">
+*UNLOCK&nbsp;TABLE使用<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;lock_100n-vtweg&nbsp;=&nbsp;i_vtweg.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;lock_100n-zbcust&nbsp;&nbsp;&nbsp;=&nbsp;i_zbcust.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;lock_100n-zym&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;i_zym.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;lock_100n-zperiod&nbsp;&nbsp;=&nbsp;i_zperiod.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;APPEND&nbsp;lock_100n.<br />
+&nbsp;&nbsp;ENDIF.<br />
+<br />
+ENDFORM.<br />
+   </div>
+   <div class="codeComment">
+*&---------------------------------------------------------------------*<br />
+*&&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Form&nbsp;&nbsp;CHECK_REQUIRED_FIELD<br />
+*&---------------------------------------------------------------------*<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;text<br />
+*----------------------------------------------------------------------*<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--&gt;P_0980&nbsp;&nbsp;&nbsp;text<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--&gt;P_&lt;WA&gt;_ZXQNO&nbsp;&nbsp;text<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;--P_L_MSG&nbsp;&nbsp;text<br />
+*----------------------------------------------------------------------*<br />
+   </div>
+   <div class="code">
+FORM check_required_field  USING  i_name<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;i_value<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CHANGING&nbsp;e_msg.<br />
+&nbsp;&nbsp;CLEAR&nbsp;e_msg.<br />
+&nbsp;&nbsp;IF&nbsp;i_value&nbsp;IS&nbsp;INITIAL.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;CONCATENATE&nbsp;i_name&nbsp;'必填'&nbsp;INTO&nbsp;e_msg.<br />
+&nbsp;&nbsp;ENDIF.<br />
+<br />
+ENDFORM.<br />
+   </div>
+   <div class="codeComment">
+*&---------------------------------------------------------------------*<br />
+*&&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Form&nbsp;&nbsp;GET_101N<br />
+*&---------------------------------------------------------------------*<br />
+   </div>
+   <div class="code">
+FORM get_101n  USING    ialv STRUCTURE gt_alv<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CHANGING&nbsp;e100n&nbsp;STRUCTURE&nbsp;ztsd0100n.<br />
+&nbsp;&nbsp;DATA:&nbsp;gnouseq&nbsp;LIKE&nbsp;ztsd0100-zseq,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;st100n&nbsp;&nbsp;LIKE&nbsp;ztsd0100n.<br />
+<br />
+&nbsp;&nbsp;CLEAR:&nbsp;e100n.<br />
+   </div>
+   <div class="codeComment">
+*取得每個客戶已使用的最大序號&nbsp;(依處理年月+期別分別取號)<br />
+*業務新增的轉出明細序號都是從95001編起<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;SELECT&nbsp;MAX(&nbsp;zseq&nbsp;)<br />
+&nbsp;&nbsp;&nbsp;&nbsp;INTO&nbsp;gnouseq<br />
+&nbsp;&nbsp;&nbsp;&nbsp;FROM&nbsp;ztsd0100<br />
+&nbsp;&nbsp;&nbsp;WHERE&nbsp;vtweg&nbsp;=&nbsp;ialv-vtweg<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;zbcust&nbsp;=&nbsp;ialv-zbcust<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;zym&nbsp;=&nbsp;ialv-zym<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;zperiod&nbsp;=&nbsp;ialv-zperiod.<br />
+   </div>
+   <div class="codeComment">
+*&nbsp;V002&nbsp;Changed&nbsp;by&nbsp;Tristan&nbsp;2026/04/27&nbsp;*<br />
+*&nbsp;&nbsp;IF&nbsp;gnouseq&nbsp;IS&nbsp;INITIAL&nbsp;OR&nbsp;gnouseq&nbsp;&lt;&nbsp;95000.<br />
+*&nbsp;&nbsp;&nbsp;&nbsp;gnouseq&nbsp;=&nbsp;'95000'.<br />
+*&nbsp;&nbsp;ENDIF.<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;IF&nbsp;sy-subrc&nbsp;&lt;&gt;&nbsp;0.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;CLEAR&nbsp;gnouseq.<br />
+&nbsp;&nbsp;ENDIF.<br />
+   </div>
+   <div class="codeComment">
+*&nbsp;V002&nbsp;End&nbsp;off&nbsp;*<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;SELECT&nbsp;SINGLE&nbsp;*<br />
+&nbsp;&nbsp;&nbsp;&nbsp;INTO&nbsp;e100n<br />
+&nbsp;&nbsp;&nbsp;&nbsp;FROM&nbsp;ztsd0100n<br />
+&nbsp;&nbsp;&nbsp;WHERE&nbsp;vtweg&nbsp;&nbsp;=&nbsp;ialv-vtweg<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;zbcust&nbsp;=&nbsp;ialv-zbcust<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;zym&nbsp;=&nbsp;ialv-zym<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;zperiod&nbsp;=&nbsp;ialv-zperiod.<br />
+&nbsp;&nbsp;IF&nbsp;sy-subrc&nbsp;=&nbsp;0.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;gnouseq&nbsp;&gt;&nbsp;e100n-zseq.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;e100n-zseq&nbsp;=&nbsp;gnouseq.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ENDIF.<br />
+&nbsp;&nbsp;ELSE.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;MOVE-CORRESPONDING&nbsp;ialv&nbsp;TO&nbsp;e100n.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;e100n-zseq&nbsp;=&nbsp;gnouseq.<br />
+&nbsp;&nbsp;ENDIF.<br />
+&nbsp;&nbsp;e100n-zopr&nbsp;=&nbsp;sy-uname.<br />
+&nbsp;&nbsp;e100n-zopd&nbsp;=&nbsp;sy-datum.<br />
+&nbsp;&nbsp;e100n-zopt&nbsp;=&nbsp;sy-uzeit.<br />
+<br />
+ENDFORM.<br />
+   </div>
+   <div class="codeComment">
+*&---------------------------------------------------------------------*<br />
+*&&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Form&nbsp;&nbsp;CRT_ITXQ<br />
+*&---------------------------------------------------------------------*<br />
+   </div>
+   <div class="code">
+FORM crt_itxq USING i_vtweg<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;i_werks<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;i_zxqno<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;i_light<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;i_msg.<br />
+&nbsp;&nbsp;itxq-vtweg&nbsp;=&nbsp;i_vtweg.<br />
+&nbsp;&nbsp;itxq-werks&nbsp;=&nbsp;i_werks.<br />
+&nbsp;&nbsp;itxq-zxqno&nbsp;=&nbsp;i_zxqno.<br />
+&nbsp;&nbsp;itxq-message&nbsp;=&nbsp;i_msg.<br />
+&nbsp;&nbsp;itxq-light&nbsp;=&nbsp;i_light.<br />
+&nbsp;&nbsp;APPEND&nbsp;itxq.<br />
+&nbsp;&nbsp;CLEAR&nbsp;itxq.<br />
+ENDFORM.<br />
+   </div>
+   <div class="codeComment">
+*&---------------------------------------------------------------------*<br />
+*&&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Form&nbsp;&nbsp;UNLOCK_XQ<br />
+*&---------------------------------------------------------------------*<br />
+   </div>
+   <div class="code">
+FORM unlock_xq  USING  i_vtweg i_werks i_xqno.<br />
+<br />
+&nbsp;&nbsp;CHECK&nbsp;i_vtweg&nbsp;IS&nbsp;NOT&nbsp;INITIAL<br />
+&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;i_werks&nbsp;IS&nbsp;NOT&nbsp;INITIAL<br />
+&nbsp;&nbsp;&nbsp;&nbsp;AND&nbsp;i_xqno&nbsp;&nbsp;IS&nbsp;NOT&nbsp;INITIAL.<br />
+<br />
+   </div>
+   <div class="codeComment">
+*unlock&nbsp;XQ<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;CALL&nbsp;FUNCTION&nbsp;'DEQUEUE_EZ_ZTSD0098'<br />
+&nbsp;&nbsp;&nbsp;&nbsp;EXPORTING<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;""&nbsp;vtweg&nbsp;=&nbsp;i_vtweg<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;werks&nbsp;=&nbsp;i_werks<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;zxqno&nbsp;=&nbsp;i_xqno.<br />
+<br />
+ENDFORM.<br />
+   </div>
+   <div class="codeComment">
+*&---------------------------------------------------------------------*<br />
+*&&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Form&nbsp;&nbsp;UNLOCK_XQ<br />
+*&---------------------------------------------------------------------*<br />
+   </div>
+   <div class="code">
+FORM unlock_100n.<br />
+<br />
+   </div>
+   <div class="codeComment">
+*unlock&nbsp;XQ轉出明細取號<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;LOOP&nbsp;AT&nbsp;lock_100n.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;CALL&nbsp;FUNCTION&nbsp;'DEQUEUE_EZ_ZTSD0100N'<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;EXPORTING<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mode_ztsd0100n&nbsp;=&nbsp;'E'<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mandt&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;sy-mandt<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;vtweg&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;lock_100n-vtweg<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;zbcust&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;lock_100n-zbcust<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;zym&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;lock_100n-zym<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;zperiod&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;lock_100n-zperiod.<br />
+&nbsp;&nbsp;ENDLOOP.<br />
+<br />
+ENDFORM.<br />
+<br />
+   </div>
+   <div class="codeComment">
+*Text&nbsp;elements<br />
+*----------------------------------------------------------<br />
+*&nbsp;F01&nbsp;處理訊息<br />
+*&nbsp;F02&nbsp;銷售通路<br />
+*&nbsp;F03&nbsp;XQ&nbsp;單號<br />
+*&nbsp;F04&nbsp;XQ&nbsp;項次<br />
+*&nbsp;F05&nbsp;處理年月<br />
+*&nbsp;F06&nbsp;期別<br />
+*&nbsp;F07&nbsp;客戶PO<br />
+*&nbsp;F08&nbsp;轉出數量<br />
+*&nbsp;F09&nbsp;轉出日期<br />
+*&nbsp;F10&nbsp;訂單<br />
+*&nbsp;F11&nbsp;訂單項目<br />
+*&nbsp;F12&nbsp;預採件號<br />
+*&nbsp;F13&nbsp;預計交貨日<br />
+*&nbsp;F14&nbsp;備註<br />
+*&nbsp;F15&nbsp;Invoice&nbsp;No<br />
+*&nbsp;F16&nbsp;ETD&nbsp;Date<br />
+*&nbsp;F18&nbsp;工廠<br />
+<br />
+<br />
+*Selection&nbsp;texts<br />
+*----------------------------------------------------------<br />
+*&nbsp;P_DOWNLD&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;下載模板<br />
+*&nbsp;P_FNAME&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;檔案名稱(*.xls)<br />
+*&nbsp;P_UPLOAD&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;上傳&nbsp;XQ&nbsp;轉出明細<br />
+*&nbsp;P_VTWEG&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;配銷通路<br />
+*&nbsp;P_WERKS&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Plant<br />
+*&nbsp;P_ZBCUST&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Customer<br />
+<br />
+<br />
+*Messages<br />
+*----------------------------------------------------------<br />
+*<br />
+*&nbsp;Message&nbsp;class:&nbsp;Hard&nbsp;coded<br />
+*&nbsp;&nbsp;&nbsp;Template&nbsp;Download&nbsp;Fail<br />
+*<br />
+*&nbsp;Message&nbsp;class:&nbsp;SY<br />
+*002&nbsp;&nbsp;&nbsp;&<br />
+*<br />
+*&nbsp;Message&nbsp;class:&nbsp;ZMM01<br />
+*038&nbsp;&nbsp;&nbsp;XQ&nbsp;&&nbsp;item&nbsp;&,&nbsp;Turn&nbsp;qty&nbsp;&&nbsp;is&nbsp;more&nbsp;than&nbsp;stock&nbsp;qty&nbsp;&.<br />
+*039&nbsp;&nbsp;&nbsp;XQ&nbsp;&&nbsp;item&nbsp;&,&nbsp;Turn&nbsp;qty(include&nbsp;scrap&nbsp;qty)&nbsp;&&nbsp;is&nbsp;more&nbsp;than&nbsp;stock&nbsp;qty&nbsp;&.<br />
+*040&nbsp;&nbsp;&nbsp;XQ&nbsp;&&nbsp;item&nbsp;&,&nbsp;Turn&nbsp;qty&nbsp;after&nbsp;received&nbsp;&&nbsp;is&nbsp;less&nbsp;than&nbsp;paid&nbsp;qty&nbsp;&.<br />
+*<br />
+*&nbsp;Message&nbsp;class:&nbsp;ZODMSD01<br />
+*000&nbsp;&nbsp;&nbsp;&&nbsp;&&nbsp;&&nbsp;&<br />
+            </div>
+          </td>
+        </tr>
+      </table>
+      </td>
+      </tr>
+   <tr>
+<td class="footer">Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2026. Sap Release 757</td>
+   </tr>
+</table>
+</body>
+</html>

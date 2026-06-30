@@ -1,0 +1,132 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="application/xhtml+xml; charset=UTF-8" />
+<title>Z_SD_ODM_DNCN_XQ_INTERFACE</title>
+<style type="text/css">
+.code{ font-family:"Courier New", Courier, monospace; color:#000; font-size:14px; background-color:#F2F4F7 }
+  .codeComment {font-family:"Courier New", Courier, monospace; color:#0000F0; font-size:14px; background-color:#F2F4F7 }
+  .normalBold{ font-family:Arial, Helvetica, sans-serif; color:#000; font-size:12px; font-weight:800 }
+  .normalBoldLarge{ font-family:Arial, Helvetica, sans-serif; color:#000; font-size:16px; font-weight:800 }
+</style>
+<style type="text/css">
+  .normal{ font-family:Arial, Helvetica, sans-serif; color:#000; font-size:12px }
+  .footer{ font-family:Arial, Helvetica, sans-serif; color:#000; font-size:12px; text-align: center }
+  h2{ font-family:Arial, Helvetica, sans-serif; color:#000; font-size:16px; font-weight:800 }
+  h3{ font-family:Arial, Helvetica, sans-serif; color:#000; font-size:14px; font-weight:800 }
+  .outerTable{
+   background-color:#E0E7ED;
+   width:100%;
+   border-top-width: thin;
+   border-right-width: thin;
+   border-right-width: thin;
+   border-left-width: thin;
+   border-top-style: solid;
+   border-right-style: solid;
+   border-bottom-style: solid;
+   border-left-style: solid;
+  }
+  .innerTable{
+   background-color:#F2F4F7;
+   width:100%;
+   border-top-width: thin;
+   border-right-width: thin;
+   border-bottom-width: thin;
+   border-left-width: thin;
+   border-top-style: solid;
+   border-right-style: solid;
+   border-bottom-style: solid;
+   border-left-style: solid;
+  }
+</style>
+</head>
+<body>
+<table class="outerTable">
+  <tr class="normalBoldLarge">
+     <td><h2>Code listing for function Z_SD_ODM_DNCN_XQ_INTERFACE</h2>
+<h3> Description: </h3></td>
+   </tr>
+  <tr>
+     <td>
+     <table class="innerTable">
+       <tr>
+          <td>
+   <div class="code">
+FUNCTION Z_SD_ODM_DNCN_XQ_INTERFACE .<br />
+   </div>
+   <div class="codeComment">
+*"----------------------------------------------------------------------<br />
+*"*"區域介面：<br />
+*"  IMPORTING<br />
+*"     VALUE(I_UUID) TYPE  ZTSD0098_CRT-UUID OPTIONAL<br />
+*"     VALUE(I_ZAUTHORG) TYPE  ZTSD0098_CRT-WERKS OPTIONAL<br />
+*"  TABLES<br />
+*"      IT_ZTSD0098_CRT STRUCTURE  ZTSD0098_CRT OPTIONAL<br />
+*"----------------------------------------------------------------------<br />
+*&=====================================================================*<br />
+* Modification Log - History<br />
+*&=====================================================================*<br />
+*    DATE     VERSION      AUTHOR                  DESCRIPTION<br />
+* ========== ========  ==============  =================================<br />
+* 2020/09/15 V001      Fangchyi        一次回傳一個權限組織的XQ單<br />
+*                                      (因為dncn已調整成不允許多個權限組織存在同一張DNCN中，<br />
+*                                      所以代表一次只會有一個權限組織資料回傳PROGRESS)<br />
+* 2024/04/09 V002      Fangchyi        S4調整 : zauthorg &gt;werks<br />
+*&---------------------------------------------------------------------*<br />
+<br />
+
+<div class="codeComment">*       <a href ="global-z_sd_odm_dncn_xq_interface.html">Global data declarations</a></div><br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;DATA:&nbsp;LT_ZTSD0098_CRT&nbsp;LIKE&nbsp;TABLE&nbsp;OF&nbsp;ZTSD0098_CRT.<br />
+&nbsp;&nbsp;DATA:&nbsp;L_EXIST.<br />
+&nbsp;&nbsp;DATA:&nbsp;VJOBNAME&nbsp;&nbsp;TYPE&nbsp;BTCJOB,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;VJOBCOUNT&nbsp;TYPE&nbsp;BTCJOBCNT,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SDATE&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;TYPE&nbsp;TBTCJOB-SDLSTRTDT,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;STIME&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;TYPE&nbsp;TBTCJOB-SDLSTRTTM.<br />
+&nbsp;&nbsp;RANGES:&nbsp;R_ZXQNO&nbsp;FOR&nbsp;ZTSD0098-ZXQNO.<br />
+<br />
+&nbsp;&nbsp;REFRESH:&nbsp;R_ZXQNO.&nbsp;CLEAR:&nbsp;R_ZXQNO.<br />
+<br />
+&nbsp;&nbsp;CHECK&nbsp;IT_ZTSD0098_CRT[]&nbsp;IS&nbsp;NOT&nbsp;INITIAL.<br />
+<br />
+"" ""  LOOP AT IT_ZTSD0098_CRT.<br />
+"" ""    R_ZXQNO-SIGN = 'I'.<br />
+"" ""    R_ZXQNO-OPTION = 'EQ'.<br />
+"" ""    R_ZXQNO-LOW = IT_ZTSD0098_CRT-ZXQNO.<br />
+"" ""    COLLECT R_ZXQNO. CLEAR R_ZXQNO.<br />
+"" ""  ENDLOOP.<br />
+"" ""<br />
+"" ""  IF SY-SUBRC = 0.<br />
+"" ""    L_EXIST = 'X'.<br />
+"" ""  ENDIF.<br />
+"" ""<br />
+"" ""  CHECK L_EXIST = 'X'.<br />
+"" ""   SUBMIT ZTWRSD0124 AND RETURN          "預採帳DN/CN資料傳送介接程式<br />
+"" ""          WITH CALLD   = 'X'<br />
+"" "" *             WITH S_UUID  = I_UUID<br />
+"" ""          WITH S_ZAUTH = I_ZAUTHORG   "V001<br />
+"" ""         WITH S_ZXQNO IN R_ZXQNO.<br />
+<br />
+ENDFUNCTION.<br />
+<br />
+<br />
+   </div>
+   <div class="codeComment">
+*Messages<br />
+*----------------------------------------------------------<br />
+*<br />
+* Message class: ZODMSD01<br />
+*000   & & & &<br />
+            </div>
+          </td>
+        </tr>
+      </table>
+      </td>
+      </tr>
+   <tr>
+<td class="footer">Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2026. Sap Release 757</td>
+   </tr>
+</table>
+</body>
+</html>

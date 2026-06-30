@@ -1,0 +1,621 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="application/xhtml+xml; charset=UTF-8" />
+<title>Dictionary object- ZFS060_S_PAID_LINES</title>
+<style type="text/css">
+  th{text-align:left}
+  .cell{
+     font-family:"Courier New", Courier, monospace;
+     color:#000;
+     font-size:12px;
+     background-color:#F2F4F7;
+  }
+  .cell td { border: thin solid #ccc; }
+</style>
+<style type="text/css">
+  .normal{ font-family:Arial, Helvetica, sans-serif; color:#000; font-size:12px }
+  .footer{ font-family:Arial, Helvetica, sans-serif; color:#000; font-size:12px; text-align: center }
+  h2{ font-family:Arial, Helvetica, sans-serif; color:#000; font-size:16px; font-weight:800 }
+  h3{ font-family:Arial, Helvetica, sans-serif; color:#000; font-size:14px; font-weight:800 }
+  .outerTable{
+   background-color:#E0E7ED;
+   width:100%;
+   border-top-width: thin;
+   border-right-width: thin;
+   border-right-width: thin;
+   border-left-width: thin;
+   border-top-style: solid;
+   border-right-style: solid;
+   border-bottom-style: solid;
+   border-left-style: solid;
+  }
+  .innerTable{
+   background-color:#F2F4F7;
+   width:100%;
+   border-top-width: thin;
+   border-right-width: thin;
+   border-bottom-width: thin;
+   border-left-width: thin;
+   border-top-style: solid;
+   border-right-style: solid;
+   border-bottom-style: solid;
+   border-left-style: solid;
+  }
+</style>
+</head>
+<body>
+  <table class="outerTable">
+    <tr>
+      <td><h2>Table: ZFS060_S_PAID_LINES</h2>
+  <h3>Description: 預採帳收款匯總報表 Paid / Un-Paid List</h3></td>
+    </tr>
+    <tr>
+      <td><!--This is where our main table begins  -->
+<table class="innerTable">
+<tr>
+  <th>Row</th>
+  <th>Field name</th>
+  <th>Position</th>
+  <th>Key</th>
+  <th>Data element</th>
+  <th>Domain</th>
+  <th>Datatype</th>
+  <th>Length</th>
+  <th>Lowercase</th>
+  <th>Domain text</th>
+</tr>
+<tr class="cell">
+  <td> 1</td>
+  <td>TYPE</td>
+  <td>1</td>
+  <td>&nbsp;</td>
+  <td>&nbsp;</td>
+  <td>&nbsp;</td>
+  <td>CHAR</td>
+  <td>20</td>
+  <td>&nbsp;</td>
+  <td>&nbsp;</td>
+</tr>
+<tr class="cell">
+  <td> 2</td>
+  <td>ZXQLINE</td>
+  <td>2</td>
+  <td>&nbsp;</td>
+  <td>ZMOQLINE</td>
+  <td>ZMOQLINE</td>
+  <td>CHAR</td>
+  <td>12</td>
+  <td>&nbsp;</td>
+  <td>預採帳線別</td>
+</tr>
+<tr class="cell">
+  <td> 3</td>
+  <td>SUMMARY_SHEET_PERIOD</td>
+  <td>3</td>
+  <td>&nbsp;</td>
+  <td>&nbsp;</td>
+  <td>&nbsp;</td>
+  <td>CHAR</td>
+  <td>30</td>
+  <td>&nbsp;</td>
+  <td>Summary sheet Period</td>
+</tr>
+<tr class="cell">
+  <td> 4</td>
+  <td>ZKINDS</td>
+  <td>4</td>
+  <td>&nbsp;</td>
+  <td>ZKINDS</td>
+  <td>CHAR10</td>
+  <td>CHAR</td>
+  <td>10</td>
+  <td>&nbsp;</td>
+  <td>預採帳Presure分類</td>
+</tr>
+<tr class="cell">
+  <td> 5</td>
+  <td>ZKINDSNAM1</td>
+  <td>5</td>
+  <td>&nbsp;</td>
+  <td>ZKINDSNAM1</td>
+  <td>CHAR50</td>
+  <td>CHAR</td>
+  <td>50</td>
+  <td>&nbsp;</td>
+  <td>預採帳Presure說明1</td>
+</tr>
+<tr class="cell">
+  <td> 6</td>
+  <td>ZDAT</td>
+  <td>6</td>
+  <td>&nbsp;</td>
+  <td>&nbsp;</td>
+  <td>&nbsp;</td>
+  <td>CHAR</td>
+  <td>10</td>
+  <td>&nbsp;</td>
+  <td>Date</td>
+</tr>
+<tr class="cell">
+  <td> 7</td>
+  <td>ZCPNO</td>
+  <td>7</td>
+  <td>&nbsp;</td>
+  <td>ZCPNO_XQ</td>
+  <td>CHAR30</td>
+  <td>CHAR</td>
+  <td>30</td>
+  <td>&nbsp;</td>
+  <td>Customer Material No</td>
+</tr>
+<tr class="cell">
+  <td> 8</td>
+  <td>ZCPNOCN</td>
+  <td>8</td>
+  <td>&nbsp;</td>
+  <td>ZCN_XQ</td>
+  <td>CHAR30</td>
+  <td>CHAR</td>
+  <td>30</td>
+  <td>&nbsp;</td>
+  <td>Model Number</td>
+</tr>
+<tr class="cell">
+  <td> 9</td>
+  <td>ZDESC</td>
+  <td>9</td>
+  <td>&nbsp;</td>
+  <td>ZDESC9</td>
+  <td>ZDESC_XQ</td>
+  <td>CHAR</td>
+  <td>150</td>
+  <td>X</td>
+  <td>英文說明</td>
+</tr>
+<tr class="cell">
+  <td>10</td>
+  <td>YDS_PCS</td>
+  <td>10</td>
+  <td>&nbsp;</td>
+  <td>&nbsp;</td>
+  <td>&nbsp;</td>
+  <td>DEC</td>
+  <td>20</td>
+  <td>&nbsp;</td>
+  <td>YDS/PCS</td>
+</tr>
+<tr class="cell">
+  <td>11</td>
+  <td>UNITS</td>
+  <td>11</td>
+  <td>&nbsp;</td>
+  <td>&nbsp;</td>
+  <td>&nbsp;</td>
+  <td>DEC</td>
+  <td>20</td>
+  <td>&nbsp;</td>
+  <td>Units</td>
+</tr>
+<tr class="cell">
+  <td>12</td>
+  <td>AMOUNT</td>
+  <td>12</td>
+  <td>&nbsp;</td>
+  <td>&nbsp;</td>
+  <td>&nbsp;</td>
+  <td>DEC</td>
+  <td>20</td>
+  <td>&nbsp;</td>
+  <td>Amount (US$)</td>
+</tr>
+<tr class="cell">
+  <td>13</td>
+  <td>SORTL</td>
+  <td>13</td>
+  <td>&nbsp;</td>
+  <td>SORTL</td>
+  <td>CHAR10</td>
+  <td>CHAR</td>
+  <td>10</td>
+  <td>&nbsp;</td>
+  <td>排序欄位</td>
+</tr>
+<tr class="cell">
+  <td>14</td>
+  <td>ZUNPTYPNAM</td>
+  <td>14</td>
+  <td>&nbsp;</td>
+  <td>ZUNPTYPNAM</td>
+  <td>&nbsp;</td>
+  <td>CHAR</td>
+  <td>30</td>
+  <td>&nbsp;</td>
+  <td>預採帳UNPAY排序說明</td>
+</tr>
+<tr class="cell">
+  <td>15</td>
+  <td>ZCORD</td>
+  <td>15</td>
+  <td>&nbsp;</td>
+  <td>&nbsp;</td>
+  <td>&nbsp;</td>
+  <td>CHAR</td>
+  <td>100</td>
+  <td>&nbsp;</td>
+  <td>PO#</td>
+</tr>
+<tr class="cell">
+  <td>16</td>
+  <td>ZDCNO</td>
+  <td>16</td>
+  <td>&nbsp;</td>
+  <td>ZDCDOCNO</td>
+  <td>&nbsp;</td>
+  <td>CHAR</td>
+  <td>30</td>
+  <td>&nbsp;</td>
+  <td>借貸項通知單列印單號</td>
+</tr>
+<tr class="cell">
+  <td>17</td>
+  <td>ZCNDAT</td>
+  <td>17</td>
+  <td>&nbsp;</td>
+  <td>&nbsp;</td>
+  <td>&nbsp;</td>
+  <td>CHAR</td>
+  <td>10</td>
+  <td>&nbsp;</td>
+  <td>Paid date</td>
+</tr>
+<tr class="cell">
+  <td>18</td>
+  <td>STORE_DAYS</td>
+  <td>18</td>
+  <td>&nbsp;</td>
+  <td>&nbsp;</td>
+  <td>&nbsp;</td>
+  <td>DEC</td>
+  <td>10</td>
+  <td>&nbsp;</td>
+  <td>Store Days</td>
+</tr>
+<tr class="cell">
+  <td>19</td>
+  <td>ZPNO</td>
+  <td>19</td>
+  <td>&nbsp;</td>
+  <td>ZZPNO_NO</td>
+  <td>ZPNO</td>
+  <td>CHAR</td>
+  <td>30</td>
+  <td>&nbsp;</td>
+  <td>廠內件號</td>
+</tr>
+<tr class="cell">
+  <td>20</td>
+  <td>ZXQNO</td>
+  <td>20</td>
+  <td>&nbsp;</td>
+  <td>ZXQNOLIST</td>
+  <td>ZXQNOLIST</td>
+  <td>CHAR</td>
+  <td>255</td>
+  <td>&nbsp;</td>
+  <td>預採帳單號明細</td>
+</tr>
+<tr class="cell">
+  <td>21</td>
+  <td>P_DAYSTX</td>
+  <td>21</td>
+  <td>&nbsp;</td>
+  <td>&nbsp;</td>
+  <td>&nbsp;</td>
+  <td>CHAR</td>
+  <td>10</td>
+  <td>&nbsp;</td>
+  <td>360 未異動</td>
+</tr>
+<tr class="cell">
+  <td>22</td>
+  <td>ZSPNO</td>
+  <td>22</td>
+  <td>&nbsp;</td>
+  <td>&nbsp;</td>
+  <td>&nbsp;</td>
+  <td>CHAR</td>
+  <td>100</td>
+  <td>&nbsp;</td>
+  <td>視同件號</td>
+</tr>
+<tr class="cell">
+  <td>23</td>
+  <td>PNO_EDESC</td>
+  <td>23</td>
+  <td>&nbsp;</td>
+  <td>&nbsp;</td>
+  <td>&nbsp;</td>
+  <td>CHAR</td>
+  <td>100</td>
+  <td>&nbsp;</td>
+  <td>英文規格</td>
+</tr>
+<tr class="cell">
+  <td>24</td>
+  <td>ZSAPPO</td>
+  <td>24</td>
+  <td>&nbsp;</td>
+  <td>&nbsp;</td>
+  <td>&nbsp;</td>
+  <td>CHAR</td>
+  <td>100</td>
+  <td>&nbsp;</td>
+  <td>SAP PO</td>
+</tr>
+<tr class="cell">
+  <td>25</td>
+  <td>ZUP</td>
+  <td>25</td>
+  <td>&nbsp;</td>
+  <td>&nbsp;</td>
+  <td>&nbsp;</td>
+  <td>CHAR</td>
+  <td>100</td>
+  <td>&nbsp;</td>
+  <td>單價</td>
+</tr>
+<tr class="cell">
+  <td>26</td>
+  <td>ZMOQTY</td>
+  <td>26</td>
+  <td>&nbsp;</td>
+  <td>&nbsp;</td>
+  <td>&nbsp;</td>
+  <td>CHAR</td>
+  <td>100</td>
+  <td>&nbsp;</td>
+  <td>原MOQ數量</td>
+</tr>
+<tr class="cell">
+  <td>27</td>
+  <td>PNO_DESC</td>
+  <td>27</td>
+  <td>&nbsp;</td>
+  <td>&nbsp;</td>
+  <td>&nbsp;</td>
+  <td>CHAR</td>
+  <td>100</td>
+  <td>&nbsp;</td>
+  <td>中文品名</td>
+</tr>
+<tr class="cell">
+  <td>28</td>
+  <td>M020_NAM</td>
+  <td>28</td>
+  <td>&nbsp;</td>
+  <td>&nbsp;</td>
+  <td>&nbsp;</td>
+  <td>CHAR</td>
+  <td>100</td>
+  <td>&nbsp;</td>
+  <td>廠內顏色</td>
+</tr>
+<tr class="cell">
+  <td>29</td>
+  <td>PNO_EDESC_MODEL</td>
+  <td>29</td>
+  <td>&nbsp;</td>
+  <td>&nbsp;</td>
+  <td>&nbsp;</td>
+  <td>CHAR</td>
+  <td>100</td>
+  <td>&nbsp;</td>
+  <td>MODEL英文規格</td>
+</tr>
+<tr class="cell">
+  <td>30</td>
+  <td>ZXQDTYPNAM</td>
+  <td>30</td>
+  <td>&nbsp;</td>
+  <td>ZXQDTYPNAM</td>
+  <td>TEXT50</td>
+  <td>CHAR</td>
+  <td>50</td>
+  <td>X</td>
+  <td>預採帳小分類說明</td>
+</tr>
+<tr class="cell">
+  <td>31</td>
+  <td>Z6PTYP</td>
+  <td>31</td>
+  <td>&nbsp;</td>
+  <td>Z6PTYP</td>
+  <td>&nbsp;</td>
+  <td>CHAR</td>
+  <td>10</td>
+  <td>&nbsp;</td>
+  <td>預採帳特殊類別</td>
+</tr>
+<tr class="cell">
+  <td>32</td>
+  <td>Z6PREM</td>
+  <td>32</td>
+  <td>&nbsp;</td>
+  <td>Z6PREM</td>
+  <td>TEXT100</td>
+  <td>CHAR</td>
+  <td>100</td>
+  <td>X</td>
+  <td>特殊類別備註</td>
+</tr>
+<tr class="cell">
+  <td>33</td>
+  <td>DOC_CURR</td>
+  <td>33</td>
+  <td>&nbsp;</td>
+  <td>WAERS</td>
+  <td>WAERS</td>
+  <td>CUKY</td>
+  <td>5</td>
+  <td>&nbsp;</td>
+  <td>幣別碼</td>
+</tr>
+<tr class="cell">
+  <td>34</td>
+  <td>DOC_AMT</td>
+  <td>34</td>
+  <td>&nbsp;</td>
+  <td>&nbsp;</td>
+  <td>&nbsp;</td>
+  <td>DEC</td>
+  <td>20</td>
+  <td>&nbsp;</td>
+  <td>交易金額</td>
+</tr>
+<tr class="cell">
+  <td>35</td>
+  <td>ZOLDDAT</td>
+  <td>35</td>
+  <td>&nbsp;</td>
+  <td>&nbsp;</td>
+  <td>&nbsp;</td>
+  <td>CHAR</td>
+  <td>10</td>
+  <td>&nbsp;</td>
+  <td>Old Date</td>
+</tr>
+      </table>
+     </td>
+   </tr>
+<br/>
+  <table class="outerTable">
+    <tr>
+      <td><h2>Fixed Domain Values </h2>
+    </tr>
+    <tr>
+      <td><!--This is where our main table begins  -->
+<table class="innerTable">
+<tr>
+  <th>Domain Name</th>
+  <th>Value Low</th>
+  <th>Value High</th>
+  <th>Text</th>
+</tr>
+<tr class="cell">
+  <td>ZMOQLINE</td>
+  <td>EMEA</td>
+  <td>&nbsp;</td>
+  <td>EMEA</td>
+</tr>
+<tr class="cell">
+  <td>ZMOQLINE</td>
+  <td>DI</td>
+  <td>&nbsp;</td>
+  <td>DI</td>
+</tr>
+<tr class="cell">
+  <td>ZMOQLINE</td>
+  <td>WB</td>
+  <td>&nbsp;</td>
+  <td>WB</td>
+</tr>
+<tr class="cell">
+  <td>ZMOQLINE</td>
+  <td>DI-CL</td>
+  <td>&nbsp;</td>
+  <td>DI-CL</td>
+</tr>
+<tr class="cell">
+  <td>ZMOQLINE</td>
+  <td>DI-BZ</td>
+  <td>&nbsp;</td>
+  <td>DI-BZ</td>
+</tr>
+<tr class="cell">
+  <td>ZMOQLINE</td>
+  <td>DI-MX</td>
+  <td>&nbsp;</td>
+  <td>DI-MX</td>
+</tr>
+<tr class="cell">
+  <td>ZMOQLINE</td>
+  <td>DII</td>
+  <td>&nbsp;</td>
+  <td>DII</td>
+</tr>
+<tr class="cell">
+  <td>ZMOQLINE</td>
+  <td>DII-APAC</td>
+  <td>&nbsp;</td>
+  <td>DII-APAC</td>
+</tr>
+<tr class="cell">
+  <td>ZMOQLINE</td>
+  <td>DII-JCN</td>
+  <td>&nbsp;</td>
+  <td>DII-JCN</td>
+</tr>
+<tr class="cell">
+  <td>ZMOQLINE</td>
+  <td>USA</td>
+  <td>&nbsp;</td>
+  <td>USA</td>
+</tr>
+<tr class="cell">
+  <td>ZMOQLINE</td>
+  <td>GLOBAL</td>
+  <td>&nbsp;</td>
+  <td>GLOBAL</td>
+</tr>
+<tr class="cell">
+  <td>ZMOQLINE</td>
+  <td>BRAZIL</td>
+  <td>&nbsp;</td>
+  <td>BRAZIL</td>
+</tr>
+<tr class="cell">
+  <td>ZMOQLINE</td>
+  <td>CANADA</td>
+  <td>&nbsp;</td>
+  <td>CANADA</td>
+</tr>
+<tr class="cell">
+  <td>ZMOQLINE</td>
+  <td>CHINA</td>
+  <td>&nbsp;</td>
+  <td>CHINA</td>
+</tr>
+<tr class="cell">
+  <td>ZMOQLINE</td>
+  <td>APAC</td>
+  <td>&nbsp;</td>
+  <td>APAC</td>
+</tr>
+<tr class="cell">
+  <td>ZMOQLINE</td>
+  <td>TAIWAN</td>
+  <td>&nbsp;</td>
+  <td>TAIWAN</td>
+</tr>
+<tr class="cell">
+  <td>ZMOQLINE</td>
+  <td>MEXICO</td>
+  <td>&nbsp;</td>
+  <td>MEXICO</td>
+</tr>
+<tr class="cell">
+  <td>ZMOQLINE</td>
+  <td>*</td>
+  <td>&nbsp;</td>
+  <td>*</td>
+</tr>
+      </table>
+     </td>
+   </tr>
+   <tr>
+<td class="footer">Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2026. Sap Release 757</td>
+   </tr>
+</table>
+</body>
+</html>

@@ -1,0 +1,166 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="application/xhtml+xml; charset=ISO-8859-1" />
+<title>LZTWSD020TOP</title>
+<style type="text/css">
+.code{ font-family:"Courier New", Courier, monospace; color:#000; font-size:14px; background-color:#F2F4F7 }
+  .codeComment {font-family:"Courier New", Courier, monospace; color:#0000F0; font-size:14px; background-color:#F2F4F7 }
+  .normalBold{ font-family:Arial, Helvetica, sans-serif; color:#000; font-size:12px; font-weight:800 }
+  .normalBoldLarge{ font-family:Arial, Helvetica, sans-serif; color:#000; font-size:16px; font-weight:800 }
+</style>
+<style type="text/css">
+  .normal{ font-family:Arial, Helvetica, sans-serif; color:#000; font-size:12px }
+  .footer{ font-family:Arial, Helvetica, sans-serif; color:#000; font-size:12px; text-align: center }
+  h2{ font-family:Arial, Helvetica, sans-serif; color:#000; font-size:16px; font-weight:800 }
+  h3{ font-family:Arial, Helvetica, sans-serif; color:#000; font-size:14px; font-weight:800 }
+  .outerTable{
+   background-color:#E0E7ED;
+   width:100%;
+   border-top-width: thin;
+   border-right-width: thin;
+   border-right-width: thin;
+   border-left-width: thin;
+   border-top-style: solid;
+   border-right-style: solid;
+   border-bottom-style: solid;
+   border-left-style: solid;
+  }
+  .innerTable{
+   background-color:#F2F4F7;
+   width:100%;
+   border-top-width: thin;
+   border-right-width: thin;
+   border-bottom-width: thin;
+   border-left-width: thin;
+   border-top-style: solid;
+   border-right-style: solid;
+   border-bottom-style: solid;
+   border-left-style: solid;
+  }
+</style>
+</head>
+<body>
+<table class="outerTable">
+  <tr class="normalBoldLarge">
+     <td><h2>Code listing for: LZTWSD020TOP</h2>
+<h3> Description: Z_SD_CONVERT_KUNNR_TO_WLPNO</h3></td>
+   </tr>
+  <tr>
+     <td>
+     <table class="innerTable">
+       <tr>
+          <td>
+   <div class="code">
+FUNCTION-POOL ZTWSD020.                     "MESSAGE-ID ..<br />
+TYPES: BEGIN OF TY_CUSTMAP,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;KUNNR&nbsp;TYPE&nbsp;KUNNR,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ALTKN&nbsp;TYPE&nbsp;ALTKN,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;END&nbsp;OF&nbsp;TY_CUSTMAP,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;TY_CUSTMAP_TTY&nbsp;TYPE&nbsp;HASHED&nbsp;TABLE&nbsp;OF&nbsp;TY_CUSTMAP&nbsp;WITH&nbsp;UNIQUE&nbsp;KEY&nbsp;KUNNR.<br />
+TYPES: BEGIN OF TY_CUSTMAP_R,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ALTKN&nbsp;TYPE&nbsp;ALTKN,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;BUKRS&nbsp;TYPE&nbsp;BUKRS,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;KUNNR&nbsp;TYPE&nbsp;KUNNR,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;END&nbsp;OF&nbsp;TY_CUSTMAP_R,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;TY_CUSTMAP_R_TTY&nbsp;TYPE&nbsp;HASHED&nbsp;TABLE&nbsp;OF&nbsp;TY_CUSTMAP_R&nbsp;WITH&nbsp;UNIQUE&nbsp;KEY&nbsp;ALTKN&nbsp;BUKRS.<br />
+TYPES: BEGIN OF TY_ZTSDURL_LOG.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;include&nbsp;structure&nbsp;<a&nbsp;href&nbsp;="ztsdurl_log/dictionary-ztsdurl_log.html">ZTSDURL_LOG</a>.<br />
+TYPES: SEQ TYPE ZTSD0046_OUT-SEQ,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;END&nbsp;OF&nbsp;TY_ZTSDURL_LOG,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;TY_ZTSDURL_LOG_TTY&nbsp;TYPE&nbsp;TABLE&nbsp;OF&nbsp;TY_ZTSDURL_LOG&nbsp;WITH&nbsp;DEFAULT&nbsp;KEY.<br />
+CONSTANTS: C_PARVW_PY TYPE PARVW VALUE 'RG',<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;C_PARVW_SH&nbsp;TYPE&nbsp;PARVW&nbsp;VALUE&nbsp;'WE',<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;C_PARVW_SP&nbsp;TYPE&nbsp;PARVW&nbsp;VALUE&nbsp;'AG',<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;C_PARVW_Z5&nbsp;TYPE&nbsp;PARVW&nbsp;VALUE&nbsp;'Z5',<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;C_PARVW_Z7&nbsp;TYPE&nbsp;PARVW&nbsp;VALUE&nbsp;'Z7'.<br />
+CONSTANTS: C_ACTIVITY_CREATE TYPE AKTYP VALUE 'H',<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;C_ACTIVITY_CHANGE&nbsp;TYPE&nbsp;AKTYP&nbsp;VALUE&nbsp;'V'.<br />
+CONSTANTS: C_UPDKZ_CREATE TYPE UPDKZ VALUE 'I',<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;C_UPDKZ_DELETE&nbsp;TYPE&nbsp;UPDKZ&nbsp;VALUE&nbsp;'D'.<br />
+CONSTANTS: C_ACTION_CREATE TYPE ZACTION_P VALUE '1',<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;C_ACTION_DELETE&nbsp;TYPE&nbsp;ZACTION_P&nbsp;VALUE&nbsp;'2'.<br />
+CONSTANTS: YES TYPE CHAR1  VALUE 'Y',<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;NO&nbsp;&nbsp;TYPE&nbsp;CHAR1&nbsp;&nbsp;VALUE&nbsp;'N'.<br />
+CONSTANTS LINE_FEED TYPE ABAP_CR_LF VALUE CL_ABAP_CHAR_UTILITIES=&gt;CR_LF.<br />
+TYPES: BEGIN OF TY_S_KUNNR,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;KUNNR&nbsp;TYPE&nbsp;KUNNR,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PARZA&nbsp;TYPE&nbsp;KNVP-PARZA,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;END&nbsp;OF&nbsp;TY_S_KUNNR,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;TY_T_KUNNR&nbsp;TYPE&nbsp;TABLE&nbsp;OF&nbsp;TY_S_KUNNR&nbsp;WITH&nbsp;DEFAULT&nbsp;KEY.<br />
+<br />
+TYPES: BEGIN OF TY_41_ITEM,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;UUID&nbsp;&nbsp;TYPE&nbsp;ZTSD0041_OUT-UUID,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;KUNNR&nbsp;TYPE&nbsp;ZTSD0041_OUT-KUNNR,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ITEM&nbsp;&nbsp;TYPE&nbsp;ZTSD0041_OUT-ITEM,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;END&nbsp;OF&nbsp;TY_41_ITEM.<br />
+<br />
+<br />
+DATA GT_41_ITEM TYPE HASHED TABLE OF TY_41_ITEM WITH UNIQUE KEY UUID KUNNR.<br />
+TABLES: T052,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ZTSD0022,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ZTSD0024,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ZTSD0025.<br />
+<br />
+TYPES: BEGIN OF TY_CUSTOMER_DATA,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;I_ACTIVITY&nbsp;TYPE&nbsp;&nbsp;AKTYP,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;S_KNA1&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;TYPE&nbsp;&nbsp;KNA1,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;S_KNB1&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;TYPE&nbsp;&nbsp;KNB1,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;S_KNVV&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;TYPE&nbsp;&nbsp;KNVV,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;T_KNAS&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;TYPE&nbsp;&nbsp;FKNAS_TAB,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;T_KNB5&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;TYPE&nbsp;&nbsp;FKNB5_TAB,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;T_KNBK&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;TYPE&nbsp;&nbsp;FKNBK_TAB,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;T_KNEX&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;TYPE&nbsp;&nbsp;FKNEX_TAB,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;T_KNVA&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;TYPE&nbsp;&nbsp;FKNVA_TAB,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;T_KNVD&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;TYPE&nbsp;&nbsp;FKNVD_TAB,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;T_KNVI&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;TYPE&nbsp;&nbsp;FKNVI_TAB,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;T_KNVK&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;TYPE&nbsp;&nbsp;FKNVK_TAB,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;T_KNVL&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;TYPE&nbsp;&nbsp;FKNVL_TAB,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;T_KNVP&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;TYPE&nbsp;&nbsp;FKNVP_TAB,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;T_KNZA&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;TYPE&nbsp;&nbsp;FKNZA_TAB,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;END&nbsp;OF&nbsp;TY_CUSTOMER_DATA.<br />
+<br />
+<br />
+DATA: GS_ADDR_COMPLETE TYPE SZADR_ADDR1_COMPLETE,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;GS_CUSTOMER_DATA&nbsp;TYPE&nbsp;TY_CUSTOMER_DATA.<br />
+DATA GT_KUNNR TYPE TT_KUNNR.<br />
+DATA: G_UUID    TYPE ZTSD0038_CRT-UUID,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;G_ITEM_NO&nbsp;TYPE&nbsp;POSNR.<br />
+DATA: GT_ZTSD0038_CRT  TYPE TABLE OF ZTSD0038_CRT, "介面控制檔<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;GT_ZTSD0039_OUT&nbsp;&nbsp;TYPE&nbsp;TABLE&nbsp;OF&nbsp;ZTSD0039_OUT,&nbsp;"客戶主檔<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;GT_ZTSD0040_OUT&nbsp;&nbsp;TYPE&nbsp;TABLE&nbsp;OF&nbsp;ZTSD0040_OUT,&nbsp;"客戶基本資料VAT&nbsp;&&nbsp;EORI<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;GT_ZTSD0041_OUT&nbsp;&nbsp;TYPE&nbsp;TABLE&nbsp;OF&nbsp;ZTSD0041_OUT,&nbsp;"客戶交運地址檔<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;GT_ZTSD0042_OUT&nbsp;&nbsp;TYPE&nbsp;TABLE&nbsp;OF&nbsp;ZTSD0042_OUT,&nbsp;"嘜頭格式檔<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;GT_ZTSD0044_OUT&nbsp;&nbsp;TYPE&nbsp;TABLE&nbsp;OF&nbsp;ZTSD0044_OUT,&nbsp;"收貨客戶&For&nbsp;Account歸屬資料<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;GT_ZTSD0045_OUT&nbsp;&nbsp;TYPE&nbsp;TABLE&nbsp;OF&nbsp;ZTSD0045_OUT,&nbsp;"收貨客戶基本設定檔<br />
+&nbsp;&nbsp;&nbsp;&nbsp;"""&nbsp;&nbsp;GT_ZTSD0045T_OUT&nbsp;TYPE&nbsp;TABLE&nbsp;OF&nbsp;ZSSD0045T_OUT,&nbsp;"收貨客戶基本TEXT設定檔<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;GT_ZTSD0046_OUT&nbsp;&nbsp;TYPE&nbsp;TABLE&nbsp;OF&nbsp;ZTSD0046_OUT&nbsp;"客戶主檔附件網址<br />
+&nbsp;&nbsp;&nbsp;&nbsp;"""&nbsp;&nbsp;GT_ZTSD0043_OUT&nbsp;&nbsp;TYPE&nbsp;TABLE&nbsp;OF&nbsp;ZTSD0043_OUT,&nbsp;"進口商資料維護<br />
+&nbsp;&nbsp;&nbsp;&nbsp;"""&nbsp;&nbsp;GT_ZTSD0048_OUT&nbsp;&nbsp;TYPE&nbsp;TABLE&nbsp;OF&nbsp;ZTSD0048_OUT.&nbsp;"批次收貨客戶檔<br />
+&nbsp;&nbsp;&nbsp;&nbsp;.<br />
+DATA GT_KUNNR_CRT TYPE HASHED TABLE OF KNA1-KUNNR WITH UNIQUE KEY TABLE_LINE.<br />
+"""DATA: GT_46_LOG_NEW TYPE ZTSD0046_LOG_TTY,<br />
+"""      GT_46_LOG_OLD TYPE ZTSD0046_LOG_TTY.<br />
+DATA RANGES_KTOKD TYPE SMB_UIE_KTOKD_RANGE_TT.<br />
+<br />
+DATA: GT_CUSTMAP   TYPE TY_CUSTMAP_TTY,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;GT_CUSTMAP_R&nbsp;TYPE&nbsp;TY_CUSTMAP_R_TTY.<br />
+DATA: g_vkorg TYPE vkorg, "V006<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;g_bukrs&nbsp;TYPE&nbsp;bukrs.&nbsp;"V006<br />
+DEFINE B.<br />
+&nbsp;&nbsp;IF&nbsp;sy-uname&nbsp;=&nbsp;'EY.DYLAN'.<br />
+&nbsp;&nbsp;BREAK-POINT.<br />
+&nbsp;&nbsp;ENDIF.<br />
+END-OF-DEFINITION.<br />
+            </div>
+          </td>
+        </tr>
+      </table>
+      </td>
+      </tr>
+   <tr>
+<td class="footer">Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2026. Sap Release 757</td>
+   </tr>
+</table>
+</body>
+</html>

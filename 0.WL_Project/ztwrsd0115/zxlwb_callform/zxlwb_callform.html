@@ -1,0 +1,262 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="application/xhtml+xml; charset=UTF-8" />
+<title>ZXLWB_CALLFORM</title>
+<style type="text/css">
+.code{ font-family:"Courier New", Courier, monospace; color:#000; font-size:14px; background-color:#F2F4F7 }
+  .codeComment {font-family:"Courier New", Courier, monospace; color:#0000F0; font-size:14px; background-color:#F2F4F7 }
+  .normalBold{ font-family:Arial, Helvetica, sans-serif; color:#000; font-size:12px; font-weight:800 }
+  .normalBoldLarge{ font-family:Arial, Helvetica, sans-serif; color:#000; font-size:16px; font-weight:800 }
+</style>
+<style type="text/css">
+  .normal{ font-family:Arial, Helvetica, sans-serif; color:#000; font-size:12px }
+  .footer{ font-family:Arial, Helvetica, sans-serif; color:#000; font-size:12px; text-align: center }
+  h2{ font-family:Arial, Helvetica, sans-serif; color:#000; font-size:16px; font-weight:800 }
+  h3{ font-family:Arial, Helvetica, sans-serif; color:#000; font-size:14px; font-weight:800 }
+  .outerTable{
+   background-color:#E0E7ED;
+   width:100%;
+   border-top-width: thin;
+   border-right-width: thin;
+   border-right-width: thin;
+   border-left-width: thin;
+   border-top-style: solid;
+   border-right-style: solid;
+   border-bottom-style: solid;
+   border-left-style: solid;
+  }
+  .innerTable{
+   background-color:#F2F4F7;
+   width:100%;
+   border-top-width: thin;
+   border-right-width: thin;
+   border-bottom-width: thin;
+   border-left-width: thin;
+   border-top-style: solid;
+   border-right-style: solid;
+   border-bottom-style: solid;
+   border-left-style: solid;
+  }
+</style>
+</head>
+<body>
+<table class="outerTable">
+  <tr class="normalBoldLarge">
+     <td><h2>Code listing for function ZXLWB_CALLFORM</h2>
+<h3> Description: Render and display form</h3></td>
+   </tr>
+  <tr>
+     <td>
+     <table class="innerTable">
+       <tr>
+          <td>
+   <div class="code">
+FUNCTION ZXLWB_CALLFORM.<br />
+   </div>
+   <div class="codeComment">
+*"--------------------------------------------------------------------<br />
+*"*"Local Interface:<br />
+*"  IMPORTING<br />
+*"     REFERENCE(IV_FORMNAME) TYPE  ANY<br />
+*"     REFERENCE(IV_CONTEXT_REF)<br />
+*"     VALUE(IV_VIEWER_TITLE) TYPE  ANY DEFAULT SY-TITLE<br />
+*"     REFERENCE(IV_VIEWER_INPLACE) TYPE  FLAG DEFAULT 'X'<br />
+*"     VALUE(IV_VIEWER_CALLBACK_PROG) TYPE  ANY DEFAULT SY-CPROG<br />
+*"     REFERENCE(IV_VIEWER_CALLBACK_FORM) TYPE  ANY OPTIONAL<br />
+*"     REFERENCE(IV_VIEWER_SUPPRESS) TYPE  ANY OPTIONAL<br />
+*"     REFERENCE(IV_PROTECT) TYPE  FLAG OPTIONAL<br />
+*"     REFERENCE(IV_SAVE_AS) TYPE  ANY OPTIONAL<br />
+*"     REFERENCE(IV_SAVE_AS_APPSERVER) TYPE  ANY OPTIONAL<br />
+*"     REFERENCE(IV_STARTUP_MACRO) TYPE  ANY OPTIONAL<br />
+*"     REFERENCE(IT_DOCPROPERTIES) TYPE  CKF_FIELD_VALUE_TABLE<br />
+*"         OPTIONAL<br />
+*"  EXPORTING<br />
+*"     REFERENCE(EV_DOCUMENT_RAWDATA) TYPE  MIME_DATA<br />
+*"     REFERENCE(EV_DOCUMENT_EXTENSION) TYPE  ANY<br />
+*"  EXCEPTIONS<br />
+*"      PROCESS_TERMINATED<br />
+*"--------------------------------------------------------------------<br />
+*=======================================================================<br />
+*=======================================================================<br />
+* Copyright 2016 Igor Borodin<br />
+* Licensed under the Apache License, Version 2.0 (the "License");<br />
+* you may not use this file except in compliance with the License.<br />
+* You may obtain a copy of the License at<br />
+*     http://www.apache.org/licenses/LICENSE-2.0<br />
+* Unless required by applicable law or agreed to in writing, software<br />
+* distributed under the License is distributed on an "AS IS" BASIS,<br />
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.<br />
+* See the License for the specific language governing permissions and<br />
+* limitations under the License.<br />
+*=======================================================================<br />
+*=======================================================================<br />
+*<br />
+* XLSX-Workbench(XLWB) components                         [Version 4.06]<br />
+* Documentation is available at:<br />
+*                             https://sites.google.com/site/sapxlwb/home<br />
+*=======================================================================<br />
+* Render and display form<br />
+*=======================================================================<br />
+*<br />
+* Parameters:<br />
+*     IV_FORMNAME         --&gt;&gt; name of the form<br />
+*     IV_CONTEXT_REF      --&gt;&gt; data for the form building<br />
+*     IV_VIEWER_TITLE     --&gt;&gt; text, which displayed in the title bar of the Viewer<br />
+*     IV_VIEWER_INPLACE   --&gt;&gt; set 'X' to show Excel in modal SAP-screen,<br />
+*                              or set SPACE for floating mode<br />
+*     IV_VIEWER_CALLBACK_PROG, IV_VIEWER_CALLBACK_FORM --&gt;&gt;<br />
+*                         --&gt;&gt; subroutine to customizing Viewer (see Docum.)<br />
+*     IV_VIEWER_SUPPRESS  --&gt;&gt; set 'X' to do not call the Viewer<br />
+*     IV_PROTECT          --&gt;&gt; set 'X', if tamper protection of workbook is required<br />
+*     IV_SAVE_AS          --&gt;&gt; full path (including file extention),<br />
+*                              if you want to save file on the Frontend<br />
+*     IV_SAVE_AS_APPSERVER--&gt;&gt; full path (including file extention),<br />
+*                              if you want to save file on the Application server<br />
+*     IV_STARTUP_MACRO    --&gt;&gt; Only for .XLSM (not for .XLSX)<br />
+*                              macro name, which should be run directly after file creation<br />
+*                              For example: Module1.Macro1<br />
+*     IT_DOCPROPERTIES    --&gt;&gt; Document properties (ie Author, Company etc.)<br />
+*<br />
+*<br />
+*=======================================================================<br />
+<br />
+
+<div class="codeComment">*       <a href ="global-zxlwb_callform.html">Global data declarations</a></div><br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;DATA:<br />
+&nbsp;&nbsp;&nbsp;&nbsp;lr_formruntime&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;TYPE&nbsp;REF&nbsp;TO&nbsp;lcl_formruntime&nbsp;,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;lv_fullpath&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;TYPE&nbsp;string&nbsp;,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;lv_message&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;TYPE&nbsp;string&nbsp;,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;lv_document_size&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;TYPE&nbsp;i&nbsp;,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;lt_document_table&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;TYPE&nbsp;STANDARD&nbsp;TABLE&nbsp;OF&nbsp;w3mime&nbsp;,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;lv_document_extension&nbsp;TYPE&nbsp;lcl_formruntime=&gt;ty_char10&nbsp;.<br />
+<br />
+   </div>
+   <div class="codeComment">
+* compose document<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;CREATE&nbsp;OBJECT&nbsp;lr_formruntime<br />
+&nbsp;&nbsp;&nbsp;&nbsp;EXPORTING<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;iv_formname&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;iv_formname<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;iv_context_ref&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;iv_context_ref<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;iv_protect&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;iv_protect<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;iv_startup_macro&nbsp;&nbsp;&nbsp;=&nbsp;iv_startup_macro<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;it_docproperties&nbsp;&nbsp;&nbsp;=&nbsp;it_docproperties<br />
+&nbsp;&nbsp;&nbsp;&nbsp;EXCEPTIONS<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;process_terminated&nbsp;=&nbsp;1.<br />
+&nbsp;&nbsp;IF&nbsp;sy-subrc&nbsp;NE&nbsp;0&nbsp;.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;MESSAGE&nbsp;ID&nbsp;sy-msgid&nbsp;TYPE&nbsp;sy-msgty&nbsp;NUMBER&nbsp;sy-msgno<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;WITH&nbsp;sy-msgv1&nbsp;sy-msgv2&nbsp;sy-msgv3&nbsp;sy-msgv4<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;RAISING&nbsp;process_terminated&nbsp;.<br />
+&nbsp;&nbsp;ENDIF&nbsp;.<br />
+<br />
+&nbsp;&nbsp;ev_document_rawdata&nbsp;&nbsp;&nbsp;=&nbsp;lr_formruntime-&gt;get_rawdata(&nbsp;)&nbsp;.<br />
+&nbsp;&nbsp;lv_document_extension&nbsp;=&nbsp;lr_formruntime-&gt;get_extension(&nbsp;)&nbsp;.<br />
+&nbsp;&nbsp;ev_document_extension&nbsp;=&nbsp;lv_document_extension&nbsp;.<br />
+<br />
+&nbsp;&nbsp;lr_formruntime-&gt;free(&nbsp;)&nbsp;.<br />
+&nbsp;&nbsp;FREE&nbsp;lr_formruntime&nbsp;.<br />
+<br />
+   </div>
+   <div class="codeComment">
+* call viewer (if required)<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;IF&nbsp;&nbsp;iv_viewer_suppress&nbsp;IS&nbsp;INITIAL<br />
+&nbsp;&nbsp;AND&nbsp;lcl_root=&gt;is_gui_available(&nbsp;)&nbsp;IS&nbsp;NOT&nbsp;INITIAL&nbsp;.<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;gv_viewer_bundle_collect&nbsp;IS&nbsp;INITIAL&nbsp;.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PERFORM&nbsp;viewer_bundle_refresh&nbsp;.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ENDIF&nbsp;.<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;gr_viewer&nbsp;IS&nbsp;BOUND&nbsp;.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;gr_viewer-&gt;document_add(<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;iv_document_rawdata&nbsp;&nbsp;&nbsp;=&nbsp;ev_document_rawdata<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;iv_document_extension&nbsp;=&nbsp;lv_document_extension<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;iv_document_title&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;iv_viewer_title<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;iv_callback_prog&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;iv_viewer_callback_prog<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;iv_callback_form&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;iv_viewer_callback_form<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;iv_inplace&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;iv_viewer_inplace&nbsp;)&nbsp;.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ENDIF&nbsp;.<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;gv_viewer_bundle_collect&nbsp;IS&nbsp;INITIAL&nbsp;.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PERFORM&nbsp;viewer_bundle_close&nbsp;.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ENDIF&nbsp;.<br />
+&nbsp;&nbsp;ENDIF&nbsp;.<br />
+<br />
+   </div>
+   <div class="codeComment">
+* download on frontend (if required)<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;IF&nbsp;iv_save_as&nbsp;IS&nbsp;NOT&nbsp;INITIAL&nbsp;.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;lv_fullpath&nbsp;=&nbsp;iv_save_as&nbsp;.<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;CALL&nbsp;FUNCTION&nbsp;'SCMS_XSTRING_TO_BINARY'<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;EXPORTING<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;buffer&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;ev_document_rawdata<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IMPORTING<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;output_length&nbsp;=&nbsp;lv_document_size<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;TABLES<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;binary_tab&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;lt_document_table.<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;cl_gui_frontend_services=&gt;gui_download(<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;EXPORTING&nbsp;bin_filesize&nbsp;=&nbsp;lv_document_size<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;filename&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;lv_fullpath<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;filetype&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;'BIN'<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CHANGING&nbsp;&nbsp;data_tab&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;lt_document_table<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;EXCEPTIONS&nbsp;OTHERS&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;24&nbsp;).<br />
+&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;sy-subrc&nbsp;NE&nbsp;0&nbsp;.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;MESSAGE&nbsp;ID&nbsp;sy-msgid&nbsp;TYPE&nbsp;sy-msgty&nbsp;NUMBER&nbsp;sy-msgno<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;WITH&nbsp;sy-msgv1&nbsp;sy-msgv2&nbsp;sy-msgv3&nbsp;sy-msgv4<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;RAISING&nbsp;process_terminated&nbsp;.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ENDIF&nbsp;.<br />
+&nbsp;&nbsp;ENDIF&nbsp;.<br />
+<br />
+   </div>
+   <div class="codeComment">
+* download on application server (if required)<br />
+   </div>
+   <div class="code">
+&nbsp;&nbsp;IF&nbsp;iv_save_as_appserver&nbsp;IS&nbsp;NOT&nbsp;INITIAL&nbsp;.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;lv_fullpath&nbsp;=&nbsp;iv_save_as_appserver&nbsp;.<br />
+<br />
+&nbsp;&nbsp;&nbsp;&nbsp;DELETE&nbsp;DATASET&nbsp;lv_fullpath&nbsp;.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;OPEN&nbsp;DATASET&nbsp;lv_fullpath&nbsp;FOR&nbsp;OUTPUT&nbsp;IN&nbsp;BINARY&nbsp;MODE&nbsp;MESSAGE&nbsp;lv_message&nbsp;.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;IF&nbsp;sy-subrc&nbsp;NE&nbsp;0&nbsp;.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;MESSAGE&nbsp;e000(lp)&nbsp;WITH&nbsp;`OPEN&nbsp;DATASET&nbsp;ERROR:`&nbsp;lv_message<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;RAISING&nbsp;process_terminated&nbsp;.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;ENDIF&nbsp;.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;TRANSFER&nbsp;ev_document_rawdata&nbsp;TO&nbsp;lv_fullpath&nbsp;.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;CLOSE&nbsp;DATASET&nbsp;lv_fullpath&nbsp;.<br />
+&nbsp;&nbsp;ENDIF&nbsp;.<br />
+<br />
+<br />
+<br />
+<br />
+<br />
+ENDFUNCTION.<br />
+<br />
+<br />
+   </div>
+   <div class="codeComment">
+*Messages<br />
+*----------------------------------------------------------<br />
+*<br />
+* Message class: LP<br />
+*000   &1 &2 &3 &4<br />
+            </div>
+          </td>
+        </tr>
+      </table>
+      </td>
+      </tr>
+   <tr>
+<td class="footer">Extracted by Mass Download version 1.5.5 - E.G.Mellodew. 1998-2026. Sap Release 757</td>
+   </tr>
+</table>
+</body>
+</html>
