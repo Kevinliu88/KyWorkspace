@@ -122,7 +122,7 @@ DATA: END OF gt_pir.
 DATA: e_conv   LIKE ekpo-menge,
       e_factor LIKE  bapicurr-bapicurr.
 
-*CKM3Nªº¹ê»Ú¦¨¥»
+*CKM3Nçš„å¯¦éš›æˆæœ¬
 DATA: BEGIN OF gt_ckm3n OCCURS 0,
         matnr LIKE mbew-matnr,
         bwkey LIKE mbew-bwkey.
@@ -151,7 +151,7 @@ DEFINE exit_alpha_input.
 END-OF-DEFINITION.
 
 DEFINE zexit_alpha_input.
-**®Æ¸¹±M¥Î
+**æ–™è™Ÿå°ˆç”¨
   CALL FUNCTION 'ZCONVERSION_EXIT_ALPHA_INPUT'
     EXPORTING
       input  = &1

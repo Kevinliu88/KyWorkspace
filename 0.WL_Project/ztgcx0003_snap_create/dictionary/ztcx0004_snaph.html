@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
 <meta http-equiv="Content-Type" content="application/xhtml+xml; charset=ISO-8859-1" />
-<title>Dictionary object- ZTSD0107</title>
+<title>Dictionary object- ZTCX0004_SNAPH</title>
 <style type="text/css">
   th{text-align:left}
   .cell{
@@ -47,8 +47,8 @@
 <body>
   <table class="outerTable">
     <tr>
-      <td><h2>Table: ZTSD0107</h2>
-  <h3>Description: 客戶公式類別與料號對應設定</h3></td>
+      <td><h2>Table: ZTCX0004_SNAPH</h2>
+  <h3>Description: </h3></td>
     </tr>
     <tr>
       <td><!--This is where our main table begins  -->
@@ -79,93 +79,45 @@
 </tr>
 <tr class="cell">
   <td> 2</td>
-  <td>VTWEG</td>
+  <td>XJ</td>
   <td>2</td>
   <td>X</td>
-  <td>VTWEG</td>
-  <td>VTWEG</td>
-  <td>CHAR</td>
-  <td>2</td>
-  <td>&nbsp;</td>
-  <td>配銷通路</td>
-</tr>
-<tr class="cell">
-  <td> 3</td>
-  <td>MATKL</td>
-  <td>3</td>
-  <td>X</td>
-  <td>MATKL</td>
-  <td>MATKL</td>
-  <td>CHAR</td>
-  <td>9</td>
-  <td>&nbsp;</td>
-  <td>物料群組</td>
-</tr>
-<tr class="cell">
-  <td> 4</td>
-  <td>WAERS</td>
-  <td>4</td>
-  <td>X</td>
-  <td>WAERS</td>
-  <td>WAERS</td>
-  <td>CUKY</td>
-  <td>5</td>
-  <td>&nbsp;</td>
-  <td>幣別碼</td>
-</tr>
-<tr class="cell">
-  <td> 5</td>
-  <td>KOZGF</td>
-  <td>5</td>
-  <td>X</td>
-  <td>ZKOZGF</td>
-  <td>NUMC4</td>
-  <td>NUMC</td>
-  <td>4</td>
-  <td>&nbsp;</td>
-  <td>存取順序(預採帳)</td>
-</tr>
-<tr class="cell">
-  <td> 6</td>
-  <td>ZMOQLINE</td>
-  <td>6</td>
-  <td>X</td>
-  <td>ZMOQLINE</td>
-  <td>ZMOQLINE</td>
+  <td>ZXJ</td>
+  <td>CHAR12</td>
   <td>CHAR</td>
   <td>12</td>
   <td>&nbsp;</td>
-  <td>預採帳線別</td>
+  <td>XJ 單號</td>
 </tr>
 <tr class="cell">
-  <td> 7</td>
-  <td>ZPNO</td>
-  <td>7</td>
-  <td>X</td>
-  <td>ZZPNO_NO</td>
-  <td>ZPNO</td>
-  <td>CHAR</td>
-  <td>30</td>
+  <td> 3</td>
+  <td>VBELN</td>
+  <td>3</td>
   <td>&nbsp;</td>
-  <td>廠內件號</td>
+  <td>VBELN_VA</td>
+  <td>VBELN</td>
+  <td>CHAR</td>
+  <td>10</td>
+  <td>&nbsp;</td>
+  <td>銷售文件</td>
 </tr>
 <tr class="cell">
-  <td> 8</td>
-  <td>ZPCUR</td>
-  <td>8</td>
-  <td>X</td>
-  <td>ZPCUR</td>
-  <td>WAERS</td>
-  <td>CUKY</td>
+  <td> 4</td>
+  <td>POSNR</td>
+  <td>4</td>
+  <td>&nbsp;</td>
+  <td>POSNR_VA</td>
+  <td>POSNR</td>
+  <td>NUMC</td>
+  <td>6</td>
+  <td>&nbsp;</td>
+  <td>銷售文件項目</td>
+</tr>
+<tr class="cell">
+  <td> 5</td>
+  <td>MEINS</td>
   <td>5</td>
   <td>&nbsp;</td>
-  <td>原採購幣別</td>
-</tr>
-<tr class="cell">
-  <td> 9</td>
-  <td>MEINS</td>
-  <td>9</td>
-  <td>X</td>
   <td>MEINS</td>
   <td>MEINS</td>
   <td>UNIT</td>
@@ -174,52 +126,172 @@
   <td>基礎計量單位</td>
 </tr>
 <tr class="cell">
-  <td>10</td>
-  <td>KSTBM</td>
-  <td>10</td>
-  <td>X</td>
-  <td>KSTBM</td>
-  <td>MENG15</td>
+  <td> 6</td>
+  <td>MENGE</td>
+  <td>6</td>
+  <td>&nbsp;</td>
+  <td>CO_MENGE</td>
+  <td>MENGV13</td>
   <td>QUAN</td>
+  <td>13</td>
+  <td>&nbsp;</td>
+  <td>零件需求數量</td>
+</tr>
+<tr class="cell">
+  <td> 7</td>
+  <td>CALC_TSTAMP</td>
+  <td>7</td>
+  <td>&nbsp;</td>
+  <td>TIMESTAMPL</td>
+  <td>TZNTSTMPL</td>
+  <td>DEC</td>
+  <td>21</td>
+  <td>&nbsp;</td>
+  <td>完整格式的 UTC 時間印記 (YYYYMMDDhhmmssmmmuuun)</td>
+</tr>
+<tr class="cell">
+  <td> 8</td>
+  <td>SAVE_TSTAMP</td>
+  <td>8</td>
+  <td>&nbsp;</td>
+  <td>TIMESTAMPL</td>
+  <td>TZNTSTMPL</td>
+  <td>DEC</td>
+  <td>21</td>
+  <td>&nbsp;</td>
+  <td>完整格式的 UTC 時間印記 (YYYYMMDDhhmmssmmmuuun)</td>
+</tr>
+<tr class="cell">
+  <td> 9</td>
+  <td>GAP_SECONDS</td>
+  <td>9</td>
+  <td>&nbsp;</td>
+  <td>INT4</td>
+  <td>INT4</td>
+  <td>INT4</td>
+  <td>10</td>
+  <td>&nbsp;</td>
+  <td>4 位元組有正負符號的整數</td>
+</tr>
+<tr class="cell">
+  <td>10</td>
+  <td>STALE_FLG</td>
+  <td>10</td>
+  <td>&nbsp;</td>
+  <td>FLAG</td>
+  <td>FLAG</td>
+  <td>CHAR</td>
+  <td>1</td>
+  <td>&nbsp;</td>
+  <td>一般旗標</td>
+</tr>
+<tr class="cell">
+  <td>11</td>
+  <td>THRESHOLD_MIN</td>
+  <td>11</td>
+  <td>&nbsp;</td>
+  <td>INT4</td>
+  <td>INT4</td>
+  <td>INT4</td>
+  <td>10</td>
+  <td>&nbsp;</td>
+  <td>4 位元組有正負符號的整數</td>
+</tr>
+<tr class="cell">
+  <td>12</td>
+  <td>RUN018_TS</td>
+  <td>12</td>
+  <td>&nbsp;</td>
+  <td>TIMESTAMPL</td>
+  <td>TZNTSTMPL</td>
+  <td>DEC</td>
+  <td>21</td>
+  <td>&nbsp;</td>
+  <td>完整格式的 UTC 時間印記 (YYYYMMDDhhmmssmmmuuun)</td>
+</tr>
+<tr class="cell">
+  <td>13</td>
+  <td>RUN018_MS</td>
+  <td>13</td>
+  <td>&nbsp;</td>
+  <td>INT4</td>
+  <td>INT4</td>
+  <td>INT4</td>
+  <td>10</td>
+  <td>&nbsp;</td>
+  <td>4 位元組有正負符號的整數</td>
+</tr>
+<tr class="cell">
+  <td>14</td>
+  <td>RUNMD4_TS</td>
+  <td>14</td>
+  <td>&nbsp;</td>
+  <td>TIMESTAMPL</td>
+  <td>TZNTSTMPL</td>
+  <td>DEC</td>
+  <td>21</td>
+  <td>&nbsp;</td>
+  <td>完整格式的 UTC 時間印記 (YYYYMMDDhhmmssmmmuuun)</td>
+</tr>
+<tr class="cell">
+  <td>15</td>
+  <td>RUNMD4_MS</td>
   <td>15</td>
   <td>&nbsp;</td>
-  <td>條件等級數量</td>
-</tr>
-<tr class="cell">
-  <td>11</td>
-  <td>ZPNOCODE_IN</td>
-  <td>11</td>
-  <td>X</td>
-  <td>ZPNOCODE_IN</td>
-  <td>CHAR4</td>
-  <td>CHAR</td>
-  <td>4</td>
+  <td>INT4</td>
+  <td>INT4</td>
+  <td>INT4</td>
+  <td>10</td>
   <td>&nbsp;</td>
-  <td>存貨類別判斷式</td>
+  <td>4 位元組有正負符號的整數</td>
 </tr>
 <tr class="cell">
-  <td>12</td>
-  <td>ZCALCUR</td>
+  <td>16</td>
+  <td>ERNAM</td>
+  <td>16</td>
+  <td>&nbsp;</td>
+  <td>ERNAM</td>
+  <td>USNAM</td>
+  <td>CHAR</td>
   <td>12</td>
   <td>&nbsp;</td>
-  <td>ZCALCUR</td>
-  <td>WAERS</td>
-  <td>CUKY</td>
-  <td>5</td>
-  <td>&nbsp;</td>
-  <td>計算單價幣別</td>
+  <td>建立物件的負責人名稱</td>
 </tr>
 <tr class="cell">
-  <td>13</td>
-  <td>ZFORMULATYPE</td>
-  <td>13</td>
+  <td>17</td>
+  <td>CLAIM_TS</td>
+  <td>17</td>
   <td>&nbsp;</td>
-  <td>ZFORMULATYPE</td>
-  <td>CHAR20</td>
+  <td>TIMESTAMPL</td>
+  <td>TZNTSTMPL</td>
+  <td>DEC</td>
+  <td>21</td>
+  <td>&nbsp;</td>
+  <td>完整格式的 UTC 時間印記 (YYYYMMDDhhmmssmmmuuun)</td>
+</tr>
+<tr class="cell">
+  <td>18</td>
+  <td>STATUS</td>
+  <td>18</td>
+  <td>&nbsp;</td>
+  <td>&nbsp;</td>
+  <td>&nbsp;</td>
   <td>CHAR</td>
-  <td>20</td>
+  <td>1</td>
   <td>&nbsp;</td>
-  <td>預採帳公式類別代碼</td>
+  <td>執行旗標(P待辦R處理中D完成E失敗)</td>
+</tr>
+<tr class="cell">
+  <td>19</td>
+  <td>ERRTX</td>
+  <td>19</td>
+  <td>&nbsp;</td>
+  <td>&nbsp;</td>
+  <td>&nbsp;</td>
+  <td>CHAR</td>
+  <td>255</td>
+  <td>&nbsp;</td>
+  <td>建立快照失敗原因</td>
 </tr>
       </table>
      </td>
@@ -239,112 +311,16 @@
   <th>Text</th>
 </tr>
 <tr class="cell">
-  <td>ZMOQLINE</td>
-  <td>EMEA</td>
+  <td>FLAG</td>
+  <td>X</td>
   <td>&nbsp;</td>
-  <td>EMEA</td>
+  <td>Flag set (event raised)</td>
 </tr>
 <tr class="cell">
-  <td>ZMOQLINE</td>
-  <td>DI</td>
+  <td>FLAG</td>
   <td>&nbsp;</td>
-  <td>DI</td>
-</tr>
-<tr class="cell">
-  <td>ZMOQLINE</td>
-  <td>WB</td>
   <td>&nbsp;</td>
-  <td>WB</td>
-</tr>
-<tr class="cell">
-  <td>ZMOQLINE</td>
-  <td>DI-CL</td>
-  <td>&nbsp;</td>
-  <td>DI-CL</td>
-</tr>
-<tr class="cell">
-  <td>ZMOQLINE</td>
-  <td>DI-BZ</td>
-  <td>&nbsp;</td>
-  <td>DI-BZ</td>
-</tr>
-<tr class="cell">
-  <td>ZMOQLINE</td>
-  <td>DI-MX</td>
-  <td>&nbsp;</td>
-  <td>DI-MX</td>
-</tr>
-<tr class="cell">
-  <td>ZMOQLINE</td>
-  <td>DII</td>
-  <td>&nbsp;</td>
-  <td>DII</td>
-</tr>
-<tr class="cell">
-  <td>ZMOQLINE</td>
-  <td>DII-APAC</td>
-  <td>&nbsp;</td>
-  <td>DII-APAC</td>
-</tr>
-<tr class="cell">
-  <td>ZMOQLINE</td>
-  <td>DII-JCN</td>
-  <td>&nbsp;</td>
-  <td>DII-JCN</td>
-</tr>
-<tr class="cell">
-  <td>ZMOQLINE</td>
-  <td>USA</td>
-  <td>&nbsp;</td>
-  <td>USA</td>
-</tr>
-<tr class="cell">
-  <td>ZMOQLINE</td>
-  <td>GLOBAL</td>
-  <td>&nbsp;</td>
-  <td>GLOBAL</td>
-</tr>
-<tr class="cell">
-  <td>ZMOQLINE</td>
-  <td>BRAZIL</td>
-  <td>&nbsp;</td>
-  <td>BRAZIL</td>
-</tr>
-<tr class="cell">
-  <td>ZMOQLINE</td>
-  <td>CANADA</td>
-  <td>&nbsp;</td>
-  <td>CANADA</td>
-</tr>
-<tr class="cell">
-  <td>ZMOQLINE</td>
-  <td>CHINA</td>
-  <td>&nbsp;</td>
-  <td>CHINA</td>
-</tr>
-<tr class="cell">
-  <td>ZMOQLINE</td>
-  <td>APAC</td>
-  <td>&nbsp;</td>
-  <td>APAC</td>
-</tr>
-<tr class="cell">
-  <td>ZMOQLINE</td>
-  <td>TAIWAN</td>
-  <td>&nbsp;</td>
-  <td>TAIWAN</td>
-</tr>
-<tr class="cell">
-  <td>ZMOQLINE</td>
-  <td>MEXICO</td>
-  <td>&nbsp;</td>
-  <td>MEXICO</td>
-</tr>
-<tr class="cell">
-  <td>ZMOQLINE</td>
-  <td>*</td>
-  <td>&nbsp;</td>
-  <td>*</td>
+  <td>Flag is not set</td>
 </tr>
       </table>
      </td>
